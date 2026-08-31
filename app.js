@@ -183,11 +183,11 @@ $("adminLoginForm").addEventListener("submit", async e => {
   if (!firebaseReady) return configWarning();
 
   try {
-    const username = $("adminUser").value.trim();
+    const email = $("adminUser").value.trim().toLowerCase();
     const password = $("adminPass").value;
     const credential = await signInWithEmailAndPassword(
       auth,
-      usernameToEmail(username),
+      email,
       password
     );
 
