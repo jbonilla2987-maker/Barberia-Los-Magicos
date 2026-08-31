@@ -1,4 +1,4 @@
-import { firebaseConfig, AUTH_ALIAS_DOMAIN } from "./firebase-config.js?v=4";
+import { firebaseConfig, AUTH_ALIAS_DOMAIN } from "./firebase-config.js?v=20";
 
 import {
   initializeApp,

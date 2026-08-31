@@ -1,0 +1,10 @@
+REEMPLAZA ESTOS 3 ARCHIVOS EN GITHUB:
+- firebase-config.js
+- app.js
+- index.html
+
+Haz Commit changes en cada reemplazo o súbelos juntos.
+Después espera a que GitHub Pages publique y usa Ctrl + Shift + R.
+
+API key configurada exactamente según Google Cloud:
+AIzaSyCNngjdKmnaW2BbOOoq1B8tgfDLgc6bngo
