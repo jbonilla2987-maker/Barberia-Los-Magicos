@@ -1,0 +1,105 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function hasProfile() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function myUser() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isAdmin() {
+      return hasProfile()
+        && myUser().data.role == "admin"
+        && myUser().data.active == true;
+    }
+
+    function isBarber() {
+      return hasProfile()
+        && myUser().data.role == "barber"
+        && myUser().data.active == true;
+    }
+
+    match /users/{userId} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == userId);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /publicBarbers/{barberId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /chairs/{chairId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /services/{serviceId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /sales/{saleId} {
+      allow read: if isAdmin()
+        || (isBarber() && resource.data.barberId == request.auth.uid);
+
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /bookedSlots/{slotId} {
+      allow read: if true;
+
+      allow create: if signedIn()
+        && request.resource.data.slotId == slotId
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.status == "pending";
+
+      allow update: if isAdmin()
+        || (
+          isBarber()
+          && resource.data.barberId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status","updatedAt"])
+          && request.resource.data.status in ["confirmed","completed","cancelled"]
+        )
+        || (
+          signedIn()
+          && resource.data.ownerUid == request.auth.uid
+          && resource.data.status == "cancelled"
+          && request.resource.data.ownerUid == request.auth.uid
+          && request.resource.data.status == "pending"
+        );
+
+      allow delete: if isAdmin();
+    }
+
+    match /appointments/{appointmentId} {
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.slotId == appointmentId
+        && request.resource.data.status == "pending";
+
+      allow read: if isAdmin()
+        || (isBarber() && resource.data.barberId == request.auth.uid)
+        || (signedIn() && resource.data.ownerUid == request.auth.uid);
+
+      allow update: if isAdmin()
+        || (
+          isBarber()
+          && resource.data.barberId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status","updatedAt"])
+          && request.resource.data.status in ["confirmed","completed","cancelled"]
+        );
+
+      allow delete: if isAdmin();
+    }
+  }
+}
