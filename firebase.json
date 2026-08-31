@@ -4,9 +4,17 @@
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
-    "public": "public",
+    "public": ".",
     "ignore": [
       "firebase.json",
+      "firestore.rules",
+      "firestore.indexes.json",
+      "package.json",
+      "package-lock.json",
+      "README.md",
+      "LEEME_PRIMERO.md",
+      ".firebaserc",
+      ".gitignore",
       "**/.*",
       "**/node_modules/**"
     ],

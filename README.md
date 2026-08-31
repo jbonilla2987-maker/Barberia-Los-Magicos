@@ -1,49 +1,24 @@
-# Barbería Los Mágicos
+# Barbería Los Mágicos — versión para subir desde GitHub Web
 
-Sistema web premium para administración de barbería.
+Esta versión está aplanada: los archivos web están directamente en la raíz.
 
-## Módulos
+Sube todos estos archivos al repositorio:
 
-- Administrador
-- Barberos con usuario propio
-- Cobros y comisión
-- Puestos configurables
-- Servicios
-- Citas de clientes
-- Reportes
-- Firebase Authentication
-- Cloud Firestore
-- Firebase Hosting
-- GitHub Actions
+- index.html
+- styles.css
+- app.js
+- firebase-config.js
+- firebase.json
+- firestore.rules
+- firestore.indexes.json
+- .firebaserc
+- .gitignore
+- package.json
 
-## Firebase
+Firebase Hosting está configurado con:
 
-Proyecto ya configurado:
+"public": "."
 
-`barberialosmagicos`
-
-La configuración web real se encuentra en:
-
-`public/firebase-config.js`
-
-## Hosting
-
-Publicación manual:
-
-```bash
-firebase login
-firebase use barberialosmagicos
-firebase deploy --only hosting
-```
-
-## GitHub
-
-El repositorio incluye:
-
-`.github/workflows/firebase-hosting.yml`
-
-Para activar el despliegue automático, GitHub necesita el secret:
-
-`FIREBASE_SERVICE_ACCOUNT_BARBERIALOSMAGICOS`
-
-No guardes credenciales privadas dentro del repositorio.
+Por ahora no incluye la carpeta oculta `.github/workflows`.
+La integración automática GitHub → Firebase Hosting la configuraremos después
+desde Firebase/GitHub una vez que la web esté publicada correctamente.

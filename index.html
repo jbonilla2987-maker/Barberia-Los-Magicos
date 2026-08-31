@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Barbería Los Mágicos</title>
+  <meta name="theme-color" content="#09090b">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <!-- ACCESS -->
+  <section id="accessScreen" class="access-screen">
+    <div class="access-shell">
+      <div class="access-brand">
+        <div class="crest">LM</div>
+        <div>
+          <p class="eyebrow">BARBER STUDIO</p>
+          <h1>Barbería <span>Los Mágicos</span></h1>
+          <p class="access-copy">Gestión premium de cobros, barberos, puestos y citas.</p>
+        </div>
+      </div>
+
+      <div class="role-grid">
+        <button class="role-card" data-access="admin">
+          <span class="role-icon">◆</span>
+          <small>GESTIÓN</small>
+          <strong>Administrador</strong>
+          <p>Control total de ventas, comisiones, citas y equipo.</p>
+          <span class="role-link">Ingresar →</span>
+        </button>
+
+        <button class="role-card" data-access="barber">
+          <span class="role-icon">✂</span>
+          <small>MI PRODUCCIÓN</small>
+          <strong>Barbero</strong>
+          <p>Consulta tus servicios, comisión ganada y próximas citas.</p>
+          <span class="role-link">Ingresar →</span>
+        </button>
+
+        <button class="role-card highlight" data-access="client">
+          <span class="role-icon">★</span>
+          <small>RESERVAS</small>
+          <strong>Cliente</strong>
+          <p>Reserva tu cita con tu barbero favorito en pocos pasos.</p>
+          <span class="role-link">Reservar cita →</span>
+        </button>
+      </div>
+
+      <div class="access-note">
+        <span></span>
+        <p>Experiencia diseñada para <strong>Barbería Los Mágicos</strong></p>
+        <span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADMIN LOGIN -->
+  <div class="modal-backdrop" id="adminLoginModal">
+    <div class="modal small">
+      <button class="modal-close" data-close="adminLoginModal">×</button>
+      <p class="eyebrow">ACCESO PRIVADO</p>
+      <h2>Administrador</h2>
+      <p class="modal-copy">Ingresa al panel de control de la barbería.</p>
+      <form id="adminLoginForm" class="form-stack">
+        <label>Usuario
+          <input id="adminUser" autocomplete="username" value="admin" required>
+        </label>
+        <label>Contraseña
+          <input id="adminPass" type="password" autocomplete="current-password" placeholder="Contraseña" required>
+        </label>
+        <button class="primary-btn" type="submit">Entrar al panel</button>
+        <small class="demo-hint">Cuenta administradora protegida con <b>Firebase Authentication</b></small>
+      </form>
+    </div>
+  </div>
+
+  <!-- BARBER LOGIN -->
+  <div class="modal-backdrop" id="barberLoginModal">
+    <div class="modal small">
+      <button class="modal-close" data-close="barberLoginModal">×</button>
+      <p class="eyebrow">ÁREA DEL BARBERO</p>
+      <h2>Mi cuenta</h2>
+      <p class="modal-copy">Consulta tu producción y tus citas.</p>
+      <form id="barberLoginForm" class="form-stack">
+        <label>Usuario
+          <input id="barberUserLogin" autocomplete="username" placeholder="Ej. carlos" required>
+        </label>
+        <label>PIN
+          <input id="barberPinLogin" type="password" inputmode="numeric" maxlength="6" minlength="6" placeholder="PIN de 6 dígitos" required>
+        </label>
+        <button class="primary-btn" type="submit">Ingresar</button>
+        <small class="demo-hint">El administrador crea el usuario y un <b>PIN de 6 dígitos</b></small>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN APP -->
+  <section id="adminApp" class="app-shell hidden">
+    <aside class="sidebar" id="adminSidebar">
+      <div class="brand">
+        <div class="brand-mark">LM</div>
+        <div>
+          <strong>LOS MÁGICOS</strong>
+          <span>BARBER STUDIO</span>
+        </div>
+      </div>
+      <nav class="nav">
+        <button class="nav-item active" data-view="dashboard"><span>⌂</span>Dashboard</button>
+        <button class="nav-item" data-view="sales"><span>◈</span>Cobros</button>
+        <button class="nav-item" data-view="appointments"><span>◷</span>Citas</button>
+        <button class="nav-item" data-view="barbers"><span>✂</span>Barberos</button>
+        <button class="nav-item" data-view="chairs"><span>▣</span>Puestos</button>
+        <button class="nav-item" data-view="services"><span>✦</span>Servicios</button>
+        <button class="nav-item" data-view="reports"><span>↗</span>Reportes</button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="admin-card">
+          <div class="avatar">A</div>
+          <div><strong>Administrador</strong><span>Control total</span></div>
+        </div>
+        <button class="logout-btn" data-logout>Cerrar sesión</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="menu-btn" id="adminMenuBtn">☰</button>
+          <div><p class="eyebrow">BARBERÍA LOS MÁGICOS</p><h1 id="adminPageTitle">Dashboard</h1></div>
+        </div>
+        <div class="top-actions">
+          <div id="todayLabel" class="date-pill"></div>
+          <button class="primary-btn" id="quickSaleBtn">+ Nuevo cobro</button>
+        </div>
+      </header>
+
+      <section class="view active" id="view-dashboard">
+        <div class="hero">
+          <div class="hero-content">
+            <span class="hero-badge">CONTROL EN TIEMPO REAL</span>
+            <h2>Haz crecer la magia <span>de cada corte.</span></h2>
+            <p>Ventas, comisiones, citas y rendimiento del equipo en un solo panel.</p>
+          </div>
+          <button class="hero-action" id="heroSaleBtn"><span>Registrar servicio</span><strong>→</strong></button>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card"><div class="stat-top"><span>Ventas de hoy</span><i>$</i></div><strong id="statSales">$0.00</strong><small id="statSalesCount">0 servicios</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Pago a barberos</span><i>✂</i></div><strong id="statBarbers">$0.00</strong><small>Comisiones del día</small></article>
+          <article class="stat-card gold-card"><div class="stat-top"><span>Ingreso barbería</span><i>◆</i></div><strong id="statShop">$0.00</strong><small>Participación de la barbería</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Citas de hoy</span><i>◷</i></div><strong id="statAppointments">0</strong><small id="statAppointmentsMeta">0 pendientes</small></article>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">ACTIVIDAD</p><h3>Últimos cobros</h3></div><button class="ghost-btn" data-go="sales">Ver todos</button></div>
+            <div id="recentSales" class="list"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">AGENDA</p><h3>Próximas citas</h3></div><button class="ghost-btn" data-go="appointments">Gestionar</button></div>
+            <div id="upcomingAppointments" class="list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-sales">
+        <div class="section-head"><div><p class="eyebrow">TRANSACCIONES</p><h2>Cobros</h2><p>Comisión calculada automáticamente según el porcentaje del barbero.</p></div><button class="primary-btn" id="newSaleBtn">+ Registrar cobro</button></div>
+        <article class="panel"><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Barbero</th><th>Puesto</th><th>Servicio</th><th>Método</th><th>Total</th><th>Barbero</th><th>Barbería</th></tr></thead><tbody id="salesTable"></tbody></table></div></article>
+      </section>
+
+      <section class="view" id="view-appointments">
+        <div class="section-head"><div><p class="eyebrow">AGENDA</p><h2>Citas</h2><p>Reservas hechas por los clientes y su estado actual.</p></div><button class="primary-btn" id="adminBookBtn">+ Crear cita</button></div>
+        <div class="filter-row">
+          <select id="appointmentFilter"><option value="all">Todas</option><option value="pending">Pendientes</option><option value="confirmed">Confirmadas</option><option value="completed">Completadas</option><option value="cancelled">Canceladas</option></select>
+        </div>
+        <div id="appointmentCards" class="appointment-grid"></div>
+      </section>
+
+      <section class="view" id="view-barbers">
+        <div class="section-head"><div><p class="eyebrow">PERSONAL</p><h2>Barberos</h2><p>Cada barbero tiene usuario, PIN y comisión independiente.</p></div><button class="primary-btn" id="addBarberBtn">+ Agregar barbero</button></div>
+        <div id="barberCards" class="cards-grid"></div>
+      </section>
+
+      <section class="view" id="view-chairs">
+        <div class="section-head"><div><p class="eyebrow">CAPACIDAD</p><h2>Puestos</h2><p>Inicia con 4 puestos y agrega más cuando la barbería crezca.</p></div><button class="primary-btn" id="addChairBtn">+ Agregar puesto</button></div>
+        <div id="chairCards" class="cards-grid"></div>
+      </section>
+
+      <section class="view" id="view-services">
+        <div class="section-head"><div><p class="eyebrow">CATÁLOGO</p><h2>Servicios</h2><p>Precios disponibles para cobros y reservas.</p></div><button class="primary-btn" id="addServiceBtn">+ Agregar servicio</button></div>
+        <div id="serviceCards" class="cards-grid"></div>
+      </section>
+
+      <section class="view" id="view-reports">
+        <div class="section-head"><div><p class="eyebrow">ANÁLISIS</p><h2>Reportes</h2><p>Resumen acumulado de producción y comisiones.</p></div><button class="ghost-btn" id="exportBtn">Exportar CSV</button></div>
+        <div class="stats-grid">
+          <article class="stat-card"><span>Total vendido</span><strong id="reportTotal">$0.00</strong></article>
+          <article class="stat-card"><span>Total barberos</span><strong id="reportBarbers">$0.00</strong></article>
+          <article class="stat-card gold-card"><span>Total barbería</span><strong id="reportShop">$0.00</strong></article>
+          <article class="stat-card"><span>Servicios</span><strong id="reportCount">0</strong></article>
+        </div>
+        <article class="panel"><div class="panel-head"><div><p class="eyebrow">DESGLOSE</p><h3>Producción por barbero</h3></div></div><div id="reportByBarber" class="list"></div></article>
+      </section>
+    </main>
+  </section>
+
+  <!-- BARBER APP -->
+  <section id="barberApp" class="barber-app hidden">
+    <header class="barber-header">
+      <div class="brand compact"><div class="brand-mark">LM</div><div><strong>LOS MÁGICOS</strong><span>PORTAL DEL BARBERO</span></div></div>
+      <button class="logout-btn" data-logout>Cerrar sesión</button>
+    </header>
+    <main class="barber-main">
+      <section class="barber-welcome">
+        <div><p class="eyebrow">MI PANEL</p><h1>Hola, <span id="barberWelcomeName">Barbero</span></h1><p>Aquí puedes ver lo que llevas producido y tus próximas citas.</p></div>
+        <div class="commission-badge"><small>MI COMISIÓN</small><strong id="myCommission">50%</strong></div>
+      </section>
+      <div class="stats-grid">
+        <article class="stat-card"><span>Ventas hoy</span><strong id="myTodayGross">$0.00</strong><small id="myTodayCount">0 servicios</small></article>
+        <article class="stat-card gold-card"><span>Mi ganancia hoy</span><strong id="myTodayPay">$0.00</strong><small>Comisión generada</small></article>
+        <article class="stat-card"><span>Acumulado</span><strong id="myAllPay">$0.00</strong><small>Comisión histórica</small></article>
+        <article class="stat-card"><span>Citas de hoy</span><strong id="myTodayAppointments">0</strong><small>Agenda personal</small></article>
+      </div>
+      <div class="dashboard-grid">
+        <article class="panel"><div class="panel-head"><div><p class="eyebrow">MI AGENDA</p><h3>Próximas citas</h3></div></div><div id="myAppointments" class="list"></div></article>
+        <article class="panel"><div class="panel-head"><div><p class="eyebrow">MI PRODUCCIÓN</p><h3>Últimos servicios</h3></div></div><div id="mySales" class="list"></div></article>
+      </div>
+    </main>
+  </section>
+
+  <!-- CLIENT APP -->
+  <section id="clientApp" class="client-app hidden">
+    <header class="client-header">
+      <button class="back-access" data-logout>← Volver</button>
+      <div class="brand compact"><div class="brand-mark">LM</div><div><strong>LOS MÁGICOS</strong><span>RESERVAS</span></div></div>
+      <span></span>
+    </header>
+    <main class="booking-main">
+      <section class="booking-intro">
+        <p class="eyebrow">RESERVA ONLINE</p>
+        <h1>Tu próximo corte empieza <span>aquí.</span></h1>
+        <p>Escoge servicio, barbero, fecha y hora. Nosotros nos encargamos del resto.</p>
+      </section>
+      <div class="booking-layout">
+        <form id="clientBookingForm" class="booking-card">
+          <div class="step-title"><span>01</span><div><strong>Tus datos</strong><small>Para identificar tu reserva</small></div></div>
+          <div class="form-grid">
+            <label>Nombre completo<input id="clientName" required placeholder="Tu nombre"></label>
+            <label>Teléfono<input id="clientPhone" required inputmode="tel" placeholder="6000-0000"></label>
+          </div>
+
+          <div class="step-title"><span>02</span><div><strong>Elige tu servicio</strong><small>Precio de referencia</small></div></div>
+          <div id="clientServiceOptions" class="choice-grid"></div>
+
+          <div class="step-title"><span>03</span><div><strong>Elige tu barbero</strong><small>Reserva con quien prefieras</small></div></div>
+          <div id="clientBarberOptions" class="choice-grid"></div>
+
+          <div class="step-title"><span>04</span><div><strong>Fecha y hora</strong><small>Solo mostramos horarios disponibles</small></div></div>
+          <div class="form-grid">
+            <label>Fecha<input id="clientDate" type="date" required></label>
+            <label>Hora<select id="clientTime" required><option value="">Selecciona primero fecha y barbero</option></select></label>
+          </div>
+
+          <label>Nota opcional<textarea id="clientNote" rows="3" placeholder="Ej. corte bajo, barba perfilada..."></textarea></label>
+          <button class="primary-btn booking-submit" type="submit">Confirmar mi cita</button>
+        </form>
+
+        <aside class="booking-side">
+          <div class="luxury-card">
+            <span class="card-kicker">LOS MÁGICOS</span>
+            <h3>Una experiencia hecha a tu medida.</h3>
+            <p>Reserva sin llamadas y llega con tu horario asegurado.</p>
+            <div class="side-points"><span>✓ Reserva rápida</span><span>✓ Elige tu barbero</span><span>✓ Horarios disponibles</span></div>
+          </div>
+
+          <div class="lookup-card">
+            <p class="eyebrow">MIS CITAS</p>
+            <h3>Consulta tus reservas</h3>
+            <p>Ingresa tu teléfono para ver tus citas.</p>
+            <div class="lookup-form"><input id="lookupPhone" placeholder="Teléfono"><button id="lookupBtn" class="ghost-btn" type="button">Buscar</button></div>
+            <div id="clientAppointments" class="client-appointments"></div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </section>
+
+  <!-- SALE MODAL -->
+  <div class="modal-backdrop" id="saleModal">
+    <div class="modal">
+      <button class="modal-close" data-close="saleModal">×</button>
+      <p class="eyebrow">NUEVA TRANSACCIÓN</p><h2>Registrar cobro</h2><p class="modal-copy">La comisión se calcula automáticamente.</p>
+      <form id="saleForm" class="form-grid">
+        <label>Barbero<select id="saleBarber" required></select></label>
+        <label>Puesto<select id="saleChair" required></select></label>
+        <label>Servicio<select id="saleService" required></select></label>
+        <label>Precio<input id="salePrice" type="number" min="0.01" step="0.01" required></label>
+        <label>Método<select id="salePayment"><option>Efectivo</option><option>Yappy</option><option>Tarjeta</option><option>Transferencia</option></select></label>
+        <label>Referencia / nota<input id="saleNote" placeholder="Opcional"></label>
+        <button class="primary-btn wide" type="submit">Confirmar cobro</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- BARBER MODAL -->
+  <div class="modal-backdrop" id="barberModal">
+    <div class="modal">
+      <button class="modal-close" data-close="barberModal">×</button>
+      <p class="eyebrow">NUEVO BARBERO</p><h2>Crear usuario</h2><p class="modal-copy">El barbero podrá entrar con su usuario y PIN.</p>
+      <form id="barberForm" class="form-grid">
+        <label>Nombre<input id="barberName" required placeholder="Nombre completo"></label>
+        <label>Usuario<input id="barberUsername" required placeholder="Ej. juan"></label>
+        <label>PIN<input id="barberPin" required inputmode="numeric" maxlength="6" minlength="6" placeholder="6 dígitos"></label>
+        <label>Comisión (%)<input id="barberCommission" type="number" min="0" max="100" step="0.01" value="50" required></label>
+        <button class="primary-btn wide" type="submit">Guardar barbero</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- SERVICE MODAL -->
+  <div class="modal-backdrop" id="serviceModal">
+    <div class="modal small">
+      <button class="modal-close" data-close="serviceModal">×</button>
+      <p class="eyebrow">NUEVO SERVICIO</p><h2>Agregar al catálogo</h2>
+      <form id="serviceForm" class="form-stack">
+        <label>Servicio<input id="serviceName" required placeholder="Ej. Corte + barba"></label>
+        <label>Precio<input id="servicePrice" type="number" min="0.01" step="0.01" required placeholder="0.00"></label>
+        <label>Duración aproximada<select id="serviceDuration"><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option><option value="90">90 min</option></select></label>
+        <button class="primary-btn" type="submit">Guardar servicio</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
