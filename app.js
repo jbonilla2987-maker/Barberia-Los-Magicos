@@ -236,6 +236,7 @@ function wireStaticUI() {
   $("clientBookingForm").addEventListener("submit", createAppointment);
   $("addChairBtn").addEventListener("click", createChair);
   $("exportBtn").addEventListener("click", exportCsv);
+  $("exportExcelBtn").addEventListener("click", exportExcelReport);
 }
 
 async function adminLogin(e) {
@@ -763,18 +764,35 @@ function renderReports() {
     };
   }).sort((a,b) => b.gross - a.gross);
 
-  $("reportByChair").innerHTML = chairRows.length ? chairRows.map((r,index) => `
-    <article class="report-chair-card">
-      <div class="report-card-top"><span class="report-rank">${String(index+1).padStart(2,"0")}</span><span class="report-card-kicker">PUESTO</span></div>
-      <h4>${escapeHtml(r.chair.name)}</h4>
-      <strong class="report-card-total">${money(r.gross)}</strong>
-      <div class="report-card-meta">${r.count} servicio${r.count===1?"":"s"}</div>
-      <div class="report-split">
-        <div><span>Barberos</span><b>${money(r.barber)}</b></div>
-        <div><span>Barbería</span><b>${money(r.shop)}</b></div>
+  $("reportByChair").innerHTML = chairRows.length ? chairRows.map((r,index) => {
+    const avg = r.count ? r.gross / r.count : 0;
+    return `
+    <article class="report-chair-card premium-card">
+      <div class="report-chair-glow"></div>
+      <div class="report-card-top">
+        <span class="report-rank">#${String(index+1).padStart(2,"0")}</span>
+        <span class="report-pill">${r.count} servicio${r.count===1?"":"s"}</span>
+      </div>
+      <div class="report-chair-head">
+        <div class="report-chair-badge">${String(index+1).padStart(2,"0")}</div>
+        <div>
+          <span class="report-card-kicker">PUESTO</span>
+          <h4>${escapeHtml(r.chair.name)}</h4>
+          <div class="report-card-meta">Producción del mes seleccionado</div>
+        </div>
+      </div>
+      <div class="report-highlight">
+        <span>Total cobrado</span>
+        <strong class="report-card-total">${money(r.gross)}</strong>
+        <small>Promedio por servicio: ${money(avg)}</small>
+      </div>
+      <div class="report-split report-split-3">
+        <div><span>Pago a barberos</span><b>${money(r.barber)}</b></div>
+        <div><span>Ingreso barbería</span><b>${money(r.shop)}</b></div>
+        <div><span>Servicios</span><b>${r.count}</b></div>
       </div>
     </article>
-  `).join("") : `<div class="empty">No hay puestos registrados.</div>`;
+  `}).join("") : `<div class="empty">No hay puestos registrados.</div>`;
 
   const barberMonthly = state.barbers.map(barber => {
     const sales = monthSales.filter(s => s.barberId === barber.id);
@@ -788,19 +806,23 @@ function renderReports() {
   }).sort((a,b) => b.gross - a.gross);
 
   $("reportBarberMonthly").innerHTML = barberMonthly.length ? barberMonthly.map((r,index) => `
-    <article class="report-barber-card">
+    <article class="report-barber-card premium-card">
+      <div class="report-card-top">
+        <span class="report-rank">#${String(index+1).padStart(2,"0")}</span>
+        <span class="report-pill">Comisión ${Number(r.barber.commission ?? 50)}%</span>
+      </div>
       <div class="report-barber-head">
         <div class="report-avatar">${escapeHtml((r.barber.name || "B").charAt(0).toUpperCase())}</div>
-        <div><span class="report-card-kicker">BARBERO ${String(index+1).padStart(2,"0")}</span><h4>${escapeHtml(r.barber.name)}</h4></div>
+        <div><span class="report-card-kicker">BARBERO</span><h4>${escapeHtml(r.barber.name)}</h4><div class="report-card-meta">Resumen del mes seleccionado</div></div>
       </div>
       <div class="report-barber-main">
-        <div><span>Generó en ventas</span><strong>${money(r.gross)}</strong></div>
-        <div class="gold-number"><span>Su saldo del mes</span><strong>${money(r.pay)}</strong></div>
+        <div><span>Venta generada</span><strong>${money(r.gross)}</strong></div>
+        <div class="gold-number"><span>Saldo del barbero</span><strong>${money(r.pay)}</strong></div>
       </div>
-      <div class="report-split">
+      <div class="report-split report-split-3">
         <div><span>Servicios</span><b>${r.count}</b></div>
-        <div><span>Comisión</span><b>${Number(r.barber.commission ?? 50)}%</b></div>
-        <div><span>Barbería</span><b>${money(r.shop)}</b></div>
+        <div><span>Ingreso barbería</span><b>${money(r.shop)}</b></div>
+        <div><span>Promedio por servicio</span><b>${money(r.count ? r.gross / r.count : 0)}</b></div>
       </div>
     </article>
   `).join("") : `<div class="empty">No hay barberos registrados.</div>`;
@@ -1069,6 +1091,392 @@ function exportCsv() {
   a.download = `Los_Magicos_Reporte_${selectedMonth}.csv`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+
+async function exportExcelReport() {
+  if (!window.ExcelJS) {
+    return toast("No se pudo cargar el generador de Excel. Revisa tu conexión a Internet.");
+  }
+
+  const selectedMonth = $("reportMonth")?.value || monthKey(new Date());
+  const monthSales = state.sales
+    .filter(s => monthKey(s.date) === selectedMonth)
+    .sort((a,b) => jsDate(a.date) - jsDate(b.date));
+
+  if (!monthSales.length) {
+    return toast("No hay cobros en el mes seleccionado para exportar.");
+  }
+
+  toast("Generando Excel premium...");
+
+  try {
+    const ExcelJS = window.ExcelJS;
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "Barbería Los Mágicos";
+    wb.lastModifiedBy = "Barbería Los Mágicos";
+    wb.created = new Date();
+    wb.modified = new Date();
+    wb.subject = `Reporte mensual ${monthLabel(selectedMonth)}`;
+    wb.title = `Barbería Los Mágicos - ${monthLabel(selectedMonth)}`;
+
+    const COLORS = {
+      black: "FF111114",
+      dark: "FF1D1D21",
+      gold: "FFD7AD56",
+      goldSoft: "FFF4E6C8",
+      white: "FFFFFFFF",
+      text: "FF171717",
+      muted: "FF666666",
+      light: "FFF7F7F7",
+      border: "FFD9D9D9",
+      green: "FF1F7A4D"
+    };
+
+    const currencyFmt = '$#,##0.00';
+    const pctFmt = '0.00%';
+
+    function setTitle(ws, title, subtitle, endCol = 6) {
+      ws.mergeCells(1, 1, 2, endCol);
+      const titleCell = ws.getCell(1, 1);
+      titleCell.value = "BARBERÍA LOS MÁGICOS";
+      titleCell.font = { name:"Aptos Display", size:22, bold:true, color:{argb:COLORS.gold} };
+      titleCell.fill = { type:"pattern", pattern:"solid", fgColor:{argb:COLORS.black} };
+      titleCell.alignment = { vertical:"middle", horizontal:"left" };
+
+      ws.mergeCells(3, 1, 3, endCol);
+      const sub = ws.getCell(3, 1);
+      sub.value = title;
+      sub.font = { name:"Aptos", size:14, bold:true, color:{argb:COLORS.text} };
+
+      ws.mergeCells(4, 1, 4, endCol);
+      const desc = ws.getCell(4, 1);
+      desc.value = subtitle;
+      desc.font = { name:"Aptos", size:10, color:{argb:COLORS.muted} };
+
+      ws.getRow(1).height = 28;
+      ws.getRow(2).height = 28;
+      ws.getRow(3).height = 22;
+      ws.getRow(4).height = 18;
+    }
+
+    function styleHeader(row) {
+      row.eachCell(cell => {
+        cell.fill = { type:"pattern", pattern:"solid", fgColor:{argb:COLORS.dark} };
+        cell.font = { name:"Aptos", size:10, bold:true, color:{argb:COLORS.white} };
+        cell.alignment = { vertical:"middle", horizontal:"center" };
+        cell.border = {
+          top:{style:"thin", color:{argb:COLORS.border}},
+          bottom:{style:"thin", color:{argb:COLORS.border}},
+          left:{style:"thin", color:{argb:COLORS.border}},
+          right:{style:"thin", color:{argb:COLORS.border}}
+        };
+      });
+      row.height = 22;
+    }
+
+    function styleDataRows(ws, startRow, endRow, moneyCols = []) {
+      for (let r = startRow; r <= endRow; r++) {
+        const row = ws.getRow(r);
+        row.eachCell(cell => {
+          cell.font = { name:"Aptos", size:10, color:{argb:COLORS.text} };
+          cell.border = {
+            bottom:{style:"hair", color:{argb:"FFE5E5E5"}}
+          };
+          cell.alignment = { vertical:"middle" };
+        });
+        moneyCols.forEach(c => {
+          row.getCell(c).numFmt = currencyFmt;
+        });
+      }
+    }
+
+    function addKpi(ws, row, col, label, value, gold = false) {
+      ws.mergeCells(row, col, row, col + 1);
+      const labelCell = ws.getCell(row, col);
+      labelCell.value = label;
+      labelCell.font = { size:9, bold:true, color:{argb:gold ? COLORS.text : COLORS.muted} };
+      labelCell.fill = {
+        type:"pattern",
+        pattern:"solid",
+        fgColor:{argb:gold ? COLORS.goldSoft : COLORS.light}
+      };
+      labelCell.alignment = { horizontal:"left", vertical:"middle" };
+
+      ws.mergeCells(row + 1, col, row + 2, col + 1);
+      const valueCell = ws.getCell(row + 1, col);
+      valueCell.value = value;
+      valueCell.numFmt = currencyFmt;
+      valueCell.font = { size:19, bold:true, color:{argb:gold ? "FF8A611D" : COLORS.text} };
+      valueCell.fill = {
+        type:"pattern",
+        pattern:"solid",
+        fgColor:{argb:gold ? COLORS.goldSoft : COLORS.light}
+      };
+      valueCell.alignment = { horizontal:"left", vertical:"middle" };
+
+      for (let rr = row; rr <= row + 2; rr++) {
+        for (let cc = col; cc <= col + 1; cc++) {
+          ws.getCell(rr, cc).border = {
+            top:{style:"thin", color:{argb:COLORS.border}},
+            bottom:{style:"thin", color:{argb:COLORS.border}},
+            left:{style:"thin", color:{argb:COLORS.border}},
+            right:{style:"thin", color:{argb:COLORS.border}}
+          };
+        }
+      }
+    }
+
+    const total = monthSales.reduce((a,s)=>a+Number(s.total||0),0);
+    const barberTotal = monthSales.reduce((a,s)=>a+Number(s.barberAmount||0),0);
+    const shopTotal = monthSales.reduce((a,s)=>a+Number(s.shopAmount||0),0);
+    const average = monthSales.length ? total / monthSales.length : 0;
+
+    const chairRows = state.chairs.map(chair => {
+      const sales = monthSales.filter(s => s.chairId === chair.id);
+      return {
+        name: chair.name,
+        count: sales.length,
+        gross: sales.reduce((a,s)=>a+Number(s.total||0),0),
+        barber: sales.reduce((a,s)=>a+Number(s.barberAmount||0),0),
+        shop: sales.reduce((a,s)=>a+Number(s.shopAmount||0),0)
+      };
+    }).sort((a,b)=>b.gross-a.gross);
+
+    const barberMonthly = state.barbers.map(barber => {
+      const sales = monthSales.filter(s => s.barberId === barber.id);
+      return {
+        id: barber.id,
+        name: barber.name,
+        commission: Number(barber.commission ?? 50),
+        count: sales.length,
+        gross: sales.reduce((a,s)=>a+Number(s.total||0),0),
+        pay: sales.reduce((a,s)=>a+Number(s.barberAmount||0),0),
+        shop: sales.reduce((a,s)=>a+Number(s.shopAmount||0),0)
+      };
+    }).sort((a,b)=>b.gross-a.gross);
+
+    const dailyMap = new Map();
+    monthSales.forEach(sale => {
+      const date = dayKey(sale.date);
+      const key = `${date}__${sale.barberId}`;
+      if (!dailyMap.has(key)) {
+        dailyMap.set(key, {
+          date,
+          barberName: sale.barberName || "Barbero",
+          count:0, gross:0, pay:0, shop:0
+        });
+      }
+      const row = dailyMap.get(key);
+      row.count += 1;
+      row.gross += Number(sale.total||0);
+      row.pay += Number(sale.barberAmount||0);
+      row.shop += Number(sale.shopAmount||0);
+    });
+    const dailyRows = [...dailyMap.values()].sort((a,b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      return a.barberName.localeCompare(b.barberName);
+    });
+
+    // =====================================================
+    // HOJA 1: RESUMEN
+    // =====================================================
+    const summary = wb.addWorksheet("Resumen", {
+      properties:{ tabColor:{argb:COLORS.gold} },
+      pageSetup:{ orientation:"landscape", fitToPage:true, fitToWidth:1, fitToHeight:0 }
+    });
+    setTitle(
+      summary,
+      `Reporte mensual · ${monthLabel(selectedMonth)}`,
+      `Generado el ${new Date().toLocaleString("es-PA")} · ${monthSales.length} servicios`,
+      8
+    );
+
+    addKpi(summary, 6, 1, "TOTAL COBRADO", total);
+    addKpi(summary, 6, 3, "PAGO A BARBEROS", barberTotal);
+    addKpi(summary, 6, 5, "INGRESO BARBERÍA", shopTotal, true);
+    addKpi(summary, 6, 7, "TICKET PROMEDIO", average);
+
+    summary.getCell("A11").value = "DETALLE POR PUESTO";
+    summary.getCell("A11").font = { size:13, bold:true, color:{argb:COLORS.text} };
+
+    const chairHeaderRow = 12;
+    const chairHeaders = ["Puesto","Servicios","Total cobrado","Pago barberos","Ingreso barbería"];
+    chairHeaders.forEach((h,i)=>summary.getCell(chairHeaderRow, i+1).value = h);
+    styleHeader(summary.getRow(chairHeaderRow));
+
+    chairRows.forEach((r,idx) => {
+      const row = chairHeaderRow + 1 + idx;
+      summary.getCell(row,1).value = r.name;
+      summary.getCell(row,2).value = r.count;
+      summary.getCell(row,3).value = r.gross;
+      summary.getCell(row,4).value = r.barber;
+      summary.getCell(row,5).value = r.shop;
+    });
+    styleDataRows(summary, chairHeaderRow+1, chairHeaderRow+chairRows.length, [3,4,5]);
+
+    const barberStart = chairHeaderRow + chairRows.length + 3;
+    summary.getCell(barberStart,1).value = "RESUMEN MENSUAL POR BARBERO";
+    summary.getCell(barberStart,1).font = { size:13, bold:true, color:{argb:COLORS.text} };
+
+    const barberHeader = barberStart + 1;
+    ["Barbero","Servicios","Venta generada","Comisión %","Saldo barbero","Ingreso barbería"]
+      .forEach((h,i)=>summary.getCell(barberHeader,i+1).value=h);
+    styleHeader(summary.getRow(barberHeader));
+
+    barberMonthly.forEach((r,idx) => {
+      const row = barberHeader + 1 + idx;
+      summary.getCell(row,1).value = r.name;
+      summary.getCell(row,2).value = r.count;
+      summary.getCell(row,3).value = r.gross;
+      summary.getCell(row,4).value = r.commission / 100;
+      summary.getCell(row,5).value = r.pay;
+      summary.getCell(row,6).value = r.shop;
+      summary.getCell(row,4).numFmt = pctFmt;
+    });
+    styleDataRows(summary, barberHeader+1, barberHeader+barberMonthly.length, [3,5,6]);
+
+    summary.columns = [
+      {width:24},{width:13},{width:18},{width:17},
+      {width:18},{width:18},{width:16},{width:16}
+    ];
+    summary.views = [{state:"frozen", ySplit:4}];
+
+    // =====================================================
+    // HOJA 2: PUESTOS
+    // =====================================================
+    const chairsWs = wb.addWorksheet("Puestos", {
+      properties:{ tabColor:{argb:"FF8A611D"} },
+      pageSetup:{ orientation:"landscape", fitToPage:true, fitToWidth:1 }
+    });
+    setTitle(chairsWs, `Detalle por puesto · ${monthLabel(selectedMonth)}`, "Producción mensual de cada puesto.", 5);
+    const chHeaders = ["Puesto","Servicios","Total cobrado","Pago barberos","Ingreso barbería"];
+    chHeaders.forEach((h,i)=>chairsWs.getCell(6,i+1).value=h);
+    styleHeader(chairsWs.getRow(6));
+    chairRows.forEach((r,idx)=>{
+      const row=7+idx;
+      chairsWs.getCell(row,1).value=r.name;
+      chairsWs.getCell(row,2).value=r.count;
+      chairsWs.getCell(row,3).value=r.gross;
+      chairsWs.getCell(row,4).value=r.barber;
+      chairsWs.getCell(row,5).value=r.shop;
+    });
+    styleDataRows(chairsWs,7,6+chairRows.length,[3,4,5]);
+    chairsWs.columns=[{width:24},{width:14},{width:20},{width:20},{width:20}];
+    chairsWs.views=[{state:"frozen",ySplit:6}];
+
+    // =====================================================
+    // HOJA 3: BARBEROS MENSUAL
+    // =====================================================
+    const bm = wb.addWorksheet("Barberos Mensual", {
+      properties:{tabColor:{argb:COLORS.gold}}
+    });
+    setTitle(bm, `Barberos · Total mensual · ${monthLabel(selectedMonth)}`, "Venta generada, comisión y saldo del mes.", 6);
+    ["Barbero","Servicios","Venta generada","Comisión %","Saldo barbero","Ingreso barbería"]
+      .forEach((h,i)=>bm.getCell(6,i+1).value=h);
+    styleHeader(bm.getRow(6));
+    barberMonthly.forEach((r,idx)=>{
+      const row=7+idx;
+      bm.getCell(row,1).value=r.name;
+      bm.getCell(row,2).value=r.count;
+      bm.getCell(row,3).value=r.gross;
+      bm.getCell(row,4).value=r.commission/100;
+      bm.getCell(row,5).value=r.pay;
+      bm.getCell(row,6).value=r.shop;
+      bm.getCell(row,4).numFmt=pctFmt;
+    });
+    styleDataRows(bm,7,6+barberMonthly.length,[3,5,6]);
+    bm.columns=[{width:26},{width:14},{width:20},{width:16},{width:20},{width:20}];
+    bm.views=[{state:"frozen",ySplit:6}];
+
+    // =====================================================
+    // HOJA 4: BARBEROS DIARIO
+    // =====================================================
+    const bd = wb.addWorksheet("Barberos Diario", {
+      properties:{tabColor:{argb:"FFB88936"}}
+    });
+    setTitle(bd, `Saldo diario por barbero · ${monthLabel(selectedMonth)}`, "Detalle de cada día trabajado en el mes.", 6);
+    ["Fecha","Barbero","Servicios","Total cobrado","Saldo barbero","Ingreso barbería"]
+      .forEach((h,i)=>bd.getCell(6,i+1).value=h);
+    styleHeader(bd.getRow(6));
+    dailyRows.forEach((r,idx)=>{
+      const row=7+idx;
+      const [y,m,d] = r.date.split("-").map(Number);
+      bd.getCell(row,1).value = new Date(y,m-1,d);
+      bd.getCell(row,1).numFmt = "dd-mmm-yyyy";
+      bd.getCell(row,2).value = r.barberName;
+      bd.getCell(row,3).value = r.count;
+      bd.getCell(row,4).value = r.gross;
+      bd.getCell(row,5).value = r.pay;
+      bd.getCell(row,6).value = r.shop;
+    });
+    styleDataRows(bd,7,6+dailyRows.length,[4,5,6]);
+    bd.columns=[{width:16},{width:26},{width:14},{width:20},{width:20},{width:20}];
+    bd.views=[{state:"frozen",ySplit:6}];
+    bd.autoFilter = { from:"A6", to:"F6" };
+
+    // =====================================================
+    // HOJA 5: COBROS
+    // =====================================================
+    const salesWs = wb.addWorksheet("Cobros", {
+      properties:{tabColor:{argb:COLORS.dark}}
+    });
+    setTitle(salesWs, `Detalle completo de cobros · ${monthLabel(selectedMonth)}`, "Movimientos individuales registrados durante el mes.", 9);
+    ["Fecha","Barbero","Puesto","Servicio","Método","Total cobrado","Comisión %","Saldo barbero","Ingreso barbería"]
+      .forEach((h,i)=>salesWs.getCell(6,i+1).value=h);
+    styleHeader(salesWs.getRow(6));
+
+    monthSales.forEach((s,idx)=>{
+      const row=7+idx;
+      salesWs.getCell(row,1).value=jsDate(s.date);
+      salesWs.getCell(row,1).numFmt="dd-mmm-yyyy hh:mm";
+      salesWs.getCell(row,2).value=s.barberName || "";
+      salesWs.getCell(row,3).value=s.chairName || "";
+      salesWs.getCell(row,4).value=s.serviceName || "";
+      salesWs.getCell(row,5).value=s.payment || "";
+      salesWs.getCell(row,6).value=Number(s.total||0);
+      salesWs.getCell(row,7).value=Number(s.commission||0)/100;
+      salesWs.getCell(row,7).numFmt=pctFmt;
+      salesWs.getCell(row,8).value=Number(s.barberAmount||0);
+      salesWs.getCell(row,9).value=Number(s.shopAmount||0);
+    });
+    styleDataRows(salesWs,7,6+monthSales.length,[6,8,9]);
+    salesWs.columns=[
+      {width:21},{width:26},{width:18},{width:26},{width:18},
+      {width:18},{width:15},{width:18},{width:20}
+    ];
+    salesWs.views=[{state:"frozen",ySplit:6}];
+    salesWs.autoFilter={from:"A6",to:"I6"};
+
+    // Highlight total rows on summary
+    const finalSummaryRow = barberHeader + barberMonthly.length + 2;
+    summary.getCell(finalSummaryRow,1).value = "CIERRE DEL MES";
+    summary.getCell(finalSummaryRow,1).font = {bold:true,color:{argb:COLORS.gold}};
+    summary.getCell(finalSummaryRow,3).value = total;
+    summary.getCell(finalSummaryRow,3).numFmt = currencyFmt;
+    summary.getCell(finalSummaryRow,5).value = barberTotal;
+    summary.getCell(finalSummaryRow,5).numFmt = currencyFmt;
+    summary.getCell(finalSummaryRow,7).value = shopTotal;
+    summary.getCell(finalSummaryRow,7).numFmt = currencyFmt;
+
+    // Download
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob(
+      [buffer],
+      {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Barberia_Los_Magicos_Reporte_${selectedMonth}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast("Excel premium generado correctamente.");
+  } catch (err) {
+    console.error(err);
+    toast("No se pudo generar el Excel.");
+  }
 }
 
 async function restoreSession(user) {

@@ -1,0 +1,18 @@
+ACTUALIZACIÓN VISUAL PREMIUM - REPORTES
+
+REEMPLAZA ESTOS 3 ARCHIVOS EN GITHUB:
+1. index.html
+2. app.js
+3. styles.css
+
+MEJORAS:
+- Tarjetas de puestos mucho más premium
+- Resumen mensual por barbero más elegante
+- Mejor jerarquía visual
+- Totales destacados
+- Tablas de reportes con mejor presentación
+
+Después de subir:
+- Commit changes
+- Espera 1 minuto
+- Recarga con Ctrl + F5
