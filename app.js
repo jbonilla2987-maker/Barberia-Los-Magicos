@@ -38,6 +38,7 @@ const state = {
   chairs: [],
   barbers: [],
   services: [],
+  products: [],
   sales: [],
   appointments: [],
   chargeRequests: [],
@@ -52,6 +53,7 @@ let currentRole = null;
 let currentBarber = null;
 let currentAdmin = null;
 let booking = { serviceId: null, barberId: null };
+let barberProductCart = [];
 let unsubscribers = [];
 
 function money(v) {
@@ -242,6 +244,7 @@ function wireStaticUI() {
 
   $("addBarberBtn").addEventListener("click", () => openModal("barberModal"));
   $("addServiceBtn").addEventListener("click", () => openModal("serviceModal"));
+  $("addProductBtn").addEventListener("click", () => openModal("productModal"));
 
   $("adminLoginForm").addEventListener("submit", adminLogin);
   $("barberLoginForm").addEventListener("submit", barberLogin);
@@ -250,9 +253,11 @@ function wireStaticUI() {
   $("barberChargeChair").addEventListener("change", renderBarberChargePreview);
   $("barberChargePrice").addEventListener("input", renderBarberChargePreview);
   $("barberChargePayment").addEventListener("change", renderBarberChargePreview);
+  $("barberAddProductBtn").addEventListener("click", addProductToBarberCharge);
   $("saleForm").addEventListener("submit", saveSale);
   $("barberForm").addEventListener("submit", createBarber);
   $("serviceForm").addEventListener("submit", createService);
+  $("productForm").addEventListener("submit", createProduct);
   $("clientBookingForm").addEventListener("submit", createAppointment);
   $("addChairBtn").addEventListener("click", createChair);
   $("exportBtn").addEventListener("click", exportCsv);
@@ -396,6 +401,11 @@ function subscribeAdmin() {
     renderAdminAll();
   }));
 
+  unsubscribers.push(onSnapshot(collection(db, "products"), snap => {
+    state.products = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>(a.order||999)-(b.order||999));
+    renderAdminAll();
+  }));
+
   unsubscribers.push(onSnapshot(collection(db, "sales"), snap => {
     state.sales = snap.docs.map(d => ({ id:d.id, ...d.data() }));
     renderAdminAll();
@@ -422,6 +432,11 @@ function subscribeBarber(uid) {
 
   unsubscribers.push(onSnapshot(collection(db, "services"), snap => {
     state.services = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => x.active !== false).sort((a,b)=>(a.order||999)-(b.order||999));
+    renderBarberPortal();
+  }));
+
+  unsubscribers.push(onSnapshot(collection(db, "products"), snap => {
+    state.products = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => x.active !== false).sort((a,b)=>(a.order||999)-(b.order||999));
     renderBarberPortal();
   }));
 
@@ -490,7 +505,7 @@ function switchAdminView(name) {
 
   const titles = {
     dashboard:"Dashboard", sales:"Cobros", appointments:"Citas",
-    barbers:"Usuarios / Barberos", chairs:"Puestos", services:"Servicios", reports:"Reportes"
+    barbers:"Usuarios / Barberos", chairs:"Puestos", services:"Servicios", products:"Productos", reports:"Reportes"
   };
   $("adminPageTitle").textContent = titles[name] || "Dashboard";
   $("adminSidebar").classList.remove("open");
@@ -506,6 +521,7 @@ function renderAdminAll() {
   renderBarbers();
   renderChairs();
   renderServices();
+  renderProducts();
   renderReports();
 }
 
@@ -591,9 +607,22 @@ function renderPendingChargeRequests() {
         <small>${escapeHtml(r.chairName || "Sin puesto")}</small>
       </div>
 
+      ${Array.isArray(r.products) && r.products.length ? `
+      <div class="cash-request-products">
+        <span class="cash-label">PRODUCTOS VENDIDOS</span>
+        ${r.products.map(p => `
+          <div class="cash-product-row">
+            <span>${Number(p.qty || 0)}× ${escapeHtml(p.name || "Producto")}</span>
+            <strong>${money(p.subtotal || (Number(p.unitPrice||0)*Number(p.qty||0)))}</strong>
+          </div>
+        `).join("")}
+        <div class="cash-product-subtotal"><span>Subtotal productos</span><strong>${money(r.productTotal || 0)}</strong></div>
+      </div>` : ""}
+
       <div class="cash-request-price">
         <span>TOTAL ENVIADO POR EL BARBERO</span>
         <strong>${money(r.price)}</strong>
+        <small>Servicio ${money(r.servicePrice ?? (Number(r.price||0)-Number(r.productTotal||0)))} + productos ${money(r.productTotal||0)}</small>
       </div>
 
       <div class="cash-confirm-summary">
@@ -661,6 +690,9 @@ async function approveChargeRequest(requestId) {
         chairName:request.chairName,
         serviceId:request.serviceId,
         serviceName:request.serviceName,
+        servicePrice:Number(request.servicePrice ?? (Number(request.price||0)-Number(request.productTotal||0))),
+        products:Array.isArray(request.products) ? request.products : [],
+        productTotal:Number(request.productTotal || 0),
         payment,
         total,
         commission,
@@ -1015,6 +1047,84 @@ async function createService(e) {
   }
 }
 
+function renderProducts() {
+  if (currentRole !== "admin") return;
+
+  $("productCards").innerHTML = state.products.length ? state.products.map(p => {
+    const active = p.active !== false;
+    const soldQty = state.sales.reduce((sum,sale) => {
+      const items = Array.isArray(sale.products) ? sale.products : [];
+      const found = items.find(x => x.productId === p.id);
+      return sum + Number(found?.qty || 0);
+    }, 0);
+
+    return `<article class="service-card product-admin-card ${active ? "" : "product-disabled"}">
+      <div class="product-admin-top">
+        <span class="card-kicker">PRODUCTO</span>
+        <span class="product-status ${active ? "active" : "inactive"}">${active ? "ACTIVO" : "DESHABILITADO"}</span>
+      </div>
+      <div class="product-admin-icon">▦</div>
+      <h3>${escapeHtml(p.name)}</h3>
+      <div class="card-meta">${active ? "Disponible para los barberos" : "No aparece en los cobros"}</div>
+      <div class="card-numbers">
+        <div class="mini-stat"><span>Precio</span><strong>${money(p.price)}</strong></div>
+        <div class="mini-stat"><span>Unidades vendidas</span><strong>${soldQty}</strong></div>
+      </div>
+      <button class="product-toggle-btn ${active ? "disable" : "enable"}"
+        data-toggle-product="${p.id}"
+        data-product-active="${active ? "false" : "true"}"
+        type="button">${active ? "Deshabilitar producto" : "Habilitar producto"}</button>
+    </article>`;
+  }).join("") : `<div class="empty">Todavía no has agregado productos al catálogo.</div>`;
+
+  document.querySelectorAll("[data-toggle-product]").forEach(btn =>
+    btn.addEventListener("click", () =>
+      toggleProductStatus(btn.dataset.toggleProduct, btn.dataset.productActive === "true")
+    )
+  );
+}
+
+async function createProduct(e) {
+  e.preventDefault();
+  try {
+    const name = $("productName").value.trim();
+    const price = Number($("productPrice").value);
+    if (!name || !price || price <= 0) return toast("Revisa nombre y precio del producto.");
+
+    await setDoc(doc(collection(db, "products")), {
+      name,
+      price:+price.toFixed(2),
+      active:true,
+      order:state.products.length+1,
+      createdAt:serverTimestamp()
+    });
+    closeModal("productModal");
+    e.target.reset();
+    toast("Producto agregado al catálogo.");
+  } catch (err) {
+    console.error(err);
+    toast(firebaseErrorMessage(err, "No se pudo crear el producto."));
+  }
+}
+
+async function toggleProductStatus(productId, nextActive) {
+  const product = state.products.find(p => p.id === productId);
+  if (!product) return;
+  if (!confirm(`${nextActive ? "Habilitar" : "Deshabilitar"} ${product.name}?`)) return;
+
+  try {
+    await updateDoc(doc(db, "products", productId), {
+      active:nextActive,
+      updatedAt:serverTimestamp()
+    });
+    toast(nextActive ? "Producto habilitado." : "Producto deshabilitado.");
+  } catch (err) {
+    console.error(err);
+    toast(firebaseErrorMessage(err, "No se pudo actualizar el producto."));
+  }
+}
+
+
 function renderReports() {
   if (currentRole !== "admin") return;
 
@@ -1157,8 +1267,10 @@ function renderBarberChargeOptions() {
 
   const serviceSelect = $("barberChargeService");
   const chairSelect = $("barberChargeChair");
+  const productSelect = $("barberChargeProduct");
   const selectedService = serviceSelect.value;
   const selectedChair = chairSelect.value;
+  const selectedProduct = productSelect?.value || "";
 
   serviceSelect.innerHTML = state.services.length
     ? `<option value="">Selecciona un servicio...</option>` + state.services.map(s => `<option value="${s.id}">${escapeHtml(s.name)} · ${money(s.price)}</option>`).join("")
@@ -1168,9 +1280,17 @@ function renderBarberChargeOptions() {
     ? `<option value="">Selecciona un puesto...</option>` + state.chairs.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("")
     : `<option value="">No hay puestos activos</option>`;
 
+  if (productSelect) {
+    productSelect.innerHTML = state.products.length
+      ? `<option value="">Selecciona un producto...</option>` + state.products.map(p => `<option value="${p.id}">${escapeHtml(p.name)} · ${money(p.price)}</option>`).join("")
+      : `<option value="">No hay productos activos</option>`;
+  }
+
   if (selectedService && state.services.some(s => s.id === selectedService)) serviceSelect.value = selectedService;
   if (selectedChair && state.chairs.some(c => c.id === selectedChair)) chairSelect.value = selectedChair;
+  if (selectedProduct && state.products.some(p => p.id === selectedProduct)) productSelect.value = selectedProduct;
 
+  renderBarberProductCart();
   renderBarberChargePreview();
 }
 
@@ -1180,23 +1300,119 @@ function syncBarberChargePrice() {
   renderBarberChargePreview();
 }
 
+
+function addProductToBarberCharge() {
+  if (currentRole !== "barber") return;
+
+  const productId = $("barberChargeProduct").value;
+  const product = state.products.find(p => p.id === productId && p.active !== false);
+  const qty = Math.max(1, Math.floor(Number($("barberChargeProductQty").value || 1)));
+
+  if (!product) return toast("Selecciona un producto.");
+
+  const existing = barberProductCart.find(item => item.productId === product.id);
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    barberProductCart.push({
+      productId:product.id,
+      name:product.name,
+      unitPrice:Number(product.price || 0),
+      qty
+    });
+  }
+
+  $("barberChargeProductQty").value = 1;
+  renderBarberProductCart();
+  renderBarberChargePreview();
+}
+
+function removeProductFromBarberCharge(productId) {
+  barberProductCart = barberProductCart.filter(item => item.productId !== productId);
+  renderBarberProductCart();
+  renderBarberChargePreview();
+}
+
+function changeBarberProductQty(productId, delta) {
+  const item = barberProductCart.find(x => x.productId === productId);
+  if (!item) return;
+  item.qty = Math.max(1, Number(item.qty || 1) + delta);
+  renderBarberProductCart();
+  renderBarberChargePreview();
+}
+
+function barberProductSubtotal() {
+  return barberProductCart.reduce((sum,item) =>
+    sum + Number(item.unitPrice || 0) * Number(item.qty || 0), 0
+  );
+}
+
+function renderBarberProductCart() {
+  const node = $("barberChargeProductCart");
+  if (!node) return;
+
+  node.innerHTML = barberProductCart.length ? barberProductCart.map(item => `
+    <div class="barber-product-line">
+      <div class="barber-product-line-info">
+        <span class="product-sale-icon">▦</span>
+        <div>
+          <strong>${escapeHtml(item.name)}</strong>
+          <small>${money(item.unitPrice)} c/u</small>
+        </div>
+      </div>
+      <div class="product-qty-control">
+        <button type="button" data-product-minus="${item.productId}">−</button>
+        <b>${item.qty}</b>
+        <button type="button" data-product-plus="${item.productId}">+</button>
+      </div>
+      <strong class="product-line-total">${money(item.unitPrice * item.qty)}</strong>
+      <button type="button" class="product-remove-btn" data-product-remove="${item.productId}" aria-label="Eliminar producto">×</button>
+    </div>
+  `).join("") : `
+    <div class="barber-product-empty">
+      <span>▦</span>
+      <div><strong>Sin productos</strong><small>Puedes enviar solo el servicio o agregar productos vendidos.</small></div>
+    </div>`;
+
+  document.querySelectorAll("[data-product-remove]").forEach(btn =>
+    btn.addEventListener("click", () => removeProductFromBarberCharge(btn.dataset.productRemove))
+  );
+  document.querySelectorAll("[data-product-plus]").forEach(btn =>
+    btn.addEventListener("click", () => changeBarberProductQty(btn.dataset.productPlus, 1))
+  );
+  document.querySelectorAll("[data-product-minus]").forEach(btn =>
+    btn.addEventListener("click", () => changeBarberProductQty(btn.dataset.productMinus, -1))
+  );
+}
+
 function renderBarberChargePreview() {
   if (currentRole !== "barber") return;
   const service = state.services.find(s => s.id === $("barberChargeService").value);
   const chair = state.chairs.find(c => c.id === $("barberChargeChair").value);
-  const price = Math.max(0, Number($("barberChargePrice").value || 0));
+  const servicePrice = Math.max(0, Number($("barberChargePrice").value || 0));
+  const productsTotal = barberProductSubtotal();
+  const total = servicePrice + productsTotal;
   const payment = $("barberChargePayment").value || "Efectivo";
   const commission = Number(currentBarber?.commission ?? 50);
-  const barberAmount = price * commission / 100;
-  const shopAmount = price - barberAmount;
+  const barberAmount = total * commission / 100;
+  const shopAmount = total - barberAmount;
 
   $("barberChargeServicePreview").textContent = service?.name || "Selecciona un servicio";
   $("barberChargeChairPreview").textContent = chair?.name || "Selecciona un puesto";
-  $("barberChargeTotalPreview").textContent = money(price);
+  $("barberChargeTotalPreview").textContent = money(total);
   $("barberChargePaymentPreview").textContent = payment;
   $("barberChargeCommissionPreview").textContent = `${commission}%`;
   $("barberChargeBarberPreview").textContent = money(barberAmount);
   $("barberChargeShopPreview").textContent = money(shopAmount);
+
+  const productsSubtotalNode = $("barberChargeProductsSubtotalPreview");
+  const productsPreviewNode = $("barberChargeProductsPreview");
+  if (productsSubtotalNode) productsSubtotalNode.textContent = money(productsTotal);
+  if (productsPreviewNode) {
+    productsPreviewNode.innerHTML = barberProductCart.length
+      ? barberProductCart.map(item => `<div><span>${item.qty}× ${escapeHtml(item.name)}</span><b>${money(item.unitPrice * item.qty)}</b></div>`).join("")
+      : `<small>Sin productos agregados</small>`;
+  }
 }
 
 async function submitBarberChargeRequest(e) {
@@ -1205,11 +1421,22 @@ async function submitBarberChargeRequest(e) {
 
   const service = state.services.find(s => s.id === $("barberChargeService").value);
   const chair = state.chairs.find(c => c.id === $("barberChargeChair").value);
-  const price = Number($("barberChargePrice").value);
+  const servicePrice = Number($("barberChargePrice").value);
+  const products = barberProductCart.map(item => ({
+    productId:item.productId,
+    name:item.name,
+    unitPrice:+Number(item.unitPrice || 0).toFixed(2),
+    qty:Number(item.qty || 0),
+    subtotal:+(Number(item.unitPrice || 0) * Number(item.qty || 0)).toFixed(2)
+  }));
+  const productTotal = +barberProductSubtotal().toFixed(2);
+  const total = +(Number(servicePrice || 0) + productTotal).toFixed(2);
   const payment = $("barberChargePayment").value;
   const note = $("barberChargeNote").value.trim();
 
-  if (!service || !chair || !price || price <= 0 || !payment) return toast("Revisa servicio, puesto, precio y método de pago.");
+  if (!service || !chair || !servicePrice || servicePrice <= 0 || !payment) {
+    return toast("Revisa servicio, puesto, precio y método de pago.");
+  }
 
   try {
     await setDoc(doc(collection(db, "chargeRequests")), {
@@ -1219,7 +1446,10 @@ async function submitBarberChargeRequest(e) {
       chairName:chair.name,
       serviceId:service.id,
       serviceName:service.name,
-      price:+price.toFixed(2),
+      servicePrice:+servicePrice.toFixed(2),
+      products,
+      productTotal,
+      price:total,
       payment,
       commissionPreview:Number(currentBarber.commission ?? 50),
       note,
@@ -1229,9 +1459,11 @@ async function submitBarberChargeRequest(e) {
     });
 
     e.target.reset();
+    barberProductCart = [];
     renderBarberChargeOptions();
+    renderBarberProductCart();
     renderBarberChargePreview();
-    toast("Cobro enviado. El administrador solo debe confirmar el trabajo y el pago.");
+    toast("Cobro con servicio y productos enviado al administrador.");
   } catch (err) {
     console.error(err);
     toast(firebaseErrorMessage(err, "No se pudo enviar el cobro al administrador."));
@@ -1861,7 +2093,7 @@ async function exportExcelReport() {
       properties:{tabColor:{argb:COLORS.dark}}
     });
     setTitle(salesWs, `Detalle completo de cobros · ${monthLabel(selectedMonth)}`, "Movimientos individuales registrados durante el mes.", 9);
-    ["Fecha","Barbero","Puesto","Servicio","Método","Total cobrado","Comisión %","Saldo barbero","Ingreso barbería"]
+    ["Fecha","Barbero","Puesto","Servicio","Productos","Método","Total cobrado","Comisión %","Saldo barbero","Ingreso barbería"]
       .forEach((h,i)=>salesWs.getCell(6,i+1).value=h);
     styleHeader(salesWs.getRow(6));
 
@@ -1872,20 +2104,21 @@ async function exportExcelReport() {
       salesWs.getCell(row,2).value=s.barberName || "";
       salesWs.getCell(row,3).value=s.chairName || "";
       salesWs.getCell(row,4).value=s.serviceName || "";
-      salesWs.getCell(row,5).value=s.payment || "";
-      salesWs.getCell(row,6).value=Number(s.total||0);
-      salesWs.getCell(row,7).value=Number(s.commission||0)/100;
-      salesWs.getCell(row,7).numFmt=pctFmt;
-      salesWs.getCell(row,8).value=Number(s.barberAmount||0);
-      salesWs.getCell(row,9).value=Number(s.shopAmount||0);
+      salesWs.getCell(row,5).value=Array.isArray(s.products) ? s.products.map(p => `${p.qty}x ${p.name}`).join(", ") : "";
+      salesWs.getCell(row,6).value=s.payment || "";
+      salesWs.getCell(row,7).value=Number(s.total||0);
+      salesWs.getCell(row,8).value=Number(s.commission||0)/100;
+      salesWs.getCell(row,8).numFmt=pctFmt;
+      salesWs.getCell(row,9).value=Number(s.barberAmount||0);
+      salesWs.getCell(row,10).value=Number(s.shopAmount||0);
     });
-    styleDataRows(salesWs,7,6+monthSales.length,[6,8,9]);
+    styleDataRows(salesWs,7,6+monthSales.length,[7,9,10]);
     salesWs.columns=[
-      {width:21},{width:26},{width:18},{width:26},{width:18},
-      {width:18},{width:15},{width:18},{width:20}
+      {width:21},{width:26},{width:18},{width:26},{width:34},
+      {width:18},{width:18},{width:15},{width:18},{width:20}
     ];
     salesWs.views=[{state:"frozen",ySplit:6}];
-    salesWs.autoFilter={from:"A6",to:"I6"};
+    salesWs.autoFilter={from:"A6",to:"J6"};
 
     // Highlight total rows on summary
     const finalSummaryRow = barberHeader + barberMonthly.length + 2;

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260901-date-picker">
+  <link rel="stylesheet" href="./styles.css?v=20260901-products">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -102,6 +102,7 @@
         <button class="nav-item" data-view="barbers" type="button"><span>✂</span>Usuarios / Barberos</button>
         <button class="nav-item" data-view="chairs" type="button"><span>▣</span>Puestos</button>
         <button class="nav-item" data-view="services" type="button"><span>✦</span>Servicios</button>
+        <button class="nav-item" data-view="products" type="button"><span>▦</span>Productos</button>
         <button class="nav-item" data-view="reports" type="button"><span>↗</span>Reportes</button>
       </nav>
       <div class="sidebar-footer">
@@ -176,6 +177,19 @@
       <section class="view" id="view-services">
         <div class="section-head"><div><p class="eyebrow">CATÁLOGO</p><h2>Servicios</h2><p>Precios para cobros y reservas.</p></div><button class="primary-btn" id="addServiceBtn" type="button">+ Agregar servicio</button></div>
         <div id="serviceCards" class="cards-grid"></div>
+      </section>
+
+
+      <section class="view" id="view-products">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">VENTA ADICIONAL</p>
+            <h2>Productos</h2>
+            <p>Configura los productos que los barberos pueden agregar a sus cobros.</p>
+          </div>
+          <button class="primary-btn" id="addProductBtn" type="button">+ Agregar producto</button>
+        </div>
+        <div id="productCards" class="cards-grid"></div>
       </section>
 
       <section class="view" id="view-reports">
@@ -300,10 +314,34 @@
               <small>Se carga el precio del servicio y puedes modificarlo.</small>
             </label>
 
-            <div class="charge-form-section-title charge-section-second">
+
+            <div class="charge-form-section-title charge-products-title">
               <span>02</span>
+              <div><strong>Productos vendidos</strong><small>Opcional · agrega uno o varios productos del local</small></div>
+            </div>
+
+            <div class="barber-product-picker charge-field-wide">
+              <div class="product-picker-grid">
+                <label class="charge-field">
+                  <span class="charge-label">Producto</span>
+                  <select id="barberChargeProduct"></select>
+                  <small>Solo productos activos del catálogo.</small>
+                </label>
+                <label class="charge-field">
+                  <span class="charge-label">Cantidad</span>
+                  <input id="barberChargeProductQty" type="number" min="1" step="1" value="1">
+                  <small>Unidades vendidas.</small>
+                </label>
+                <button class="ghost-btn product-add-btn" id="barberAddProductBtn" type="button">+ Agregar al cobro</button>
+              </div>
+              <div id="barberChargeProductCart" class="barber-product-cart"></div>
+            </div>
+
+            <div class="charge-form-section-title charge-section-second">
+              <span>03</span>
               <div><strong>Información del cobro</strong><small>Datos que recibirá el administrador</small></div>
             </div>
+
 
             <label class="charge-field">
               <span class="charge-label">Método de pago</span>
@@ -337,6 +375,16 @@
               <span>Servicio</span>
               <strong id="barberChargeServicePreview">Selecciona un servicio</strong>
               <small id="barberChargeChairPreview">Selecciona un puesto</small>
+            </div>
+
+            <div class="preview-products-block">
+              <div class="preview-products-head">
+                <span>PRODUCTOS</span>
+                <strong id="barberChargeProductsSubtotalPreview">USD 0.00</strong>
+              </div>
+              <div id="barberChargeProductsPreview" class="preview-products-list">
+                <small>Sin productos agregados</small>
+              </div>
             </div>
 
             <div class="preview-total-block">
@@ -490,7 +538,26 @@
     </div>
   </div>
 
+
+  <div class="modal-backdrop" id="productModal">
+    <div class="modal small">
+      <button class="modal-close" data-close="productModal" type="button">×</button>
+      <p class="eyebrow">NUEVO PRODUCTO</p>
+      <h2>Agregar producto</h2>
+      <p class="modal-copy">Estará disponible para que los barberos lo agreguen a sus cobros.</p>
+      <form id="productForm" class="form-stack">
+        <label>Producto
+          <input id="productName" required placeholder="Ej. Cera para cabello">
+        </label>
+        <label>Precio de venta
+          <input id="productPrice" type="number" min="0.01" step="0.01" required placeholder="0.00">
+        </label>
+        <button class="primary-btn" type="submit">Guardar producto</button>
+      </form>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260901-date-picker"></script>
+  <script type="module" src="./app.js?v=20260901-products">
 </body>
 </html>

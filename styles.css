@@ -540,3 +540,149 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .booking-date-section{padding:12px}
   .quick-date-row button{flex:1;min-width:70px}
 }
+
+
+/* =========================================================
+   PRODUCTOS EN COBRO DEL BARBERO
+   ========================================================= */
+.charge-products-title{margin-top:8px!important}
+.barber-product-picker{
+  grid-column:1/-1;
+  padding:15px;
+  border-radius:18px;
+  border:1px solid rgba(215,173,86,.13);
+  background:linear-gradient(135deg,rgba(215,173,86,.045),rgba(255,255,255,.012));
+}
+.product-picker-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.6fr) minmax(110px,.55fr) auto;
+  gap:10px;
+  align-items:end;
+}
+.product-add-btn{
+  height:43px;
+  margin-bottom:1px;
+  white-space:nowrap;
+}
+.barber-product-cart{
+  display:grid;
+  gap:8px;
+  margin-top:13px;
+}
+.barber-product-empty{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding:13px;
+  border:1px dashed #33333a;
+  border-radius:14px;
+  color:var(--muted);
+}
+.barber-product-empty>span{
+  width:34px;height:34px;border-radius:11px;
+  display:grid;place-items:center;
+  background:rgba(215,173,86,.08);
+  color:var(--gold2);
+}
+.barber-product-empty strong,.barber-product-empty small{display:block}
+.barber-product-empty strong{font-size:10px;color:#dedee2}
+.barber-product-empty small{font-size:8px;margin-top:2px}
+.barber-product-line{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto 30px;
+  gap:10px;
+  align-items:center;
+  padding:10px 11px;
+  border:1px solid #2b2b31;
+  border-radius:14px;
+  background:#151518;
+}
+.barber-product-line-info{
+  display:flex;align-items:center;gap:9px;min-width:0;
+}
+.product-sale-icon{
+  width:32px;height:32px;min-width:32px;
+  border-radius:10px;display:grid;place-items:center;
+  color:var(--gold2);background:rgba(215,173,86,.08);
+}
+.barber-product-line-info strong,.barber-product-line-info small{display:block}
+.barber-product-line-info strong{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.barber-product-line-info small{font-size:8px;color:var(--muted);margin-top:2px}
+.product-qty-control{
+  display:flex;align-items:center;gap:7px;
+  padding:4px;border:1px solid #303036;border-radius:10px;
+}
+.product-qty-control button,.product-remove-btn{
+  border:0;background:#202024;color:#ddd;border-radius:7px;
+  width:24px;height:24px;display:grid;place-items:center;
+}
+.product-qty-control b{font-size:10px;min-width:13px;text-align:center}
+.product-line-total{font-size:11px;white-space:nowrap}
+.product-remove-btn{color:#ff9999;background:rgba(255,124,124,.08)}
+.preview-products-block{
+  margin-top:12px;
+  padding:13px;
+  border-radius:15px;
+  border:1px solid #2d2d33;
+  background:#141417;
+}
+.preview-products-head{
+  display:flex;justify-content:space-between;gap:10px;align-items:center;
+  padding-bottom:8px;border-bottom:1px solid #28282d;
+}
+.preview-products-head span{font-size:8px;color:var(--muted);letter-spacing:1.2px;font-weight:800}
+.preview-products-head strong{font-size:12px;color:var(--gold2)}
+.preview-products-list{display:grid;gap:6px;margin-top:8px}
+.preview-products-list>div{display:flex;justify-content:space-between;gap:10px;font-size:9px}
+.preview-products-list>div span{color:#b6b6bc}
+.preview-products-list small{color:var(--muted);font-size:9px}
+
+.cash-request-products{
+  margin:12px 0;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(215,173,86,.14);
+  background:rgba(215,173,86,.045);
+}
+.cash-product-row,.cash-product-subtotal{
+  display:flex;justify-content:space-between;gap:12px;
+  padding:6px 0;font-size:10px;
+}
+.cash-product-row span{color:#babac0}
+.cash-product-subtotal{
+  border-top:1px solid rgba(215,173,86,.12);
+  margin-top:4px;padding-top:9px;
+}
+.cash-product-subtotal span{color:var(--gold)}
+.cash-request-price small{display:block;color:var(--muted);font-size:9px;margin-top:5px}
+
+/* Admin products */
+.product-admin-card{position:relative}
+.product-admin-card.product-disabled{opacity:.72}
+.product-admin-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.product-admin-icon{
+  width:44px;height:44px;border-radius:14px;
+  display:grid;place-items:center;margin-top:16px;
+  background:rgba(215,173,86,.08);color:var(--gold2);
+  border:1px solid rgba(215,173,86,.14);
+}
+.product-status{
+  padding:5px 8px;border-radius:999px;font-size:8px;font-weight:900;letter-spacing:.7px
+}
+.product-status.active{color:#87e2b5;background:rgba(114,215,167,.08);border:1px solid rgba(114,215,167,.15)}
+.product-status.inactive{color:#ff9999;background:rgba(255,124,124,.08);border:1px solid rgba(255,124,124,.15)}
+.product-toggle-btn{
+  width:100%;margin-top:12px;padding:9px 10px;
+  border-radius:11px;font-size:9px;font-weight:900;
+}
+.product-toggle-btn.disable{background:transparent;color:#ff9999;border:1px solid rgba(255,124,124,.2)}
+.product-toggle-btn.enable{background:rgba(114,215,167,.1);color:#8de5b8;border:1px solid rgba(114,215,167,.2)}
+
+@media(max-width:720px){
+  .product-picker-grid{grid-template-columns:1fr}
+  .product-add-btn{width:100%;margin:0}
+  .barber-product-line{grid-template-columns:1fr auto}
+  .product-qty-control{grid-column:1}
+  .product-line-total{grid-column:2;grid-row:1}
+  .product-remove-btn{grid-column:2;grid-row:2;justify-self:end}
+}

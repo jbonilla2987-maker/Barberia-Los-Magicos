@@ -48,9 +48,11 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // Flujo Barbero -> Caja.
-    // El barbero SOLO puede crear una solicitud pendiente a su propio nombre.
-    // Caja/Administrador es quien puede aprobar o rechazar.
+    match /products/{productId} {
+      allow read: if isAdmin() || isBarber();
+      allow create, update, delete: if isAdmin();
+    }
+
     match /chargeRequests/{requestId} {
       allow read: if isAdmin()
         || (isBarber() && resource.data.barberId == request.auth.uid);
@@ -63,7 +65,8 @@ service cloud.firestore {
         && request.resource.data.price > 0
         && request.resource.data.keys().hasOnly([
           "barberId","barberName","chairId","chairName",
-          "serviceId","serviceName","price","payment","commissionPreview",
+          "serviceId","serviceName","servicePrice",
+          "products","productTotal","price","payment","commissionPreview",
           "note","status","requestedAt","createdBy"
         ]);
 
@@ -73,8 +76,6 @@ service cloud.firestore {
     match /sales/{saleId} {
       allow read: if isAdmin()
         || (isBarber() && resource.data.barberId == request.auth.uid);
-
-      // Solo Caja/Administrador genera la venta definitiva.
       allow create, update, delete: if isAdmin();
     }
 

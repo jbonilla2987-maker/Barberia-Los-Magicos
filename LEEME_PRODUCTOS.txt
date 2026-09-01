@@ -1,0 +1,25 @@
+BARBERÍA LOS MÁGICOS — PRODUCTOS EN COBROS
+
+NUEVO:
+- Administrador: módulo Productos.
+- Puede crear productos con nombre y precio.
+- Puede habilitar / deshabilitar productos.
+- Barbero: puede agregar uno o varios productos a un cobro.
+- Puede cambiar cantidades (+ / -).
+- Total = servicio + productos.
+- Vista previa muestra subtotal de productos y total final.
+- Administrador ve los productos antes de confirmar.
+- Al confirmar se guarda todo en la venta.
+- El porcentaje del barbero se aplica al TOTAL confirmado (servicio + productos).
+
+ARCHIVOS A SUBIR EN GITHUB:
+- index.html
+- app.js
+- styles.css
+
+FIREBASE:
+- Copiar y publicar firestore.rules.
+
+NO reemplazar firebase-config.js.
+
+El ZIP no contiene carpetas internas.
