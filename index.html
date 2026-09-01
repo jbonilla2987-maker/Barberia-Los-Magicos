@@ -136,7 +136,24 @@
       </section>
 
       <section class="view" id="view-sales">
-        <div class="section-head"><div><p class="eyebrow">TRANSACCIONES</p><h2>Cobros</h2><p>La comisión se calcula según el porcentaje de cada barbero.</p></div><button class="primary-btn" id="newSaleBtn" type="button">+ Registrar cobro</button></div>
+        <div class="section-head"><div><p class="eyebrow">CAJA Y TRANSACCIONES</p><h2>Cobros</h2><p>El barbero prepara el cobro completo. El administrador solo confirma que el trabajo se realizó y que el pago fue recibido.</p></div><button class="primary-btn" id="newSaleBtn" type="button">+ Cobro manual</button></div>
+
+        <article class="panel cash-queue-panel">
+          <div class="panel-head cash-queue-head">
+            <div>
+              <p class="eyebrow">PENDIENTES DE CONFIRMACIÓN</p>
+              <h3>Cobros enviados por barberos</h3>
+              <p class="cash-help">Revisa la información enviada. No necesitas modificar nada: confirma únicamente que el trabajo fue realizado y el pago fue recibido.</p>
+            </div>
+            <div class="cash-count"><span>PENDIENTES</span><strong id="pendingCashCount">0</strong></div>
+          </div>
+          <div id="pendingChargeRequests" class="cash-request-grid"></div>
+        </article>
+
+        <div class="report-section-title compact-title">
+          <div><p class="eyebrow">HISTORIAL</p><h3>Cobros aprobados</h3></div>
+          <p>Ventas que ya fueron confirmadas por el administrador.</p>
+        </div>
         <article class="panel"><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Barbero</th><th>Puesto</th><th>Servicio</th><th>Método</th><th>Total</th><th>Barbero</th><th>Barbería</th></tr></thead><tbody id="salesTable"></tbody></table></div></article>
       </section>
 
@@ -244,6 +261,49 @@
         <div><p class="eyebrow">MI PANEL</p><h1>Hola, <span id="barberWelcomeName">Barbero</span></h1><p>Aquí puedes ver tu producción y tus próximas citas.</p></div>
         <div class="commission-badge"><small>MI COMISIÓN</small><strong id="myCommission">50%</strong></div>
       </section>
+      <section class="barber-cash-module">
+        <div class="barber-cash-intro">
+          <div>
+            <p class="eyebrow">PREPARAR COBRO</p>
+            <h2>Enviar trabajo para confirmación</h2>
+            <p>Registra el servicio, puesto, precio final y método de pago. El administrador únicamente confirmará que el trabajo se realizó y se cobró.</p>
+          </div>
+          <div class="cash-flow-badge"><span>01</span><b>Barbero prepara</b><i>→</i><span>02</span><b>Admin confirma</b><i>→</i><span>03</span><b>Saldo</b></div>
+        </div>
+
+        <form id="barberChargeForm" class="barber-charge-form">
+          <label>Servicio
+            <select id="barberChargeService" required></select>
+          </label>
+          <label>Puesto
+            <select id="barberChargeChair" required></select>
+          </label>
+          <label>Precio final
+            <div class="money-input"><span>USD</span><input id="barberChargePrice" type="number" min="0.01" step="0.01" required></div>
+          </label>
+          <label>Método de pago
+            <select id="barberChargePayment" required>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Yappy">Yappy</option>
+              <option value="Tarjeta">Tarjeta</option>
+              <option value="Transferencia">Transferencia</option>
+            </select>
+          </label>
+          <label>Nota / detalle
+            <input id="barberChargeNote" placeholder="Opcional: detalle del trabajo">
+          </label>
+          <button class="primary-btn barber-send-cash" type="submit">Enviar al administrador →</button>
+        </form>
+      </section>
+
+      <article class="panel barber-cash-status-panel">
+        <div class="panel-head">
+          <div><p class="eyebrow">MIS COBROS ENVIADOS</p><h3>Estado de mis trabajos</h3></div>
+          <span class="report-note">Pendiente · Aprobado · Rechazado</span>
+        </div>
+        <div id="myChargeRequests" class="barber-charge-list"></div>
+      </article>
+
       <div class="stats-grid barber-money-grid">
         <article class="stat-card"><span>Venta de hoy</span><strong id="myTodayGross">$0.00</strong><small id="myTodayCount">0 servicios</small></article>
         <article class="stat-card gold-card"><span>Mi saldo de hoy</span><strong id="myTodayPay">$0.00</strong><small>Comisión ganada hoy</small></article>

@@ -1,0 +1,27 @@
+BARBERÍA LOS MÁGICOS — FLUJO DEFINITIVO DE COBRO
+
+NUEVO FLUJO:
+1. El barbero selecciona el servicio.
+2. El barbero selecciona el puesto.
+3. El barbero define el precio final.
+4. El barbero selecciona el método de pago.
+5. El barbero envía el cobro al administrador.
+6. El administrador NO modifica nada.
+7. El administrador solo puede:
+   - Confirmar trabajo y cobro
+   - Rechazar
+8. Al confirmar:
+   - Se crea la venta.
+   - Se calcula la comisión real configurada para el barbero.
+   - Se acredita el saldo diario y mensual.
+   - Se actualizan reportes, puestos y Excel.
+
+ARCHIVOS PARA GITHUB:
+- index.html
+- app.js
+- styles.css
+
+FIREBASE:
+- Publicar también el nuevo firestore.rules.
+
+NO reemplazar firebase-config.js.

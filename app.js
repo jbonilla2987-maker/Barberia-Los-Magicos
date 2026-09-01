@@ -40,6 +40,7 @@ const state = {
   services: [],
   sales: [],
   appointments: [],
+  chargeRequests: [],
   clientAppointments: [],
   bookedSlots: []
 };
@@ -87,7 +88,10 @@ function escapeHtml(v) {
 }
 
 function statusLabel(v) {
-  return { pending:"Pendiente", confirmed:"Confirmada", completed:"Completada", cancelled:"Cancelada" }[v] || v;
+  return {
+    pending:"Pendiente", confirmed:"Confirmada", completed:"Completada", cancelled:"Cancelada",
+    approved:"Aprobado", rejected:"Rechazado"
+  }[v] || v;
 }
 
 function monthKey(value = new Date()) {
@@ -230,6 +234,8 @@ function wireStaticUI() {
 
   $("adminLoginForm").addEventListener("submit", adminLogin);
   $("barberLoginForm").addEventListener("submit", barberLogin);
+  $("barberChargeForm").addEventListener("submit", submitBarberChargeRequest);
+  $("barberChargeService").addEventListener("change", syncBarberChargePrice);
   $("saleForm").addEventListener("submit", saveSale);
   $("barberForm").addEventListener("submit", createBarber);
   $("serviceForm").addEventListener("submit", createService);
@@ -381,6 +387,11 @@ function subscribeAdmin() {
     renderAdminAll();
   }));
 
+  unsubscribers.push(onSnapshot(collection(db, "chargeRequests"), snap => {
+    state.chargeRequests = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    renderAdminAll();
+  }));
+
   unsubscribers.push(onSnapshot(collection(db, "appointments"), snap => {
     state.appointments = snap.docs.map(d => ({ id:d.id, ...d.data() }));
     renderAdminAll();
@@ -389,6 +400,21 @@ function subscribeAdmin() {
 
 function subscribeBarber(uid) {
   cleanupListeners();
+
+  unsubscribers.push(onSnapshot(collection(db, "chairs"), snap => {
+    state.chairs = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => x.active !== false).sort((a,b)=>(a.order||999)-(b.order||999));
+    renderBarberPortal();
+  }));
+
+  unsubscribers.push(onSnapshot(collection(db, "services"), snap => {
+    state.services = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => x.active !== false).sort((a,b)=>(a.order||999)-(b.order||999));
+    renderBarberPortal();
+  }));
+
+  unsubscribers.push(onSnapshot(query(collection(db, "chargeRequests"), where("barberId","==",uid)), snap => {
+    state.chargeRequests = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    renderBarberPortal();
+  }));
 
   unsubscribers.push(onSnapshot(doc(db, "users", uid), snap => {
     if (!snap.exists()) return;
@@ -457,6 +483,7 @@ function renderAdminAll() {
   renderSelectors();
   renderDashboard();
   renderSales();
+  renderPendingChargeRequests();
   renderAppointments();
   renderBarbers();
   renderChairs();
@@ -516,6 +543,149 @@ function renderSales() {
   $("salesTable").innerHTML = rows.length ? rows.map(s => `
     <tr><td>${fmtDateTime(s.date)}</td><td>${escapeHtml(s.barberName)}</td><td>${escapeHtml(s.chairName)}</td><td>${escapeHtml(s.serviceName)}</td><td>${escapeHtml(s.payment)}</td><td><b>${money(s.total)}</b></td><td>${money(s.barberAmount)}</td><td>${money(s.shopAmount)}</td></tr>
   `).join("") : `<tr><td colspan="8" class="empty">No hay cobros registrados.</td></tr>`;
+}
+
+
+function renderPendingChargeRequests() {
+  if (currentRole !== "admin") return;
+
+  const pending = state.chargeRequests
+    .filter(r => r.status === "pending")
+    .sort((a,b) => jsDate(a.requestedAt) - jsDate(b.requestedAt));
+
+  $("pendingCashCount").textContent = pending.length;
+
+  $("pendingChargeRequests").innerHTML = pending.length ? pending.map(r => `
+    <article class="cash-request-card">
+      <div class="cash-request-top">
+        <div class="cash-avatar">${escapeHtml((r.barberName || "B").charAt(0).toUpperCase())}</div>
+        <div class="cash-request-person">
+          <span class="cash-label">BARBERO</span>
+          <h4>${escapeHtml(r.barberName || "Barbero")}</h4>
+          <small>${r.requestedAt ? fmtDateTime(r.requestedAt) : "Enviado ahora"}</small>
+        </div>
+        <span class="request-status pending">POR CONFIRMAR</span>
+      </div>
+
+      <div class="cash-request-service">
+        <span>Servicio realizado</span>
+        <strong>${escapeHtml(r.serviceName || "Servicio")}</strong>
+        <small>${escapeHtml(r.chairName || "Sin puesto")}</small>
+      </div>
+
+      <div class="cash-request-price">
+        <span>TOTAL ENVIADO POR EL BARBERO</span>
+        <strong>${money(r.price)}</strong>
+      </div>
+
+      <div class="cash-confirm-summary">
+        <div>
+          <span>Método de pago</span>
+          <strong>${escapeHtml(r.payment || "No indicado")}</strong>
+        </div>
+        <div>
+          <span>Comisión al confirmar</span>
+          <strong>${Number(r.commissionPreview ?? 50)}%</strong>
+        </div>
+      </div>
+
+      ${r.note ? `<div class="cash-note">“${escapeHtml(r.note)}”</div>` : ""}
+
+      <div class="cash-admin-message">
+        <span>✓</span>
+        <p>El barbero ya definió el cobro. Solo confirma que el trabajo fue realizado y que el cliente pagó.</p>
+      </div>
+
+      <div class="cash-actions cash-actions-full">
+        <button class="cash-reject-btn" data-reject-charge="${r.id}" type="button">Rechazar</button>
+        <button class="cash-approve-btn" data-approve-charge="${r.id}" type="button">Confirmar trabajo y cobro →</button>
+      </div>
+    </article>
+  `).join("") : `<div class="cash-empty"><span>✓</span><strong>Todo confirmado</strong><p>No hay cobros pendientes enviados por los barberos.</p></div>`;
+
+  document.querySelectorAll("[data-approve-charge]").forEach(btn =>
+    btn.addEventListener("click", () => approveChargeRequest(btn.dataset.approveCharge))
+  );
+  document.querySelectorAll("[data-reject-charge]").forEach(btn =>
+    btn.addEventListener("click", () => rejectChargeRequest(btn.dataset.rejectCharge))
+  );
+}
+
+async function approveChargeRequest(requestId) {
+  const requestRef = doc(db, "chargeRequests", requestId);
+  const saleRef = doc(db, "sales", requestId);
+
+  try {
+    await runTransaction(db, async transaction => {
+      const requestSnap = await transaction.get(requestRef);
+      if (!requestSnap.exists()) throw new Error("Solicitud no encontrada");
+      const request = requestSnap.data();
+      if (request.status !== "pending") throw new Error("Esta solicitud ya fue procesada");
+
+      const barberRef = doc(db, "users", request.barberId);
+      const barberSnap = await transaction.get(barberRef);
+      if (!barberSnap.exists()) throw new Error("Barbero no encontrado");
+      const barber = barberSnap.data();
+      if (barber.active === false || barber.role !== "barber") throw new Error("Barbero inactivo");
+
+      const total = Number(request.price || 0);
+      if (total <= 0) throw new Error("Precio inválido");
+      const payment = request.payment || "Efectivo";
+      const commission = Number(barber.commission ?? 50);
+      const barberAmount = +(total * commission / 100).toFixed(2);
+      const shopAmount = +(total - barberAmount).toFixed(2);
+
+      transaction.set(saleRef, {
+        date:serverTimestamp(),
+        barberId:request.barberId,
+        barberName:request.barberName || barber.name || "Barbero",
+        chairId:request.chairId,
+        chairName:request.chairName,
+        serviceId:request.serviceId,
+        serviceName:request.serviceName,
+        payment,
+        total,
+        commission,
+        barberAmount,
+        shopAmount,
+        note:request.note || "",
+        createdBy:auth.currentUser.uid,
+        source:"barber_request",
+        requestId
+      });
+
+      transaction.update(requestRef, {
+        status:"approved",
+        payment,
+        commission,
+        barberAmount,
+        shopAmount,
+        saleId:saleRef.id,
+        approvedBy:auth.currentUser.uid,
+        approvedAt:serverTimestamp()
+      });
+    });
+
+    toast("Trabajo y cobro confirmados. La comisión fue acreditada automáticamente.");
+  } catch (err) {
+    console.error(err);
+    toast(firebaseErrorMessage(err, err?.message || "No se pudo aprobar el cobro."));
+  }
+}
+
+async function rejectChargeRequest(requestId) {
+  if (!confirm("¿Rechazar este trabajo enviado por el barbero? No se registrará la venta ni se acreditará comisión.")) return;
+  try {
+    await updateDoc(doc(db, "chargeRequests", requestId), {
+      status:"rejected",
+      rejectedBy:auth.currentUser.uid,
+      rejectedAt:serverTimestamp()
+    });
+    toast("Cobro rechazado.");
+  } catch (err) {
+    console.error(err);
+    toast(firebaseErrorMessage(err, "No se pudo rechazar el cobro."));
+  }
 }
 
 async function saveSale(e) {
@@ -869,8 +1039,101 @@ function renderReports() {
   `).join("") : `<tr><td colspan="6" class="empty">No hay movimientos diarios en este mes.</td></tr>`;
 }
 
+
+function renderBarberChargeOptions() {
+  if (currentRole !== "barber") return;
+
+  const serviceSelect = $("barberChargeService");
+  const chairSelect = $("barberChargeChair");
+  const selectedService = serviceSelect.value;
+  const selectedChair = chairSelect.value;
+
+  serviceSelect.innerHTML = state.services.length
+    ? state.services.map(s => `<option value="${s.id}">${escapeHtml(s.name)} · ${money(s.price)}</option>`).join("")
+    : `<option value="">Sin servicios disponibles</option>`;
+
+  chairSelect.innerHTML = state.chairs.length
+    ? state.chairs.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("")
+    : `<option value="">Sin puestos disponibles</option>`;
+
+  if (selectedService && state.services.some(s => s.id === selectedService)) serviceSelect.value = selectedService;
+  if (selectedChair && state.chairs.some(c => c.id === selectedChair)) chairSelect.value = selectedChair;
+
+  if (!$("barberChargePrice").value) syncBarberChargePrice();
+}
+
+function syncBarberChargePrice() {
+  const service = state.services.find(s => s.id === $("barberChargeService").value);
+  if (service) $("barberChargePrice").value = Number(service.price || 0).toFixed(2);
+}
+
+async function submitBarberChargeRequest(e) {
+  e.preventDefault();
+  if (currentRole !== "barber" || !currentBarber) return;
+
+  const service = state.services.find(s => s.id === $("barberChargeService").value);
+  const chair = state.chairs.find(c => c.id === $("barberChargeChair").value);
+  const price = Number($("barberChargePrice").value);
+  const payment = $("barberChargePayment").value;
+  const note = $("barberChargeNote").value.trim();
+
+  if (!service || !chair || !price || price <= 0 || !payment) return toast("Revisa servicio, puesto, precio y método de pago.");
+
+  try {
+    await setDoc(doc(collection(db, "chargeRequests")), {
+      barberId:auth.currentUser.uid,
+      barberName:currentBarber.name || "Barbero",
+      chairId:chair.id,
+      chairName:chair.name,
+      serviceId:service.id,
+      serviceName:service.name,
+      price:+price.toFixed(2),
+      payment,
+      commissionPreview:Number(currentBarber.commission ?? 50),
+      note,
+      status:"pending",
+      requestedAt:serverTimestamp(),
+      createdBy:auth.currentUser.uid
+    });
+
+    e.target.reset();
+    renderBarberChargeOptions();
+    syncBarberChargePrice();
+    toast("Cobro enviado. El administrador solo debe confirmar el trabajo y el pago.");
+  } catch (err) {
+    console.error(err);
+    toast(firebaseErrorMessage(err, "No se pudo enviar el cobro al administrador."));
+  }
+}
+
+function renderMyChargeRequests() {
+  if (currentRole !== "barber") return;
+
+  const requests = [...state.chargeRequests].sort((a,b) => jsDate(b.requestedAt) - jsDate(a.requestedAt)).slice(0,12);
+  $("myChargeRequests").innerHTML = requests.length ? requests.map(r => {
+    const status = r.status || "pending";
+    const statusText = statusLabel(status);
+    const credited = status === "approved" ? money(r.barberAmount || 0) : "—";
+    return `
+      <div class="barber-charge-row">
+        <div class="barber-charge-icon ${status}">${status === "approved" ? "✓" : status === "rejected" ? "×" : "↗"}</div>
+        <div class="barber-charge-info">
+          <div class="barber-charge-title">${escapeHtml(r.serviceName || "Servicio")} · ${money(r.price)}</div>
+          <div class="item-meta">${escapeHtml(r.chairName || "")} · ${escapeHtml(r.payment || "")} · ${r.requestedAt ? fmtDateTime(r.requestedAt) : "Enviado ahora"}</div>
+        </div>
+        <div class="barber-charge-credit">
+          <span class="request-status ${status}">${statusText}</span>
+          <small>${status === "approved" ? `Mi comisión: ${credited}` : status === "rejected" ? "No acreditado" : "Esperando confirmación"}</small>
+        </div>
+      </div>`;
+  }).join("") : `<div class="empty">Todavía no has enviado trabajos a Caja.</div>`;
+}
+
 function renderBarberPortal() {
   if (currentRole !== "barber" || !currentBarber) return;
+
+  renderBarberChargeOptions();
+  renderMyChargeRequests();
 
   $("barberWelcomeName").textContent = (currentBarber.name || "Barbero").split(" ")[0];
   $("myCommission").textContent = `${Number(currentBarber.commission ?? 50)}%`;

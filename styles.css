@@ -264,3 +264,101 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
     grid-column:auto;
   }
 }
+
+
+/* =========================================================
+   FLUJO BARBERO -> CAJA -> COMISIÓN
+   ========================================================= */
+.cash-queue-panel{margin-bottom:22px;border-color:rgba(215,173,86,.18);background:linear-gradient(180deg,#161619,#101012)}
+.cash-queue-head{align-items:center}
+.cash-help{max-width:650px;color:var(--muted);font-size:10px;line-height:1.55;margin:6px 0 0}
+.cash-count{min-width:92px;padding:11px 14px;text-align:center;border-radius:15px;background:rgba(215,173,86,.08);border:1px solid rgba(215,173,86,.18)}
+.cash-count span{display:block;color:var(--gold);font-size:8px;letter-spacing:1.4px;font-weight:900}
+.cash-count strong{display:block;font-size:24px;margin-top:2px}
+.cash-request-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.cash-request-card{border:1px solid #2c2c32;border-radius:20px;padding:18px;background:linear-gradient(160deg,#19191c,#121214);position:relative;overflow:hidden}
+.cash-request-card:before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--gold),transparent)}
+.cash-request-top{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px}
+.cash-avatar{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:rgba(215,173,86,.12);border:1px solid rgba(215,173,86,.18);color:var(--gold2);font-weight:900}
+.cash-label{font-size:8px;color:var(--gold);font-weight:900;letter-spacing:1.3px}
+.cash-request-person h4{margin:2px 0;font-size:14px}.cash-request-person small{color:var(--muted);font-size:9px}
+.request-status{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;border-radius:999px;padding:6px 9px;font-size:8px;font-weight:900;letter-spacing:.7px}
+.request-status.pending{color:#f1d28c;background:rgba(215,173,86,.1);border:1px solid rgba(215,173,86,.2)}
+.request-status.approved{color:#8ce7b9;background:rgba(114,215,167,.1);border:1px solid rgba(114,215,167,.2)}
+.request-status.rejected{color:#ff9f9f;background:rgba(255,124,124,.1);border:1px solid rgba(255,124,124,.2)}
+.cash-request-service{margin-top:15px;padding:12px 13px;border-radius:13px;background:#1b1b1f;border:1px solid #29292e}.cash-request-service span,.cash-request-price span{display:block;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}.cash-request-service strong{display:block;font-size:13px;margin:4px 0}.cash-request-service small{color:var(--muted);font-size:9px}
+.cash-request-price{padding:16px 0 10px}.cash-request-price strong{display:block;font-size:28px;letter-spacing:-1px;margin-top:5px;color:var(--gold2)}
+.cash-note{padding:10px 12px;border-left:2px solid var(--gold3);background:rgba(215,173,86,.04);color:#aaaab0;font-size:9px;border-radius:0 10px 10px 0;margin-bottom:12px}
+.cash-approval-row{display:grid;grid-template-columns:minmax(150px,.65fr) 1fr;gap:10px;align-items:end}.cash-approval-row select{margin-top:5px;padding:10px 11px}.cash-actions{display:flex;justify-content:flex-end;gap:8px}.cash-reject-btn,.cash-approve-btn{border-radius:12px;padding:11px 13px;font-size:9px;font-weight:900}.cash-reject-btn{background:transparent;color:#ff9b9b;border:1px solid rgba(255,124,124,.24)}.cash-approve-btn{border:0;background:linear-gradient(135deg,var(--gold2),#bd8433);color:#171108;flex:1;max-width:180px}
+.cash-empty{grid-column:1/-1;padding:34px;text-align:center;border:1px dashed #303037;border-radius:18px;color:var(--muted)}.cash-empty span{width:42px;height:42px;display:grid;place-items:center;margin:0 auto 9px;border-radius:50%;background:rgba(114,215,167,.1);color:var(--success);font-size:18px}.cash-empty strong{display:block;color:#ddd}.cash-empty p{margin:5px 0 0;font-size:10px}.compact-title{margin-top:22px}
+
+.barber-cash-module{margin:18px 0;border:1px solid rgba(215,173,86,.22);border-radius:26px;padding:22px;background:radial-gradient(circle at 85% 0,rgba(215,173,86,.11),transparent 30%),linear-gradient(145deg,#17171a,#111113);box-shadow:0 18px 45px rgba(0,0,0,.18)}
+.barber-cash-intro{display:flex;justify-content:space-between;align-items:center;gap:20px}.barber-cash-intro h2{font-family:"Playfair Display",serif;font-size:29px;margin:5px 0 6px}.barber-cash-intro>div>p:last-child{color:var(--muted);font-size:11px;line-height:1.6;max-width:650px;margin:0}
+.cash-flow-badge{display:flex;align-items:center;gap:6px;padding:11px 13px;border:1px solid rgba(215,173,86,.18);border-radius:16px;background:rgba(215,173,86,.05);white-space:nowrap}.cash-flow-badge span{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;background:rgba(215,173,86,.13);color:var(--gold2);font-size:8px;font-weight:900}.cash-flow-badge b{font-size:9px}.cash-flow-badge i{font-style:normal;color:#666}
+.barber-charge-form{display:grid;grid-template-columns:1.1fr .8fr .8fr 1.2fr auto;gap:10px;align-items:end;margin-top:19px;padding-top:17px;border-top:1px solid rgba(255,255,255,.06)}.barber-charge-form input,.barber-charge-form select{padding:11px 12px;margin-top:6px}.money-input{position:relative}.money-input span{position:absolute;left:11px;top:50%;transform:translateY(-22%);font-size:8px;color:var(--gold);font-weight:900;z-index:2}.money-input input{padding-left:42px}.barber-send-cash{height:41px;white-space:nowrap}
+.barber-cash-status-panel{margin:18px 0}.barber-charge-list{display:flex;flex-direction:column}.barber-charge-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:11px;padding:12px 2px;border-bottom:1px solid #252529}.barber-charge-row:last-child{border-bottom:0}.barber-charge-icon{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;font-weight:900}.barber-charge-icon.pending{background:rgba(215,173,86,.1);color:var(--gold2)}.barber-charge-icon.approved{background:rgba(114,215,167,.1);color:var(--success)}.barber-charge-icon.rejected{background:rgba(255,124,124,.1);color:var(--danger)}.barber-charge-title{font-size:11px;font-weight:900}.barber-charge-credit{text-align:right}.barber-charge-credit small{display:block;color:var(--muted);font-size:8px;margin-top:5px}
+
+@media(max-width:1050px){.cash-request-grid{grid-template-columns:1fr}.barber-charge-form{grid-template-columns:1fr 1fr}.barber-send-cash{grid-column:1/-1}.cash-flow-badge{display:none}}
+@media(max-width:650px){.cash-queue-head,.barber-cash-intro{align-items:flex-start;flex-direction:column}.cash-count{width:100%}.cash-approval-row{grid-template-columns:1fr}.cash-actions{justify-content:stretch}.cash-reject-btn,.cash-approve-btn{flex:1;max-width:none}.barber-charge-form{grid-template-columns:1fr}.barber-send-cash{grid-column:auto}.barber-charge-row{grid-template-columns:auto 1fr}.barber-charge-credit{grid-column:2;text-align:left}.cash-request-top{grid-template-columns:auto 1fr}.cash-request-top .request-status{grid-column:2;justify-self:start}}
+
+
+/* Flujo Barbero prepara / Administrador confirma */
+.cash-confirm-summary{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin:12px 0;
+}
+.cash-confirm-summary>div{
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;
+  padding:12px;
+}
+.cash-confirm-summary span{
+  display:block;
+  color:var(--muted);
+  font-size:8px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  margin-bottom:6px;
+}
+.cash-confirm-summary strong{
+  font-size:13px;
+}
+.cash-admin-message{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  margin:12px 0 15px;
+  padding:11px 12px;
+  border-radius:14px;
+  border:1px solid rgba(215,173,86,.16);
+  background:rgba(215,173,86,.055);
+}
+.cash-admin-message>span{
+  width:24px;height:24px;min-width:24px;
+  border-radius:8px;
+  display:grid;place-items:center;
+  background:rgba(215,173,86,.12);
+  color:var(--gold2);
+  font-weight:900;
+}
+.cash-admin-message p{
+  margin:1px 0 0;
+  color:#b8b8be;
+  font-size:10px;
+  line-height:1.5;
+}
+.cash-actions-full{
+  display:grid!important;
+  grid-template-columns:auto 1fr;
+  gap:10px;
+}
+.cash-actions-full .cash-approve-btn{
+  width:100%;
+}
+@media(max-width:620px){
+  .cash-confirm-summary{grid-template-columns:1fr}
+  .cash-actions-full{grid-template-columns:1fr}
+}
