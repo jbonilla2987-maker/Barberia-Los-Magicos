@@ -767,7 +767,13 @@ async function changeAppointment(id, status) {
 }
 
 function renderBarbers() {
-  $("barberCards").innerHTML = state.barbers.length ? state.barbers.map(b => {
+  const orderedBarbers = [...state.barbers].sort((a,b) => {
+    const aActive = a.active !== false ? 0 : 1;
+    const bActive = b.active !== false ? 0 : 1;
+    return aActive - bActive || (a.name || "").localeCompare(b.name || "");
+  });
+
+  $("barberCards").innerHTML = orderedBarbers.length ? orderedBarbers.map(b => {
     const sales = state.sales.filter(s => s.barberId === b.id);
     const gross = sales.reduce((a,s)=>a+Number(s.total||0),0);
     const pay = sales.reduce((a,s)=>a+Number(s.barberAmount||0),0);
@@ -778,23 +784,67 @@ function renderBarbers() {
         <div class="barber-admin-avatar">${escapeHtml((b.name || "B").charAt(0).toUpperCase())}</div>
         <span class="barber-state ${active ? "active" : "inactive"}">${active ? "ACTIVO" : "DESHABILITADO"}</span>
       </div>
+
       <span class="card-kicker">USUARIO BARBERO</span>
       <h3>${escapeHtml(b.name)}</h3>
-      <div class="card-meta">${active ? `Comisión configurada: ${Number(b.commission ?? 50)}%` : "Acceso temporalmente suspendido"}</div>
-      <div class="credential"><span>Usuario</span><b>${escapeHtml(b.username)}</b><small>Contraseña protegida por Firebase</small></div>
-      <div class="card-numbers barber-admin-numbers">
-        <div class="mini-stat"><span>Ventas</span><strong>${money(gross)}</strong></div>
-        <div class="mini-stat"><span>Comisión</span><strong>${money(pay)}</strong></div>
+      <div class="card-meta">${active
+        ? `Comisión configurada: ${Number(b.commission ?? 50)}%`
+        : "Acceso suspendido temporalmente"}</div>
+
+      <div class="credential">
+        <span>Usuario</span>
+        <b>${escapeHtml(b.username || "")}</b>
+        <small>Conserva su misma contraseña e historial</small>
       </div>
-      <button class="barber-toggle-btn ${active ? "disable" : "enable"}" data-toggle-barber="${b.id}" data-next-active="${active ? "false" : "true"}" type="button">
-        <span>${active ? "⊘" : "✓"}</span>${active ? "Deshabilitar barbero" : "Habilitar barbero"}
-      </button>
-      <div class="barber-toggle-help">${active ? "No podrá iniciar sesión ni aparecerá disponible para clientes." : "Al habilitarlo recuperará el acceso con el mismo usuario y contraseña."}</div>
+
+      <div class="card-numbers barber-admin-numbers">
+        <div class="mini-stat">
+          <span>Ventas</span>
+          <strong>${money(gross)}</strong>
+        </div>
+        <div class="mini-stat">
+          <span>Comisión</span>
+          <strong>${money(pay)}</strong>
+        </div>
+      </div>
+
+      ${active ? `
+        <div class="barber-account-status status-active-box">
+          <span>✓</span>
+          <div><b>Cuenta habilitada</b><small>Puede ingresar y recibir citas.</small></div>
+        </div>
+        <button class="barber-toggle-btn disable"
+          data-toggle-barber="${b.id}"
+          data-next-active="false"
+          type="button">
+          <span>⊘</span> Deshabilitar usuario
+        </button>
+      ` : `
+        <div class="barber-account-status status-disabled-box">
+          <span>!</span>
+          <div><b>Cuenta deshabilitada</b><small>No puede ingresar ni aparecer para clientes.</small></div>
+        </div>
+        <button class="barber-toggle-btn enable"
+          data-toggle-barber="${b.id}"
+          data-next-active="true"
+          type="button">
+          <span>✓</span> Habilitar usuario
+        </button>
+      `}
+
+      <div class="barber-toggle-help">${active
+        ? "Puedes deshabilitarlo temporalmente sin eliminar sus datos."
+        : "Al habilitarlo recuperará inmediatamente su acceso con el mismo usuario y contraseña."}</div>
     </article>`;
   }).join("") : `<div class="empty">Todavía no has creado barberos.</div>`;
 
   document.querySelectorAll("[data-toggle-barber]").forEach(btn =>
-    btn.addEventListener("click", () => toggleBarberStatus(btn.dataset.toggleBarber, btn.dataset.nextActive === "true"))
+    btn.addEventListener("click", () =>
+      toggleBarberStatus(
+        btn.dataset.toggleBarber,
+        btn.dataset.nextActive === "true"
+      )
+    )
   );
 }
 
@@ -861,20 +911,47 @@ async function createBarber(e) {
 
 async function toggleBarberStatus(uid, nextActive) {
   const barber = state.barbers.find(b => b.id === uid);
-  const action = nextActive ? "habilitar" : "deshabilitar";
   if (!barber) return;
 
-  if (!confirm(`¿Deseas ${action} a ${barber.name}?`)) return;
+  const action = nextActive ? "habilitar" : "deshabilitar";
+  const message = nextActive
+    ? `¿Habilitar nuevamente a ${barber.name}? Recuperará su acceso con el mismo usuario y contraseña.`
+    : `¿Deshabilitar temporalmente a ${barber.name}? No podrá ingresar ni aparecer disponible para clientes.`;
+
+  if (!confirm(message)) return;
 
   try {
     const batch = writeBatch(db);
-    batch.update(doc(db, "users", uid), { active:nextActive, updatedAt:serverTimestamp() });
-    batch.update(doc(db, "publicBarbers", uid), { active:nextActive, updatedAt:serverTimestamp() });
+
+    // Perfil privado del usuario.
+    batch.update(doc(db, "users", uid), {
+      active:nextActive,
+      updatedAt:serverTimestamp()
+    });
+
+    // set + merge funciona incluso con barberos creados en versiones anteriores
+    // que todavía no tengan documento en publicBarbers.
+    batch.set(doc(db, "publicBarbers", uid), {
+      name:barber.name || "Barbero",
+      active:nextActive,
+      updatedAt:serverTimestamp()
+    }, { merge:true });
+
     await batch.commit();
-    toast(nextActive ? "Barbero habilitado. Ya puede volver a ingresar." : "Barbero deshabilitado. Su acceso quedó suspendido.");
+
+    toast(
+      nextActive
+        ? `${barber.name} fue habilitado. Ya puede volver a iniciar sesión.`
+        : `${barber.name} fue deshabilitado temporalmente.`
+    );
   } catch (err) {
     console.error(err);
-    toast(firebaseErrorMessage(err, `No se pudo ${action} al barbero.`));
+    toast(firebaseErrorMessage(
+      err,
+      nextActive
+        ? "No se pudo habilitar el usuario."
+        : "No se pudo deshabilitar el usuario."
+    ));
   }
 }
 

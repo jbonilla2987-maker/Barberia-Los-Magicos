@@ -385,3 +385,75 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 
 @media(max-width:1100px){.barber-charge-layout{grid-template-columns:1fr}.barber-charge-preview{position:relative;top:auto}.premium-flow{display:none!important}}
 @media(max-width:700px){.barber-cash-premium{padding:17px}.premium-charge-form{grid-template-columns:1fr;padding:14px}.charge-field-wide,.charge-form-section-title,.charge-submit-area{grid-column:auto}.charge-submit-area{align-items:stretch;flex-direction:column}.barber-send-cash{justify-content:center;width:100%}.preview-money-grid{grid-template-columns:1fr}.premium-cash-head{align-items:flex-start;flex-direction:column}}
+
+
+/* =========================================================
+   ADMIN - HABILITAR / DESHABILITAR BARBEROS
+   ========================================================= */
+.barber-admin-card.is-disabled{
+  opacity:1!important;
+  border-color:rgba(255,124,124,.16)!important;
+  background:
+    linear-gradient(135deg,rgba(255,124,124,.035),transparent 42%),
+    linear-gradient(180deg,#151518,#111113)!important;
+}
+.barber-account-status{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:11px 12px;
+  margin:2px 0 11px;
+  border-radius:13px;
+}
+.barber-account-status>span{
+  width:29px;
+  height:29px;
+  min-width:29px;
+  border-radius:9px;
+  display:grid;
+  place-items:center;
+  font-size:12px;
+  font-weight:900;
+}
+.barber-account-status b,
+.barber-account-status small{
+  display:block;
+}
+.barber-account-status b{
+  font-size:10px;
+  margin-bottom:2px;
+}
+.barber-account-status small{
+  font-size:8px;
+  color:var(--muted);
+  line-height:1.35;
+}
+.status-active-box{
+  background:rgba(114,215,167,.055);
+  border:1px solid rgba(114,215,167,.14);
+}
+.status-active-box>span{
+  color:#8ce7b9;
+  background:rgba(114,215,167,.1);
+}
+.status-disabled-box{
+  background:rgba(255,124,124,.055);
+  border:1px solid rgba(255,124,124,.15);
+}
+.status-disabled-box>span{
+  color:#ff9f9f;
+  background:rgba(255,124,124,.1);
+}
+.barber-toggle-btn.enable{
+  background:linear-gradient(135deg,#8de5b8,#4ca97a)!important;
+  border:1px solid rgba(141,229,184,.48)!important;
+  color:#07170f!important;
+  box-shadow:0 8px 22px rgba(76,169,122,.13);
+}
+.barber-toggle-btn.enable:hover{
+  transform:translateY(-1px);
+  filter:brightness(1.05);
+}
+.barber-toggle-btn.disable:hover{
+  background:rgba(255,124,124,.06);
+}

@@ -1,0 +1,18 @@
+BARBERÍA LOS MÁGICOS — HABILITAR / DESHABILITAR BARBEROS
+
+REEMPLAZA EN GITHUB:
+- index.html
+- app.js
+- styles.css
+
+NUEVA LÓGICA:
+- Usuario activo: botón DESHABILITAR USUARIO.
+- Usuario deshabilitado: botón verde HABILITAR USUARIO.
+- No se borra el usuario.
+- Conserva contraseña, comisión, ventas e historial.
+- Al habilitarlo vuelve a poder iniciar sesión.
+- Vuelve a aparecer disponible para clientes.
+- Compatible con barberos creados en versiones anteriores.
+
+No reemplaces firebase-config.js.
+No necesitas cambiar las reglas de Firestore si ya estás usando las reglas actuales del proyecto.
