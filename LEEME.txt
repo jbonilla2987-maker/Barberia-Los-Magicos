@@ -1,10 +1,23 @@
-REEMPLAZA ESTOS 3 ARCHIVOS EN GITHUB:
-- firebase-config.js
-- app.js
+BARBERÍA LOS MÁGICOS — REPORTES PREMIUM
+
+REEMPLAZA SOLO:
 - index.html
+- app.js
+- styles.css
 
-Haz Commit changes en cada reemplazo o súbelos juntos.
-Después espera a que GitHub Pages publique y usa Ctrl + Shift + R.
+NO reemplaces firebase-config.js.
 
-API key configurada exactamente según Google Cloud:
-AIzaSyCNngjdKmnaW2BbOOoq1B8tgfDLgc6bngo
+Incluye:
+- Total cobrado por mes.
+- Pago total a barberos.
+- Ingreso de barbería.
+- Ticket promedio.
+- Detalle separado por puesto.
+- Resumen mensual de cada barbero.
+- Saldo diario de cada barbero.
+- Venta mensual y saldo mensual en portal del barbero.
+- CSV por mes.
+- Imprimir / Guardar PDF.
+
+Después:
+Commit changes > espera GitHub Pages > Ctrl + Shift + R.

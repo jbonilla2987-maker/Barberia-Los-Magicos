@@ -162,14 +162,73 @@
       </section>
 
       <section class="view" id="view-reports">
-        <div class="section-head"><div><p class="eyebrow">ANÁLISIS</p><h2>Reportes</h2><p>Resumen acumulado de ventas y comisiones.</p></div><button class="ghost-btn" id="exportBtn" type="button">Exportar CSV</button></div>
-        <div class="stats-grid">
-          <article class="stat-card"><span>Total vendido</span><strong id="reportTotal">$0.00</strong></article>
-          <article class="stat-card"><span>Total barberos</span><strong id="reportBarbers">$0.00</strong></article>
-          <article class="stat-card gold-card"><span>Total barbería</span><strong id="reportShop">$0.00</strong></article>
-          <article class="stat-card"><span>Servicios</span><strong id="reportCount">0</strong></article>
+        <div class="section-head report-page-head">
+          <div>
+            <p class="eyebrow">ANÁLISIS FINANCIERO</p>
+            <h2>Reporte premium</h2>
+            <p>Resumen mensual de cobros, puestos, producción y comisiones.</p>
+          </div>
+          <div class="report-actions">
+            <label class="month-filter">Mes
+              <input id="reportMonth" type="month">
+            </label>
+            <button class="ghost-btn" id="printReportBtn" type="button">Imprimir / PDF</button>
+            <button class="primary-btn" id="exportBtn" type="button">Exportar CSV</button>
+          </div>
         </div>
-        <article class="panel"><div class="panel-head"><div><p class="eyebrow">DESGLOSE</p><h3>Producción por barbero</h3></div></div><div id="reportByBarber" class="list"></div></article>
+
+        <div class="report-cover">
+          <div>
+            <p class="eyebrow">BARBERÍA LOS MÁGICOS</p>
+            <h3 id="reportPeriodTitle">Reporte mensual</h3>
+            <p id="reportGeneratedAt">Resumen financiero y operativo.</p>
+          </div>
+          <div class="report-seal">LM</div>
+        </div>
+
+        <div class="stats-grid report-stats">
+          <article class="stat-card"><span>Total cobrado</span><strong id="reportTotal">$0.00</strong><small id="reportTotalMeta">0 servicios en el mes</small></article>
+          <article class="stat-card"><span>Pago a barberos</span><strong id="reportBarbers">$0.00</strong><small>Comisiones generadas</small></article>
+          <article class="stat-card gold-card"><span>Ingreso barbería</span><strong id="reportShop">$0.00</strong><small>Participación de la barbería</small></article>
+          <article class="stat-card"><span>Ticket promedio</span><strong id="reportAverage">$0.00</strong><small id="reportCount">0 servicios</small></article>
+        </div>
+
+        <div class="report-section-title">
+          <div><p class="eyebrow">PUESTOS</p><h3>Detalle por puesto</h3></div>
+          <p>Cuánto produjo cada puesto durante el mes seleccionado.</p>
+        </div>
+        <div id="reportByChair" class="report-chair-grid"></div>
+
+        <div class="report-section-title">
+          <div><p class="eyebrow">BARBEROS</p><h3>Resumen mensual por barbero</h3></div>
+          <p>Venta total, saldo del barbero y aporte a la barbería.</p>
+        </div>
+        <div id="reportBarberMonthly" class="report-barber-grid"></div>
+
+        <article class="panel report-table-panel">
+          <div class="panel-head">
+            <div><p class="eyebrow">SALDO DIARIO</p><h3>Producción diaria por barbero</h3></div>
+            <span class="report-note">Detalle día por día del mes seleccionado</span>
+          </div>
+          <div class="table-wrap">
+            <table class="premium-report-table">
+              <thead><tr><th>Fecha</th><th>Barbero</th><th>Servicios</th><th>Total cobrado</th><th>Saldo barbero</th><th>Barbería</th></tr></thead>
+              <tbody id="reportDailyBarbers"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel report-table-panel">
+          <div class="panel-head">
+            <div><p class="eyebrow">CIERRE MENSUAL</p><h3>Total generado por cada barbero</h3></div>
+          </div>
+          <div class="table-wrap">
+            <table class="premium-report-table">
+              <thead><tr><th>Barbero</th><th>Servicios</th><th>Venta generada</th><th>Comisión %</th><th>Saldo barbero</th><th>Ingreso barbería</th></tr></thead>
+              <tbody id="reportMonthlyBarbersTable"></tbody>
+            </table>
+          </div>
+        </article>
       </section>
     </main>
   </section>
@@ -184,12 +243,26 @@
         <div><p class="eyebrow">MI PANEL</p><h1>Hola, <span id="barberWelcomeName">Barbero</span></h1><p>Aquí puedes ver tu producción y tus próximas citas.</p></div>
         <div class="commission-badge"><small>MI COMISIÓN</small><strong id="myCommission">50%</strong></div>
       </section>
-      <div class="stats-grid">
-        <article class="stat-card"><span>Ventas hoy</span><strong id="myTodayGross">$0.00</strong><small id="myTodayCount">0 servicios</small></article>
-        <article class="stat-card gold-card"><span>Mi ganancia hoy</span><strong id="myTodayPay">$0.00</strong><small>Comisión generada</small></article>
-        <article class="stat-card"><span>Acumulado</span><strong id="myAllPay">$0.00</strong><small>Comisión histórica</small></article>
+      <div class="stats-grid barber-money-grid">
+        <article class="stat-card"><span>Venta de hoy</span><strong id="myTodayGross">$0.00</strong><small id="myTodayCount">0 servicios</small></article>
+        <article class="stat-card gold-card"><span>Mi saldo de hoy</span><strong id="myTodayPay">$0.00</strong><small>Comisión ganada hoy</small></article>
+        <article class="stat-card"><span>Venta del mes</span><strong id="myMonthGross">$0.00</strong><small id="myMonthCount">0 servicios este mes</small></article>
+        <article class="stat-card gold-card"><span>Mi saldo del mes</span><strong id="myMonthPay">$0.00</strong><small>Comisión acumulada del mes</small></article>
+        <article class="stat-card"><span>Total histórico</span><strong id="myAllPay">$0.00</strong><small>Comisión desde el inicio</small></article>
         <article class="stat-card"><span>Citas de hoy</span><strong id="myTodayAppointments">0</strong><small>Agenda personal</small></article>
       </div>
+      <article class="panel barber-daily-panel">
+        <div class="panel-head">
+          <div><p class="eyebrow">MI SALDO DIARIO</p><h3>Detalle del mes actual</h3></div>
+          <span class="report-note" id="myMonthLabel"></span>
+        </div>
+        <div class="table-wrap">
+          <table class="premium-report-table">
+            <thead><tr><th>Fecha</th><th>Servicios</th><th>Venta</th><th>Mi saldo</th></tr></thead>
+            <tbody id="myDailyBalances"></tbody>
+          </table>
+        </div>
+      </article>
       <div class="dashboard-grid">
         <article class="panel"><div class="panel-head"><div><p class="eyebrow">MI AGENDA</p><h3>Próximas citas</h3></div></div><div id="myAppointments" class="list"></div></article>
         <article class="panel"><div class="panel-head"><div><p class="eyebrow">MI PRODUCCIÓN</p><h3>Últimos servicios</h3></div></div><div id="mySales" class="list"></div></article>
@@ -276,6 +349,6 @@
     </div>
   </div>
 
-  <script type="module" src="./app.js?v=20"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>

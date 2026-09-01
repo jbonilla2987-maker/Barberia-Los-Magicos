@@ -1,4 +1,4 @@
-import { firebaseConfig, AUTH_ALIAS_DOMAIN } from "./firebase-config.js?v=20";
+import { firebaseConfig, AUTH_ALIAS_DOMAIN } from "./firebase-config.js";
 
 import {
   initializeApp,
@@ -88,6 +88,27 @@ function escapeHtml(v) {
 
 function statusLabel(v) {
   return { pending:"Pendiente", confirmed:"Confirmada", completed:"Completada", cancelled:"Cancelada" }[v] || v;
+}
+
+function monthKey(value = new Date()) {
+  const d = value instanceof Date ? value : jsDate(value);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+}
+
+function dayKey(value) {
+  const d = jsDate(value);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function monthLabel(key) {
+  if (!key) return "";
+  const [year, month] = key.split("-").map(Number);
+  return new Date(year, month-1, 1).toLocaleDateString("es-PA", { month:"long", year:"numeric" });
+}
+
+function shortDayLabel(key) {
+  const [year, month, day] = key.split("-").map(Number);
+  return new Date(year, month-1, day).toLocaleDateString("es-PA", { day:"2-digit", month:"short", year:"numeric" });
 }
 
 function toast(message) {
@@ -196,6 +217,9 @@ function wireStaticUI() {
   $("appointmentFilter").addEventListener("change", renderAppointments);
   $("saleService").addEventListener("change", syncSalePrice);
   $("clientDate").addEventListener("change", renderAvailableTimes);
+  $("reportMonth").value = monthKey(new Date());
+  $("reportMonth").addEventListener("change", renderReports);
+  $("printReportBtn").addEventListener("click", () => window.print());
 
   ["quickSaleBtn","heroSaleBtn","newSaleBtn"].forEach(id =>
     $(id).addEventListener("click", () => openModal("saleModal"))
@@ -709,21 +733,118 @@ async function createService(e) {
 }
 
 function renderReports() {
-  const total = state.sales.reduce((a,s)=>a+Number(s.total||0),0);
-  const barber = state.sales.reduce((a,s)=>a+Number(s.barberAmount||0),0);
-  const shop = state.sales.reduce((a,s)=>a+Number(s.shopAmount||0),0);
+  if (currentRole !== "admin") return;
+
+  const selectedMonth = $("reportMonth")?.value || monthKey(new Date());
+  const monthSales = state.sales.filter(s => monthKey(s.date) === selectedMonth);
+
+  const total = monthSales.reduce((a,s) => a + Number(s.total || 0), 0);
+  const barberTotal = monthSales.reduce((a,s) => a + Number(s.barberAmount || 0), 0);
+  const shopTotal = monthSales.reduce((a,s) => a + Number(s.shopAmount || 0), 0);
+  const average = monthSales.length ? total / monthSales.length : 0;
 
   $("reportTotal").textContent = money(total);
-  $("reportBarbers").textContent = money(barber);
-  $("reportShop").textContent = money(shop);
-  $("reportCount").textContent = state.sales.length;
+  $("reportBarbers").textContent = money(barberTotal);
+  $("reportShop").textContent = money(shopTotal);
+  $("reportAverage").textContent = money(average);
+  $("reportCount").textContent = `${monthSales.length} servicios`;
+  $("reportTotalMeta").textContent = `${monthSales.length} servicio${monthSales.length === 1 ? "" : "s"} en el mes`;
+  $("reportPeriodTitle").textContent = `Reporte · ${monthLabel(selectedMonth)}`;
+  $("reportGeneratedAt").textContent = `Generado el ${new Date().toLocaleString("es-PA", {dateStyle:"long", timeStyle:"short"})}`;
 
-  $("reportByBarber").innerHTML = state.barbers.map(b => {
-    const ss = state.sales.filter(s=>s.barberId===b.id);
-    const gross = ss.reduce((a,s)=>a+Number(s.total||0),0);
-    const pay = ss.reduce((a,s)=>a+Number(s.barberAmount||0),0);
-    return `<div class="list-row"><div><div class="item-title">${escapeHtml(b.name)}</div><div class="item-meta">${ss.length} servicios · comisión ${Number(b.commission ?? 50)}%</div></div><div class="amount">${money(pay)} <span class="item-meta">de ${money(gross)}</span></div></div>`;
-  }).join("");
+  const chairRows = state.chairs.map(chair => {
+    const sales = monthSales.filter(s => s.chairId === chair.id);
+    return {
+      chair,
+      count: sales.length,
+      gross: sales.reduce((a,s)=>a+Number(s.total||0),0),
+      barber: sales.reduce((a,s)=>a+Number(s.barberAmount||0),0),
+      shop: sales.reduce((a,s)=>a+Number(s.shopAmount||0),0)
+    };
+  }).sort((a,b) => b.gross - a.gross);
+
+  $("reportByChair").innerHTML = chairRows.length ? chairRows.map((r,index) => `
+    <article class="report-chair-card">
+      <div class="report-card-top"><span class="report-rank">${String(index+1).padStart(2,"0")}</span><span class="report-card-kicker">PUESTO</span></div>
+      <h4>${escapeHtml(r.chair.name)}</h4>
+      <strong class="report-card-total">${money(r.gross)}</strong>
+      <div class="report-card-meta">${r.count} servicio${r.count===1?"":"s"}</div>
+      <div class="report-split">
+        <div><span>Barberos</span><b>${money(r.barber)}</b></div>
+        <div><span>Barbería</span><b>${money(r.shop)}</b></div>
+      </div>
+    </article>
+  `).join("") : `<div class="empty">No hay puestos registrados.</div>`;
+
+  const barberMonthly = state.barbers.map(barber => {
+    const sales = monthSales.filter(s => s.barberId === barber.id);
+    return {
+      barber,
+      count: sales.length,
+      gross: sales.reduce((a,s)=>a+Number(s.total||0),0),
+      pay: sales.reduce((a,s)=>a+Number(s.barberAmount||0),0),
+      shop: sales.reduce((a,s)=>a+Number(s.shopAmount||0),0)
+    };
+  }).sort((a,b) => b.gross - a.gross);
+
+  $("reportBarberMonthly").innerHTML = barberMonthly.length ? barberMonthly.map((r,index) => `
+    <article class="report-barber-card">
+      <div class="report-barber-head">
+        <div class="report-avatar">${escapeHtml((r.barber.name || "B").charAt(0).toUpperCase())}</div>
+        <div><span class="report-card-kicker">BARBERO ${String(index+1).padStart(2,"0")}</span><h4>${escapeHtml(r.barber.name)}</h4></div>
+      </div>
+      <div class="report-barber-main">
+        <div><span>Generó en ventas</span><strong>${money(r.gross)}</strong></div>
+        <div class="gold-number"><span>Su saldo del mes</span><strong>${money(r.pay)}</strong></div>
+      </div>
+      <div class="report-split">
+        <div><span>Servicios</span><b>${r.count}</b></div>
+        <div><span>Comisión</span><b>${Number(r.barber.commission ?? 50)}%</b></div>
+        <div><span>Barbería</span><b>${money(r.shop)}</b></div>
+      </div>
+    </article>
+  `).join("") : `<div class="empty">No hay barberos registrados.</div>`;
+
+  $("reportMonthlyBarbersTable").innerHTML = barberMonthly.length ? barberMonthly.map(r => `
+    <tr>
+      <td><b>${escapeHtml(r.barber.name)}</b></td>
+      <td>${r.count}</td>
+      <td><b>${money(r.gross)}</b></td>
+      <td>${Number(r.barber.commission ?? 50)}%</td>
+      <td class="money-positive">${money(r.pay)}</td>
+      <td>${money(r.shop)}</td>
+    </tr>
+  `).join("") : `<tr><td colspan="6" class="empty">No hay movimientos en este mes.</td></tr>`;
+
+  const dailyMap = new Map();
+  monthSales.forEach(sale => {
+    const date = dayKey(sale.date);
+    const key = `${date}__${sale.barberId}`;
+    if (!dailyMap.has(key)) {
+      dailyMap.set(key, {date, barberId:sale.barberId, barberName:sale.barberName || "Barbero", count:0, gross:0, pay:0, shop:0});
+    }
+    const row = dailyMap.get(key);
+    row.count += 1;
+    row.gross += Number(sale.total || 0);
+    row.pay += Number(sale.barberAmount || 0);
+    row.shop += Number(sale.shopAmount || 0);
+  });
+
+  const dailyRows = [...dailyMap.values()].sort((a,b) => {
+    if (a.date !== b.date) return b.date.localeCompare(a.date);
+    return a.barberName.localeCompare(b.barberName);
+  });
+
+  $("reportDailyBarbers").innerHTML = dailyRows.length ? dailyRows.map(r => `
+    <tr>
+      <td>${shortDayLabel(r.date)}</td>
+      <td><b>${escapeHtml(r.barberName)}</b></td>
+      <td>${r.count}</td>
+      <td>${money(r.gross)}</td>
+      <td class="money-positive"><b>${money(r.pay)}</b></td>
+      <td>${money(r.shop)}</td>
+    </tr>
+  `).join("") : `<tr><td colspan="6" class="empty">No hay movimientos diarios en este mes.</td></tr>`;
 }
 
 function renderBarberPortal() {
@@ -734,11 +855,36 @@ function renderBarberPortal() {
 
   const mine = state.sales.filter(s => s.barberId === currentBarber.id);
   const today = mine.filter(s => todayIso(s.date));
+  const currentMonth = monthKey(new Date());
+  const thisMonth = mine.filter(s => monthKey(s.date) === currentMonth);
 
   $("myTodayGross").textContent = money(today.reduce((a,s)=>a+Number(s.total||0),0));
   $("myTodayPay").textContent = money(today.reduce((a,s)=>a+Number(s.barberAmount||0),0));
+  $("myMonthGross").textContent = money(thisMonth.reduce((a,s)=>a+Number(s.total||0),0));
+  $("myMonthPay").textContent = money(thisMonth.reduce((a,s)=>a+Number(s.barberAmount||0),0));
   $("myAllPay").textContent = money(mine.reduce((a,s)=>a+Number(s.barberAmount||0),0));
   $("myTodayCount").textContent = `${today.length} servicios`;
+  $("myMonthCount").textContent = `${thisMonth.length} servicio${thisMonth.length===1?"":"s"} este mes`;
+  $("myMonthLabel").textContent = monthLabel(currentMonth);
+
+  const daily = new Map();
+  thisMonth.forEach(sale => {
+    const date = dayKey(sale.date);
+    if (!daily.has(date)) daily.set(date, {date, count:0, gross:0, pay:0});
+    const row = daily.get(date);
+    row.count += 1;
+    row.gross += Number(sale.total || 0);
+    row.pay += Number(sale.barberAmount || 0);
+  });
+  const dailyRows = [...daily.values()].sort((a,b)=>b.date.localeCompare(a.date));
+  $("myDailyBalances").innerHTML = dailyRows.length ? dailyRows.map(r => `
+    <tr>
+      <td>${shortDayLabel(r.date)}</td>
+      <td>${r.count}</td>
+      <td>${money(r.gross)}</td>
+      <td class="money-positive"><b>${money(r.pay)}</b></td>
+    </tr>
+  `).join("") : `<tr><td colspan="4" class="empty">Aún no tienes servicios este mes.</td></tr>`;
 
   const appts = state.appointments.filter(a => !["cancelled","completed"].includes(a.status) && a.date >= isoDay()).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
   $("myTodayAppointments").textContent = appts.filter(a=>a.date===isoDay()).length;
@@ -894,17 +1040,33 @@ function renderClientAppointments() {
 }
 
 function exportCsv() {
-  const header = ["Fecha","Barbero","Puesto","Servicio","Metodo","Total","Comision","Pago Barbero","Ingreso Barberia"];
-  const rows = state.sales.map(s => [
-    jsDate(s.date).toLocaleString("es-PA"), s.barberName, s.chairName, s.serviceName,
-    s.payment, s.total, s.commission, s.barberAmount, s.shopAmount
+  const selectedMonth = $("reportMonth")?.value || monthKey(new Date());
+  const rows = state.sales
+    .filter(s => monthKey(s.date) === selectedMonth)
+    .sort((a,b)=>jsDate(a.date)-jsDate(b.date));
+
+  const header = ["Fecha","Barbero","Puesto","Servicio","Metodo","Total cobrado","Comision %","Saldo barbero","Ingreso barberia"];
+  const data = rows.map(s => [
+    jsDate(s.date).toLocaleString("es-PA"),
+    s.barberName,
+    s.chairName,
+    s.serviceName,
+    s.payment,
+    Number(s.total || 0).toFixed(2),
+    Number(s.commission || 0).toFixed(2),
+    Number(s.barberAmount || 0).toFixed(2),
+    Number(s.shopAmount || 0).toFixed(2)
   ]);
-  const csv = [header,...rows].map(r=>r.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(",")).join("\n");
-  const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
+
+  const csv = [header,...data]
+    .map(r => r.map(v => `"${String(v ?? "").replaceAll('"','""')}"`).join(","))
+    .join("\\n");
+
+  const blob = new Blob(["\\ufeff"+csv], { type:"text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "Los_Magicos_Reporte.csv";
+  a.download = `Los_Magicos_Reporte_${selectedMonth}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
