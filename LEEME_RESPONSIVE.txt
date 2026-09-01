@@ -1,0 +1,15 @@
+BARBERÍA LOS MÁGICOS - AJUSTE RESPONSIVE DE REPORTES
+
+CAMBIO PRINCIPAL:
+- Los números se ajustan automáticamente al ancho del cuadro.
+- Los montos no se salen de las tarjetas.
+- En pantallas angostas los 3 indicadores pasan automáticamente a 2 o 1 columna.
+- Funciona en PC, laptop, tablet y celular.
+
+PARA ACTUALIZAR GITHUB:
+Reemplaza SOLO styles.css.
+
+Después:
+1. Commit changes
+2. Espera GitHub Pages
+3. Ctrl + F5
