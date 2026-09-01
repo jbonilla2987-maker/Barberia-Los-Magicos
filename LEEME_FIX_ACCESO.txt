@@ -1,0 +1,25 @@
+BARBERÍA LOS MÁGICOS — FIX DE ACCESO / INICIALIZACIÓN
+
+Este paquete conserva:
+- productos
+- comisiones separadas de servicios y productos
+- citas
+- reportes
+- barberos
+
+CORRECCIÓN:
+- Los eventos nuevos ya no detienen toda la aplicación si GitHub carga temporalmente archivos de versiones distintas.
+- Se fuerza una versión nueva de app.js, styles.css y firebase-config.js para evitar caché.
+- El acceso Administrador / Barbero / Cliente vuelve a inicializarse de forma segura.
+
+SUBIR A GITHUB:
+1. index.html
+2. app.js
+3. styles.css
+
+NO reemplazar firebase-config.js.
+
+FIRESTORE:
+Si ya publicaste las reglas de la versión de comisiones separadas, no necesitas volver a cambiarlas.
+
+Después de subir: Commit changes, espera GitHub Pages y presiona Ctrl + F5.

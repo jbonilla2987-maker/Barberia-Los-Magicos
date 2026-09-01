@@ -1,4 +1,4 @@
-import { firebaseConfig, AUTH_ALIAS_DOMAIN } from "./firebase-config.js";
+import { firebaseConfig, AUTH_ALIAS_DOMAIN } from "./firebase-config.js?v=20260901-stable-access";
 
 import {
   initializeApp,
@@ -125,10 +125,19 @@ function toast(message) {
   window.__toastTimer = setTimeout(() => node.classList.remove("show"), 2600);
 }
 
-function show(id) { $(id).classList.remove("hidden"); }
-function hide(id) { $(id).classList.add("hidden"); }
-function openModal(id) { $(id).classList.add("show"); }
-function closeModal(id) { $(id).classList.remove("show"); }
+function show(id) { const el = $(id); if (el) el.classList.remove("hidden"); }
+function hide(id) { const el = $(id); if (el) el.classList.add("hidden"); }
+function openModal(id) { const el = $(id); if (el) el.classList.add("show"); }
+function closeModal(id) { const el = $(id); if (el) el.classList.remove("show"); }
+
+function bind(id, eventName, handler) {
+  const el = $(id);
+  if (!el) {
+    console.warn(`[Los Mágicos] Elemento opcional no encontrado: #${id}`);
+    return;
+  }
+  el.addEventListener(eventName, handler);
+}
 
 function cleanupListeners() {
   for (const unsub of unsubscribers) {
@@ -193,9 +202,9 @@ async function logout() {
 }
 
 function wireStaticUI() {
-  $("openAdmin").addEventListener("click", () => openModal("adminLoginModal"));
-  $("openBarber").addEventListener("click", () => openModal("barberLoginModal"));
-  $("openClient").addEventListener("click", enterClient);
+  bind("openAdmin", "click", () => openModal("adminLoginModal"));
+  bind("openBarber", "click", () => openModal("barberLoginModal"));
+  bind("openClient", "click", enterClient);
 
   document.querySelectorAll("[data-close]").forEach(btn =>
     btn.addEventListener("click", () => closeModal(btn.dataset.close))
@@ -219,50 +228,50 @@ function wireStaticUI() {
     btn.addEventListener("click", () => switchAdminView(btn.dataset.go))
   );
 
-  $("adminMenuBtn").addEventListener("click", () => $("adminSidebar").classList.toggle("open"));
-  $("appointmentFilter").addEventListener("change", renderAppointments);
-  $("saleService").addEventListener("change", syncSalePrice);
-  $("clientDate").addEventListener("change", () => {
+  bind("adminMenuBtn", "click", () => $("adminSidebar").classList.toggle("open"));
+  bind("appointmentFilter", "change", renderAppointments);
+  bind("saleService", "change", syncSalePrice);
+  bind("clientDate", "change", () => {
     updateSelectedDateSummary();
     renderAvailableTimes();
   });
-  $("clientDate").addEventListener("input", () => {
+  bind("clientDate", "input", () => {
     updateSelectedDateSummary();
     renderAvailableTimes();
   });
-  $("clientDatePickerBtn").addEventListener("click", openClientDatePicker);
+  bind("clientDatePickerBtn", "click", openClientDatePicker);
   document.querySelectorAll("[data-date-offset]").forEach(btn =>
     btn.addEventListener("click", () => setClientDateOffset(Number(btn.dataset.dateOffset || 0)))
   );
   $("reportMonth").value = monthKey(new Date());
-  $("reportMonth").addEventListener("change", renderReports);
-  $("printReportBtn").addEventListener("click", () => window.print());
+  bind("reportMonth", "change", renderReports);
+  bind("printReportBtn", "click", () => window.print());
 
   ["quickSaleBtn","heroSaleBtn","newSaleBtn"].forEach(id =>
     $(id).addEventListener("click", () => openModal("saleModal"))
   );
 
-  $("addBarberBtn").addEventListener("click", () => openModal("barberModal"));
-  $("addServiceBtn").addEventListener("click", () => openModal("serviceModal"));
-  $("addProductBtn").addEventListener("click", () => openModal("productModal"));
+  bind("addBarberBtn", "click", () => openModal("barberModal"));
+  bind("addServiceBtn", "click", () => openModal("serviceModal"));
+  bind("addProductBtn", "click", () => openModal("productModal"));
 
-  $("adminLoginForm").addEventListener("submit", adminLogin);
-  $("barberLoginForm").addEventListener("submit", barberLogin);
-  $("barberChargeForm").addEventListener("submit", submitBarberChargeRequest);
-  $("barberChargeService").addEventListener("change", syncBarberChargePrice);
-  $("barberChargeChair").addEventListener("change", renderBarberChargePreview);
-  $("barberChargePrice").addEventListener("input", renderBarberChargePreview);
-  $("barberChargePayment").addEventListener("change", renderBarberChargePreview);
-  $("barberAddProductBtn").addEventListener("click", addProductToBarberCharge);
-  $("saleForm").addEventListener("submit", saveSale);
-  $("barberForm").addEventListener("submit", createBarber);
-  $("commissionForm").addEventListener("submit", saveBarberCommissions);
-  $("serviceForm").addEventListener("submit", createService);
-  $("productForm").addEventListener("submit", createProduct);
-  $("clientBookingForm").addEventListener("submit", createAppointment);
-  $("addChairBtn").addEventListener("click", createChair);
-  $("exportBtn").addEventListener("click", exportCsv);
-  $("exportExcelBtn").addEventListener("click", exportExcelReport);
+  bind("adminLoginForm", "submit", adminLogin);
+  bind("barberLoginForm", "submit", barberLogin);
+  bind("barberChargeForm", "submit", submitBarberChargeRequest);
+  bind("barberChargeService", "change", syncBarberChargePrice);
+  bind("barberChargeChair", "change", renderBarberChargePreview);
+  bind("barberChargePrice", "input", renderBarberChargePreview);
+  bind("barberChargePayment", "change", renderBarberChargePreview);
+  bind("barberAddProductBtn", "click", addProductToBarberCharge);
+  bind("saleForm", "submit", saveSale);
+  bind("barberForm", "submit", createBarber);
+  bind("commissionForm", "submit", saveBarberCommissions);
+  bind("serviceForm", "submit", createService);
+  bind("productForm", "submit", createProduct);
+  bind("clientBookingForm", "submit", createAppointment);
+  bind("addChairBtn", "click", createChair);
+  bind("exportBtn", "click", exportCsv);
+  bind("exportExcelBtn", "click", exportExcelReport);
 }
 
 async function adminLogin(e) {
@@ -2304,7 +2313,10 @@ async function restoreSession(user) {
 
 async function main() {
   wireStaticUI();
-  $("todayLabel").textContent = new Date().toLocaleDateString("es-PA", { weekday:"long", day:"2-digit", month:"long" });
+  const todayLabel = $("todayLabel");
+  if (todayLabel) {
+    todayLabel.textContent = new Date().toLocaleDateString("es-PA", { weekday:"long", day:"2-digit", month:"long" });
+  }
 
   const ready = await initFirebase();
   if (!ready) return;
@@ -2312,4 +2324,11 @@ async function main() {
   onAuthStateChanged(auth, restoreSession);
 }
 
-main();
+main().catch(err => {
+  console.error("[Los Mágicos] Error de inicialización:", err);
+  const alert = $("firebaseAlert");
+  if (alert) {
+    alert.textContent = "La aplicación no pudo completar la inicialización. Recarga la página con Ctrl + F5.";
+    alert.classList.remove("hidden");
+  }
+});
