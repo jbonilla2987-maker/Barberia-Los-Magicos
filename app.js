@@ -220,7 +220,18 @@ function wireStaticUI() {
   $("adminMenuBtn").addEventListener("click", () => $("adminSidebar").classList.toggle("open"));
   $("appointmentFilter").addEventListener("change", renderAppointments);
   $("saleService").addEventListener("change", syncSalePrice);
-  $("clientDate").addEventListener("change", renderAvailableTimes);
+  $("clientDate").addEventListener("change", () => {
+    updateSelectedDateSummary();
+    renderAvailableTimes();
+  });
+  $("clientDate").addEventListener("input", () => {
+    updateSelectedDateSummary();
+    renderAvailableTimes();
+  });
+  $("clientDatePickerBtn").addEventListener("click", openClientDatePicker);
+  document.querySelectorAll("[data-date-offset]").forEach(btn =>
+    btn.addEventListener("click", () => setClientDateOffset(Number(btn.dataset.dateOffset || 0)))
+  );
   $("reportMonth").value = monthKey(new Date());
   $("reportMonth").addEventListener("change", renderReports);
   $("printReportBtn").addEventListener("click", () => window.print());
@@ -461,7 +472,11 @@ function subscribeClient(uid) {
   }));
 
   $("clientDate").min = isoDay();
+  const maxBookingDate = new Date();
+  maxBookingDate.setFullYear(maxBookingDate.getFullYear() + 1);
+  $("clientDate").max = isoDay(maxBookingDate);
   if (!$("clientDate").value) $("clientDate").value = isoDay();
+  updateSelectedDateSummary();
   renderClientOptions();
   renderClientAppointments();
 }
@@ -1334,6 +1349,43 @@ function renderClientOptions() {
   renderAvailableTimes();
 }
 
+function openClientDatePicker() {
+  const input = $("clientDate");
+  if (!input) return;
+  try {
+    if (typeof input.showPicker === "function") input.showPicker();
+    else {
+      input.focus();
+      input.click();
+    }
+  } catch (_) {
+    input.focus();
+    input.click();
+  }
+}
+
+function setClientDateOffset(offset) {
+  const d = new Date();
+  d.setHours(12,0,0,0);
+  d.setDate(d.getDate() + Number(offset || 0));
+  $("clientDate").value = isoDay(d);
+  updateSelectedDateSummary();
+  renderAvailableTimes();
+}
+
+function updateSelectedDateSummary() {
+  const input = $("clientDate");
+  const box = $("selectedDateSummary");
+  if (!input || !box) return;
+  if (!input.value) {
+    box.textContent = "Selecciona una fecha para ver horarios disponibles.";
+    return;
+  }
+  const [y,m,d] = input.value.split("-").map(Number);
+  const selected = new Date(y,m-1,d);
+  box.innerHTML = `<span>✓</span><div><b>${selected.toLocaleDateString("es-PA", {weekday:"long", day:"2-digit", month:"long", year:"numeric"})}</b><small>Ahora selecciona un barbero para consultar sus horas disponibles.</small></div>`;
+}
+
 function renderAvailableTimes() {
   if (currentRole !== "client") return;
 
@@ -1353,16 +1405,22 @@ function renderAvailableTimes() {
   );
 
   const slots = [];
+  const now = new Date();
+  const isToday = day === isoDay(now);
+  const minMinutesToday = (now.getHours() * 60) + now.getMinutes() + 30;
+
   for (let h=9; h<19; h++) {
     for (const m of [0,30]) {
       const t = `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
-      if (!occupied.has(t)) slots.push(t);
+      const slotMinutes = (h * 60) + m;
+      const isPast = isToday && slotMinutes < minMinutesToday;
+      if (!occupied.has(t) && !isPast) slots.push(t);
     }
   }
 
   select.innerHTML = slots.length
     ? `<option value="">Selecciona una hora</option>${slots.map(t=>`<option value="${t}">${t}</option>`).join("")}`
-    : `<option value="">Sin horarios disponibles</option>`;
+    : `<option value="">Sin horarios disponibles para esta fecha</option>`;
 }
 
 function slotId(barberId, day, time) {
@@ -1421,6 +1479,7 @@ async function createAppointment(e) {
     e.target.reset();
     booking = { serviceId:null, barberId:null };
     $("clientDate").value = isoDay();
+    updateSelectedDateSummary();
     renderClientOptions();
     toast("¡Cita reservada! Pendiente de confirmación.");
   } catch (err) {

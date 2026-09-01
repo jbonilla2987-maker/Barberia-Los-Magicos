@@ -457,3 +457,86 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 .barber-toggle-btn.disable:hover{
   background:rgba(255,124,124,.06);
 }
+
+
+/* =========================================================
+   CITAS - SELECTOR DE FECHA PREMIUM
+   ========================================================= */
+.booking-date-section{
+  margin:2px 0 18px;
+  padding:15px;
+  border-radius:17px;
+  border:1px solid rgba(215,173,86,.13);
+  background:linear-gradient(145deg,rgba(215,173,86,.035),rgba(255,255,255,.01));
+}
+.booking-date-grid{align-items:end}
+.date-picker-shell{position:relative;margin-top:7px}
+.date-picker-shell input{
+  margin:0;
+  padding-right:50px;
+  min-height:46px;
+  color-scheme:dark;
+  cursor:pointer;
+  border-color:rgba(215,173,86,.18);
+  background:#101012;
+}
+.date-picker-shell input:hover,.date-picker-shell input:focus{border-color:rgba(215,173,86,.55)}
+.date-picker-shell input::-webkit-calendar-picker-indicator{
+  opacity:0;
+  width:42px;
+  height:42px;
+  cursor:pointer;
+}
+.calendar-open-btn{
+  position:absolute;
+  right:5px;
+  top:50%;
+  transform:translateY(-50%);
+  width:37px;
+  height:37px;
+  border-radius:11px;
+  border:1px solid rgba(215,173,86,.2);
+  background:rgba(215,173,86,.09);
+  color:var(--gold2);
+  display:grid;
+  place-items:center;
+  font-size:14px;
+  font-weight:900;
+}
+.calendar-open-btn:hover{background:rgba(215,173,86,.16);border-color:rgba(215,173,86,.4)}
+.quick-date-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:11px}
+.quick-date-row>span{font-size:8px;letter-spacing:1.3px;color:#73737a;font-weight:900;margin-right:3px}
+.quick-date-row button{
+  border:1px solid #2b2b31;
+  background:#17171a;
+  color:#c7c7cc;
+  border-radius:999px;
+  padding:7px 11px;
+  font-size:9px;
+  font-weight:800;
+}
+.quick-date-row button:hover{border-color:rgba(215,173,86,.35);color:var(--gold2);background:rgba(215,173,86,.06)}
+.selected-date-summary{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin-top:10px;
+  padding:10px 11px;
+  border-radius:12px;
+  background:#111113;
+  border:1px solid #27272c;
+  color:#77777f;
+  font-size:9px;
+}
+.selected-date-summary>span{
+  width:24px;height:24px;min-width:24px;border-radius:8px;
+  display:grid;place-items:center;
+  background:rgba(215,173,86,.1);color:var(--gold2);font-weight:900
+}
+.selected-date-summary b,.selected-date-summary small{display:block}
+.selected-date-summary b{color:#ddd;font-size:10px;text-transform:capitalize}
+.selected-date-summary small{color:#777780;margin-top:2px;font-size:8px}
+@media(max-width:600px){
+  .booking-date-section{padding:12px}
+  .quick-date-row button{flex:1;min-width:70px}
+}

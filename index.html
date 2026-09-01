@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260901-enable-barbers">
+  <link rel="stylesheet" href="./styles.css?v=20260901-date-picker">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -411,7 +411,27 @@
           <div id="clientBarberOptions" class="choice-grid"></div>
 
           <div class="step-title"><span>04</span><div><strong>Fecha y hora</strong><small>Horarios disponibles</small></div></div>
-          <div class="form-grid"><label>Fecha<input id="clientDate" type="date" required></label><label>Hora<select id="clientTime" required><option value="">Selecciona fecha y barbero</option></select></label></div>
+          <div class="booking-date-section">
+            <div class="form-grid booking-date-grid">
+              <label>Fecha de la cita
+                <div class="date-picker-shell">
+                  <input id="clientDate" type="date" required>
+                  <button id="clientDatePickerBtn" class="calendar-open-btn" type="button" aria-label="Abrir calendario">▣</button>
+                </div>
+              </label>
+              <label>Hora disponible
+                <select id="clientTime" required><option value="">Selecciona fecha y barbero</option></select>
+              </label>
+            </div>
+            <div class="quick-date-row" aria-label="Fechas rápidas">
+              <span>FECHA RÁPIDA</span>
+              <button type="button" data-date-offset="0">Hoy</button>
+              <button type="button" data-date-offset="1">Mañana</button>
+              <button type="button" data-date-offset="2">+2 días</button>
+              <button type="button" data-date-offset="3">+3 días</button>
+            </div>
+            <div id="selectedDateSummary" class="selected-date-summary">Selecciona una fecha para ver horarios disponibles.</div>
+          </div>
 
           <label>Nota opcional<textarea id="clientNote" rows="3" placeholder="Ej. corte bajo, barba perfilada..."></textarea></label>
           <button class="primary-btn booking-submit" type="submit">Confirmar mi cita</button>
@@ -471,6 +491,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260901-enable-barbers"></script>
+  <script type="module" src="./app.js?v=20260901-date-picker"></script>
 </body>
 </html>
