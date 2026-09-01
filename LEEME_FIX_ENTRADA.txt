@@ -1,0 +1,27 @@
+BARBERÍA LOS MÁGICOS — FIX DE ENTRADA
+
+CAUSA ENCONTRADA:
+El index.html tenía el script de app.js sin cerrar:
+
+INCORRECTO:
+<script type="module" src="./app.js?v=20260901-products">
+
+CORRECTO:
+<script type="module" src="./app.js?v=20260901-entry-fixed"></script>
+
+Esto impedía que app.js cargara y por eso Administrador, Barbero y Cliente no respondían.
+
+SUBIR A GITHUB:
+- index.html
+- app.js
+- styles.css
+
+Si estás usando productos/comisiones separadas y todavía no publicaste sus reglas:
+- firestore.rules
+
+NO reemplazar firebase-config.js.
+
+Después:
+1. Commit changes.
+2. Esperar GitHub Pages.
+3. Ctrl + F5.
