@@ -236,6 +236,9 @@ function wireStaticUI() {
   $("barberLoginForm").addEventListener("submit", barberLogin);
   $("barberChargeForm").addEventListener("submit", submitBarberChargeRequest);
   $("barberChargeService").addEventListener("change", syncBarberChargePrice);
+  $("barberChargeChair").addEventListener("change", renderBarberChargePreview);
+  $("barberChargePrice").addEventListener("input", renderBarberChargePreview);
+  $("barberChargePayment").addEventListener("change", renderBarberChargePreview);
   $("saleForm").addEventListener("submit", saveSale);
   $("barberForm").addEventListener("submit", createBarber);
   $("serviceForm").addEventListener("submit", createService);
@@ -768,19 +771,30 @@ function renderBarbers() {
     const sales = state.sales.filter(s => s.barberId === b.id);
     const gross = sales.reduce((a,s)=>a+Number(s.total||0),0);
     const pay = sales.reduce((a,s)=>a+Number(s.barberAmount||0),0);
+    const active = b.active !== false;
 
-    return `<article class="person-card">
+    return `<article class="person-card barber-admin-card ${active ? "" : "is-disabled"}">
+      <div class="barber-admin-top">
+        <div class="barber-admin-avatar">${escapeHtml((b.name || "B").charAt(0).toUpperCase())}</div>
+        <span class="barber-state ${active ? "active" : "inactive"}">${active ? "ACTIVO" : "DESHABILITADO"}</span>
+      </div>
       <span class="card-kicker">USUARIO BARBERO</span>
       <h3>${escapeHtml(b.name)}</h3>
-      <div class="card-meta">${b.active===false ? "Cuenta desactivada" : `Comisión ${Number(b.commission ?? 50)}%`}</div>
-      <div class="credential">Usuario: <b>${escapeHtml(b.username)}</b><br>Contraseña: protegida por Firebase y no visible.</div>
-      <div class="card-numbers"><div class="mini-stat"><span>Ventas</span><strong>${money(gross)}</strong></div><div class="mini-stat"><span>Comisión</span><strong>${money(pay)}</strong></div></div>
-      ${b.active!==false ? `<button class="danger-btn" data-disable-barber="${b.id}" type="button">Desactivar usuario</button>` : ""}
+      <div class="card-meta">${active ? `Comisión configurada: ${Number(b.commission ?? 50)}%` : "Acceso temporalmente suspendido"}</div>
+      <div class="credential"><span>Usuario</span><b>${escapeHtml(b.username)}</b><small>Contraseña protegida por Firebase</small></div>
+      <div class="card-numbers barber-admin-numbers">
+        <div class="mini-stat"><span>Ventas</span><strong>${money(gross)}</strong></div>
+        <div class="mini-stat"><span>Comisión</span><strong>${money(pay)}</strong></div>
+      </div>
+      <button class="barber-toggle-btn ${active ? "disable" : "enable"}" data-toggle-barber="${b.id}" data-next-active="${active ? "false" : "true"}" type="button">
+        <span>${active ? "⊘" : "✓"}</span>${active ? "Deshabilitar barbero" : "Habilitar barbero"}
+      </button>
+      <div class="barber-toggle-help">${active ? "No podrá iniciar sesión ni aparecerá disponible para clientes." : "Al habilitarlo recuperará el acceso con el mismo usuario y contraseña."}</div>
     </article>`;
   }).join("") : `<div class="empty">Todavía no has creado barberos.</div>`;
 
-  document.querySelectorAll("[data-disable-barber]").forEach(btn =>
-    btn.addEventListener("click", () => deactivateBarber(btn.dataset.disableBarber))
+  document.querySelectorAll("[data-toggle-barber]").forEach(btn =>
+    btn.addEventListener("click", () => toggleBarberStatus(btn.dataset.toggleBarber, btn.dataset.nextActive === "true"))
   );
 }
 
@@ -845,16 +859,22 @@ async function createBarber(e) {
   }
 }
 
-async function deactivateBarber(uid) {
+async function toggleBarberStatus(uid, nextActive) {
+  const barber = state.barbers.find(b => b.id === uid);
+  const action = nextActive ? "habilitar" : "deshabilitar";
+  if (!barber) return;
+
+  if (!confirm(`¿Deseas ${action} a ${barber.name}?`)) return;
+
   try {
     const batch = writeBatch(db);
-    batch.update(doc(db, "users", uid), { active:false, updatedAt:serverTimestamp() });
-    batch.update(doc(db, "publicBarbers", uid), { active:false, updatedAt:serverTimestamp() });
+    batch.update(doc(db, "users", uid), { active:nextActive, updatedAt:serverTimestamp() });
+    batch.update(doc(db, "publicBarbers", uid), { active:nextActive, updatedAt:serverTimestamp() });
     await batch.commit();
-    toast("Usuario desactivado.");
+    toast(nextActive ? "Barbero habilitado. Ya puede volver a ingresar." : "Barbero deshabilitado. Su acceso quedó suspendido.");
   } catch (err) {
     console.error(err);
-    toast(firebaseErrorMessage(err, "No se pudo desactivar."));
+    toast(firebaseErrorMessage(err, `No se pudo ${action} al barbero.`));
   }
 }
 
@@ -1049,22 +1069,42 @@ function renderBarberChargeOptions() {
   const selectedChair = chairSelect.value;
 
   serviceSelect.innerHTML = state.services.length
-    ? state.services.map(s => `<option value="${s.id}">${escapeHtml(s.name)} · ${money(s.price)}</option>`).join("")
-    : `<option value="">Sin servicios disponibles</option>`;
+    ? `<option value="">Selecciona un servicio...</option>` + state.services.map(s => `<option value="${s.id}">${escapeHtml(s.name)} · ${money(s.price)}</option>`).join("")
+    : `<option value="">No hay servicios activos</option>`;
 
   chairSelect.innerHTML = state.chairs.length
-    ? state.chairs.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("")
-    : `<option value="">Sin puestos disponibles</option>`;
+    ? `<option value="">Selecciona un puesto...</option>` + state.chairs.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("")
+    : `<option value="">No hay puestos activos</option>`;
 
   if (selectedService && state.services.some(s => s.id === selectedService)) serviceSelect.value = selectedService;
   if (selectedChair && state.chairs.some(c => c.id === selectedChair)) chairSelect.value = selectedChair;
 
-  if (!$("barberChargePrice").value) syncBarberChargePrice();
+  renderBarberChargePreview();
 }
 
 function syncBarberChargePrice() {
   const service = state.services.find(s => s.id === $("barberChargeService").value);
-  if (service) $("barberChargePrice").value = Number(service.price || 0).toFixed(2);
+  $("barberChargePrice").value = service ? Number(service.price || 0).toFixed(2) : "";
+  renderBarberChargePreview();
+}
+
+function renderBarberChargePreview() {
+  if (currentRole !== "barber") return;
+  const service = state.services.find(s => s.id === $("barberChargeService").value);
+  const chair = state.chairs.find(c => c.id === $("barberChargeChair").value);
+  const price = Math.max(0, Number($("barberChargePrice").value || 0));
+  const payment = $("barberChargePayment").value || "Efectivo";
+  const commission = Number(currentBarber?.commission ?? 50);
+  const barberAmount = price * commission / 100;
+  const shopAmount = price - barberAmount;
+
+  $("barberChargeServicePreview").textContent = service?.name || "Selecciona un servicio";
+  $("barberChargeChairPreview").textContent = chair?.name || "Selecciona un puesto";
+  $("barberChargeTotalPreview").textContent = money(price);
+  $("barberChargePaymentPreview").textContent = payment;
+  $("barberChargeCommissionPreview").textContent = `${commission}%`;
+  $("barberChargeBarberPreview").textContent = money(barberAmount);
+  $("barberChargeShopPreview").textContent = money(shopAmount);
 }
 
 async function submitBarberChargeRequest(e) {
@@ -1098,7 +1138,7 @@ async function submitBarberChargeRequest(e) {
 
     e.target.reset();
     renderBarberChargeOptions();
-    syncBarberChargePrice();
+    renderBarberChargePreview();
     toast("Cobro enviado. El administrador solo debe confirmar el trabajo y el pago.");
   } catch (err) {
     console.error(err);
