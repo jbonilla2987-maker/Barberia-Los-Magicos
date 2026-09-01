@@ -686,3 +686,118 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .product-line-total{grid-column:2;grid-row:1}
   .product-remove-btn{grid-column:2;grid-row:2;justify-self:end}
 }
+
+
+/* =========================================================
+   COMISIONES SEPARADAS: SERVICIOS / PRODUCTOS
+   ========================================================= */
+.barber-commission-pills{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin:12px 0;
+}
+.barber-commission-pills>div{
+  padding:10px 11px;
+  border-radius:12px;
+  border:1px solid rgba(215,173,86,.13);
+  background:rgba(215,173,86,.04);
+}
+.barber-commission-pills span,
+.barber-commission-pills strong{
+  display:block;
+}
+.barber-commission-pills span{
+  font-size:8px;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.8px;
+}
+.barber-commission-pills strong{
+  margin-top:4px;
+  font-size:15px;
+  color:var(--gold2);
+}
+.barber-edit-commission-btn{
+  width:100%;
+  margin:0 0 11px;
+  padding:9px 11px;
+  border-radius:11px;
+  border:1px solid rgba(215,173,86,.2);
+  background:rgba(215,173,86,.06);
+  color:var(--gold2);
+  font-size:9px;
+  font-weight:900;
+}
+.barber-edit-commission-btn:hover{
+  background:rgba(215,173,86,.1);
+}
+.commission-explain{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
+.commission-explain>div{
+  padding:11px;
+  border-radius:12px;
+  border:1px solid #2d2d33;
+  background:#111113;
+}
+.commission-explain span,
+.commission-explain strong{
+  display:block;
+}
+.commission-explain span{
+  font-size:8px;
+  color:var(--gold);
+  letter-spacing:1px;
+}
+.commission-explain strong{
+  font-size:9px;
+  color:#bbb;
+  margin-top:5px;
+  line-height:1.45;
+}
+.preview-commission-split{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin-top:12px;
+}
+.preview-commission-split>div{
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(215,173,86,.14);
+  background:linear-gradient(135deg,rgba(215,173,86,.07),rgba(255,255,255,.01));
+}
+.preview-commission-split span,
+.preview-commission-split strong,
+.preview-commission-split small{
+  display:block;
+}
+.preview-commission-split span{
+  color:var(--muted);
+  font-size:8px;
+  text-transform:uppercase;
+  letter-spacing:.7px;
+}
+.preview-commission-split strong{
+  color:var(--gold2);
+  font-size:17px;
+  margin-top:4px;
+}
+.preview-commission-split small{
+  color:#ddd;
+  font-size:10px;
+  margin-top:4px;
+}
+.cash-confirm-summary{
+  grid-template-columns:repeat(auto-fit,minmax(120px,1fr))!important;
+}
+@media(max-width:620px){
+  .commission-explain,
+  .preview-commission-split,
+  .barber-commission-pills{
+    grid-template-columns:1fr;
+  }
+}

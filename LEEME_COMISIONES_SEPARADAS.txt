@@ -1,0 +1,44 @@
+BARBERÍA LOS MÁGICOS — COMISIONES SEPARADAS
+
+NUEVA LÓGICA:
+
+SERVICIOS
+- Cada barbero tiene un porcentaje de comisión para servicios.
+- Se calcula únicamente sobre el precio del servicio.
+
+PRODUCTOS
+- Cada barbero tiene otro porcentaje independiente para productos.
+- Se calcula únicamente sobre el subtotal de productos vendidos.
+
+EJEMPLO:
+Servicio: $20.00
+Comisión servicio: 40%
+Ganancia servicio barbero: $8.00
+
+Productos: $10.00
+Comisión productos: 10%
+Ganancia productos barbero: $1.00
+
+TOTAL CLIENTE: $30.00
+TOTAL BARBERO: $9.00
+TOTAL BARBERÍA: $21.00
+
+ADMINISTRADOR:
+- Al crear un barbero define ambos porcentajes.
+- En cada tarjeta aparece Servicios % y Productos %.
+- Botón "Editar comisiones" permite cambiar ambos cuando quiera.
+
+BARBEROS EXISTENTES:
+- Conservan su comisión actual de servicios.
+- Comisión de productos inicia en 0% hasta que el administrador la configure.
+
+ARCHIVOS GITHUB:
+- index.html
+- app.js
+- styles.css
+
+FIREBASE:
+- Publicar el nuevo firestore.rules.
+
+NO reemplazar firebase-config.js.
+ZIP sin carpetas internas.

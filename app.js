@@ -256,6 +256,7 @@ function wireStaticUI() {
   $("barberAddProductBtn").addEventListener("click", addProductToBarberCharge);
   $("saleForm").addEventListener("submit", saveSale);
   $("barberForm").addEventListener("submit", createBarber);
+  $("commissionForm").addEventListener("submit", saveBarberCommissions);
   $("serviceForm").addEventListener("submit", createService);
   $("productForm").addEventListener("submit", createProduct);
   $("clientBookingForm").addEventListener("submit", createAppointment);
@@ -631,8 +632,12 @@ function renderPendingChargeRequests() {
           <strong>${escapeHtml(r.payment || "No indicado")}</strong>
         </div>
         <div>
-          <span>Comisión al confirmar</span>
-          <strong>${Number(r.commissionPreview ?? 50)}%</strong>
+          <span>Comisión servicio</span>
+          <strong>${Number(r.serviceCommissionPreview ?? r.commissionPreview ?? 50)}%</strong>
+        </div>
+        <div>
+          <span>Comisión productos</span>
+          <strong>${Number(r.productCommissionPreview ?? 0)}%</strong>
         </div>
       </div>
 
@@ -666,21 +671,39 @@ async function approveChargeRequest(requestId) {
     await runTransaction(db, async transaction => {
       const requestSnap = await transaction.get(requestRef);
       if (!requestSnap.exists()) throw new Error("Solicitud no encontrada");
+
       const request = requestSnap.data();
       if (request.status !== "pending") throw new Error("Esta solicitud ya fue procesada");
 
       const barberRef = doc(db, "users", request.barberId);
       const barberSnap = await transaction.get(barberRef);
       if (!barberSnap.exists()) throw new Error("Barbero no encontrado");
+
       const barber = barberSnap.data();
       if (barber.active === false || barber.role !== "barber") throw new Error("Barbero inactivo");
 
-      const total = Number(request.price || 0);
-      if (total <= 0) throw new Error("Precio inválido");
+      const servicePrice = Number(
+        request.servicePrice ??
+        (Number(request.price || 0) - Number(request.productTotal || 0))
+      );
+      const productTotal = Number(request.productTotal || 0);
+      const total = +(servicePrice + productTotal).toFixed(2);
+
+      if (servicePrice <= 0 || total <= 0) throw new Error("Precio inválido");
+
       const payment = request.payment || "Efectivo";
-      const commission = Number(barber.commission ?? 50);
-      const barberAmount = +(total * commission / 100).toFixed(2);
-      const shopAmount = +(total - barberAmount).toFixed(2);
+
+      // Comisiones independientes configuradas por el administrador.
+      const serviceCommission = Number(barber.commission ?? 50);
+      const productCommission = Number(barber.productCommission ?? 0);
+
+      const serviceBarberAmount = +(servicePrice * serviceCommission / 100).toFixed(2);
+      const productBarberAmount = +(productTotal * productCommission / 100).toFixed(2);
+      const barberAmount = +(serviceBarberAmount + productBarberAmount).toFixed(2);
+
+      const serviceShopAmount = +(servicePrice - serviceBarberAmount).toFixed(2);
+      const productShopAmount = +(productTotal - productBarberAmount).toFixed(2);
+      const shopAmount = +(serviceShopAmount + productShopAmount).toFixed(2);
 
       transaction.set(saleRef, {
         date:serverTimestamp(),
@@ -688,16 +711,29 @@ async function approveChargeRequest(requestId) {
         barberName:request.barberName || barber.name || "Barbero",
         chairId:request.chairId,
         chairName:request.chairName,
+
         serviceId:request.serviceId,
         serviceName:request.serviceName,
-        servicePrice:Number(request.servicePrice ?? (Number(request.price||0)-Number(request.productTotal||0))),
+        servicePrice,
+
         products:Array.isArray(request.products) ? request.products : [],
-        productTotal:Number(request.productTotal || 0),
+        productTotal,
+
         payment,
         total,
-        commission,
+
+        // Mantener commission por compatibilidad con reportes antiguos:
+        commission:serviceCommission,
+
+        serviceCommission,
+        productCommission,
+        serviceBarberAmount,
+        productBarberAmount,
         barberAmount,
+        serviceShopAmount,
+        productShopAmount,
         shopAmount,
+
         note:request.note || "",
         createdBy:auth.currentUser.uid,
         source:"barber_request",
@@ -707,8 +743,13 @@ async function approveChargeRequest(requestId) {
       transaction.update(requestRef, {
         status:"approved",
         payment,
-        commission,
+        serviceCommission,
+        productCommission,
+        serviceBarberAmount,
+        productBarberAmount,
         barberAmount,
+        serviceShopAmount,
+        productShopAmount,
         shopAmount,
         saleId:saleRef.id,
         approvedBy:auth.currentUser.uid,
@@ -716,7 +757,7 @@ async function approveChargeRequest(requestId) {
       });
     });
 
-    toast("Trabajo y cobro confirmados. La comisión fue acreditada automáticamente.");
+    toast("Cobro confirmado. Las comisiones de servicio y productos fueron calculadas por separado.");
   } catch (err) {
     console.error(err);
     toast(firebaseErrorMessage(err, err?.message || "No se pudo aprobar el cobro."));
@@ -835,8 +876,13 @@ function renderBarbers() {
       <span class="card-kicker">USUARIO BARBERO</span>
       <h3>${escapeHtml(b.name)}</h3>
       <div class="card-meta">${active
-        ? `Comisión configurada: ${Number(b.commission ?? 50)}%`
+        ? `Comisiones configuradas por separado`
         : "Acceso suspendido temporalmente"}</div>
+
+      <div class="barber-commission-pills">
+        <div><span>Servicios</span><strong>${Number(b.commission ?? 50)}%</strong></div>
+        <div><span>Productos</span><strong>${Number(b.productCommission ?? 0)}%</strong></div>
+      </div>
 
       <div class="credential">
         <span>Usuario</span>
@@ -854,6 +900,10 @@ function renderBarbers() {
           <strong>${money(pay)}</strong>
         </div>
       </div>
+
+      <button class="barber-edit-commission-btn"
+        data-edit-commission="${b.id}"
+        type="button">⚙ Editar comisiones</button>
 
       ${active ? `
         <div class="barber-account-status status-active-box">
@@ -893,6 +943,51 @@ function renderBarbers() {
       )
     )
   );
+
+  document.querySelectorAll("[data-edit-commission]").forEach(btn =>
+    btn.addEventListener("click", () => openCommissionEditor(btn.dataset.editCommission))
+  );
+}
+
+
+function openCommissionEditor(barberId) {
+  const barber = state.barbers.find(b => b.id === barberId);
+  if (!barber) return;
+
+  $("commissionBarberId").value = barber.id;
+  $("commissionBarberName").textContent = barber.name || "Barbero";
+  $("editServiceCommission").value = Number(barber.commission ?? 50);
+  $("editProductCommission").value = Number(barber.productCommission ?? 0);
+  openModal("commissionModal");
+}
+
+async function saveBarberCommissions(e) {
+  e.preventDefault();
+
+  const barberId = $("commissionBarberId").value;
+  const serviceCommission = Number($("editServiceCommission").value);
+  const productCommission = Number($("editProductCommission").value);
+
+  if (!barberId) return;
+  if (serviceCommission < 0 || serviceCommission > 100) {
+    return toast("La comisión de servicios debe estar entre 0 y 100%.");
+  }
+  if (productCommission < 0 || productCommission > 100) {
+    return toast("La comisión de productos debe estar entre 0 y 100%.");
+  }
+
+  try {
+    await updateDoc(doc(db, "users", barberId), {
+      commission:serviceCommission,
+      productCommission,
+      updatedAt:serverTimestamp()
+    });
+    closeModal("commissionModal");
+    toast("Comisiones actualizadas.");
+  } catch (err) {
+    console.error(err);
+    toast(firebaseErrorMessage(err, "No se pudieron actualizar las comisiones."));
+  }
 }
 
 async function createBarber(e) {
@@ -903,11 +998,13 @@ async function createBarber(e) {
   const password = $("barberPassword").value;
   const password2 = $("barberPassword2").value;
   const commission = Number($("barberCommission").value);
+  const productCommission = Number($("barberProductCommission").value);
 
   if (!/^[a-z0-9._-]{3,30}$/.test(username)) return toast("El usuario debe tener mínimo 3 caracteres, sin espacios.");
   if (password.length < 6) return toast("La contraseña debe tener mínimo 6 caracteres.");
   if (password !== password2) return toast("Las contraseñas no coinciden.");
-  if (commission < 0 || commission > 100) return toast("La comisión debe estar entre 0 y 100%.");
+  if (commission < 0 || commission > 100) return toast("La comisión de servicios debe estar entre 0 y 100%.");
+  if (productCommission < 0 || productCommission > 100) return toast("La comisión de productos debe estar entre 0 y 100%.");
 
   let secondaryApp = null;
   try {
@@ -928,6 +1025,7 @@ async function createBarber(e) {
       username,
       emailAlias:usernameToEmail(username),
       commission,
+      productCommission,
       active:true,
       createdAt:serverTimestamp(),
       createdBy:auth.currentUser.uid
@@ -946,6 +1044,7 @@ async function createBarber(e) {
     closeModal("barberModal");
     e.target.reset();
     $("barberCommission").value = 50;
+    $("barberProductCommission").value = 0;
     toast(`Usuario ${username} creado correctamente.`);
   } catch (err) {
     console.error(err);
@@ -1387,21 +1486,32 @@ function renderBarberProductCart() {
 
 function renderBarberChargePreview() {
   if (currentRole !== "barber") return;
+
   const service = state.services.find(s => s.id === $("barberChargeService").value);
   const chair = state.chairs.find(c => c.id === $("barberChargeChair").value);
   const servicePrice = Math.max(0, Number($("barberChargePrice").value || 0));
   const productsTotal = barberProductSubtotal();
   const total = servicePrice + productsTotal;
   const payment = $("barberChargePayment").value || "Efectivo";
-  const commission = Number(currentBarber?.commission ?? 50);
-  const barberAmount = total * commission / 100;
+
+  const serviceCommission = Number(currentBarber?.commission ?? 50);
+  const productCommission = Number(currentBarber?.productCommission ?? 0);
+
+  const serviceBarberAmount = servicePrice * serviceCommission / 100;
+  const productBarberAmount = productsTotal * productCommission / 100;
+  const barberAmount = serviceBarberAmount + productBarberAmount;
   const shopAmount = total - barberAmount;
 
   $("barberChargeServicePreview").textContent = service?.name || "Selecciona un servicio";
   $("barberChargeChairPreview").textContent = chair?.name || "Selecciona un puesto";
   $("barberChargeTotalPreview").textContent = money(total);
   $("barberChargePaymentPreview").textContent = payment;
-  $("barberChargeCommissionPreview").textContent = `${commission}%`;
+
+  $("barberChargeServiceCommissionPreview").textContent = `${serviceCommission}%`;
+  $("barberChargeProductCommissionPreview").textContent = `${productCommission}%`;
+  $("barberChargeServicePayPreview").textContent = money(serviceBarberAmount);
+  $("barberChargeProductPayPreview").textContent = money(productBarberAmount);
+
   $("barberChargeBarberPreview").textContent = money(barberAmount);
   $("barberChargeShopPreview").textContent = money(shopAmount);
 
@@ -1451,7 +1561,8 @@ async function submitBarberChargeRequest(e) {
       productTotal,
       price:total,
       payment,
-      commissionPreview:Number(currentBarber.commission ?? 50),
+      serviceCommissionPreview:Number(currentBarber.commission ?? 50),
+      productCommissionPreview:Number(currentBarber.productCommission ?? 0),
       note,
       status:"pending",
       requestedAt:serverTimestamp(),
@@ -1548,7 +1659,7 @@ function renderBarberPortal() {
 
   const recent = [...mine].sort((a,b)=>jsDate(b.date)-jsDate(a.date)).slice(0,8);
   $("mySales").innerHTML = recent.length ? recent.map(s => `
-    <div class="list-row"><div><div class="item-title">${escapeHtml(s.serviceName)}</div><div class="item-meta">${fmtDateTime(s.date)} · Venta ${money(s.total)}</div></div><div class="amount">${money(s.barberAmount)}</div></div>
+    <div class="list-row"><div><div class="item-title">${escapeHtml(s.serviceName)}</div><div class="item-meta">${fmtDateTime(s.date)} · Venta ${money(s.total)} · Servicio ${money(s.serviceBarberAmount ?? s.barberAmount)}${Number(s.productTotal||0)>0 ? ` · Productos ${money(s.productBarberAmount||0)}` : ""}</div></div><div class="amount">${money(s.barberAmount)}</div></div>
   `).join("") : `<div class="empty">Aún no tienes servicios registrados.</div>`;
 }
 
@@ -2093,7 +2204,7 @@ async function exportExcelReport() {
       properties:{tabColor:{argb:COLORS.dark}}
     });
     setTitle(salesWs, `Detalle completo de cobros · ${monthLabel(selectedMonth)}`, "Movimientos individuales registrados durante el mes.", 9);
-    ["Fecha","Barbero","Puesto","Servicio","Productos","Método","Total cobrado","Comisión %","Saldo barbero","Ingreso barbería"]
+    ["Fecha","Barbero","Puesto","Servicio","Productos","Método","Total cobrado","Comisión servicio %","Comisión productos %","Ganancia servicio","Ganancia productos","Saldo barbero","Ingreso barbería"]
       .forEach((h,i)=>salesWs.getCell(6,i+1).value=h);
     styleHeader(salesWs.getRow(6));
 
@@ -2107,18 +2218,22 @@ async function exportExcelReport() {
       salesWs.getCell(row,5).value=Array.isArray(s.products) ? s.products.map(p => `${p.qty}x ${p.name}`).join(", ") : "";
       salesWs.getCell(row,6).value=s.payment || "";
       salesWs.getCell(row,7).value=Number(s.total||0);
-      salesWs.getCell(row,8).value=Number(s.commission||0)/100;
+      salesWs.getCell(row,8).value=Number(s.serviceCommission ?? s.commission ?? 0)/100;
       salesWs.getCell(row,8).numFmt=pctFmt;
-      salesWs.getCell(row,9).value=Number(s.barberAmount||0);
-      salesWs.getCell(row,10).value=Number(s.shopAmount||0);
+      salesWs.getCell(row,9).value=Number(s.productCommission ?? 0)/100;
+      salesWs.getCell(row,9).numFmt=pctFmt;
+      salesWs.getCell(row,10).value=Number(s.serviceBarberAmount ?? s.barberAmount ?? 0);
+      salesWs.getCell(row,11).value=Number(s.productBarberAmount ?? 0);
+      salesWs.getCell(row,12).value=Number(s.barberAmount||0);
+      salesWs.getCell(row,13).value=Number(s.shopAmount||0);
     });
-    styleDataRows(salesWs,7,6+monthSales.length,[7,9,10]);
+    styleDataRows(salesWs,7,6+monthSales.length,[7,10,11,12,13]);
     salesWs.columns=[
       {width:21},{width:26},{width:18},{width:26},{width:34},
       {width:18},{width:18},{width:15},{width:18},{width:20}
     ];
     salesWs.views=[{state:"frozen",ySplit:6}];
-    salesWs.autoFilter={from:"A6",to:"J6"};
+    salesWs.autoFilter={from:"A6",to:"M6"};
 
     // Highlight total rows on summary
     const finalSummaryRow = barberHeader + barberMonthly.length + 2;

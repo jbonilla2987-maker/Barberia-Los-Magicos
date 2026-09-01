@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260901-products">
+  <link rel="stylesheet" href="./styles.css?v=20260901-split-commissions">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -393,9 +393,21 @@
               <small id="barberChargePaymentPreview">Efectivo</small>
             </div>
 
+            <div class="preview-commission-split">
+              <div>
+                <span>Comisión servicio</span>
+                <strong id="barberChargeServiceCommissionPreview">0%</strong>
+                <small id="barberChargeServicePayPreview">USD 0.00</small>
+              </div>
+              <div>
+                <span>Comisión productos</span>
+                <strong id="barberChargeProductCommissionPreview">0%</strong>
+                <small id="barberChargeProductPayPreview">USD 0.00</small>
+              </div>
+            </div>
+
             <div class="preview-money-grid">
-              <div><span>Tu comisión</span><strong id="barberChargeCommissionPreview">0%</strong></div>
-              <div class="preview-gold"><span>Tu saldo estimado</span><strong id="barberChargeBarberPreview">USD 0.00</strong></div>
+              <div class="preview-gold"><span>Tu saldo total</span><strong id="barberChargeBarberPreview">USD 0.00</strong></div>
               <div><span>Barbería</span><strong id="barberChargeShopPreview">USD 0.00</strong></div>
             </div>
 
@@ -518,9 +530,37 @@
         <label>Usuario<input id="barberUsername" required minlength="3" placeholder="Ej. carlos"></label>
         <label>Contraseña<input id="barberPassword" type="password" required minlength="6" placeholder="Mínimo 6 caracteres"></label>
         <label>Confirmar contraseña<input id="barberPassword2" type="password" required minlength="6" placeholder="Repite la contraseña"></label>
-        <label>Comisión (%)<input id="barberCommission" type="number" min="0" max="100" step="0.01" value="50" required></label>
-        <div></div>
+        <label>Comisión servicios (%)
+          <input id="barberCommission" type="number" min="0" max="100" step="0.01" value="50" required>
+        </label>
+        <label>Comisión productos (%)
+          <input id="barberProductCommission" type="number" min="0" max="100" step="0.01" value="0" required>
+        </label>
         <button class="primary-btn wide" type="submit">Crear usuario</button>
+      </form>
+    </div>
+  </div>
+
+
+  <div class="modal-backdrop" id="commissionModal">
+    <div class="modal small">
+      <button class="modal-close" data-close="commissionModal" type="button">×</button>
+      <p class="eyebrow">COMISIONES</p>
+      <h2>Configurar comisiones</h2>
+      <p class="modal-copy" id="commissionBarberName">Barbero</p>
+      <form id="commissionForm" class="form-stack">
+        <input id="commissionBarberId" type="hidden">
+        <label>Comisión por servicios (%)
+          <input id="editServiceCommission" type="number" min="0" max="100" step="0.01" required>
+        </label>
+        <label>Comisión por productos (%)
+          <input id="editProductCommission" type="number" min="0" max="100" step="0.01" required>
+        </label>
+        <div class="commission-explain">
+          <div><span>SERVICIO</span><strong>Se calcula solo sobre el precio del servicio.</strong></div>
+          <div><span>PRODUCTOS</span><strong>Se calcula solo sobre el subtotal de productos.</strong></div>
+        </div>
+        <button class="primary-btn" type="submit">Guardar comisiones</button>
       </form>
     </div>
   </div>
