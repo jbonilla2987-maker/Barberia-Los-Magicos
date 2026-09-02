@@ -2201,6 +2201,8 @@ function renderBarberPortal() {
     const day = dt.toLocaleDateString("es-PA", {day:"2-digit",month:"short"});
     const servicePay = Number(s.serviceBarberAmount ?? s.barberAmount ?? 0);
     const productPay = Number(s.productBarberAmount || 0);
+    const shopPay = Number(s.shopAmount || 0);
+    const totalCharged = Number(s.total || (servicePay + productPay + shopPay) || 0);
     const productsCount = Array.isArray(s.products)
       ? s.products.reduce((sum,p)=>sum+Number(p.qty||0),0)
       : 0;
@@ -2213,24 +2215,28 @@ function renderBarberPortal() {
         </div>
 
         <div class="service-movement-main">
-          <div class="service-movement-title-row">
-            <div>
-              <span class="service-movement-number">#${String(index+1).padStart(2,"0")}</span>
+          <div class="service-movement-top">
+            <div class="service-movement-title-wrap">
+              <div class="service-movement-title-row">
+                <span class="service-movement-number">#${String(index+1).padStart(2,"0")}</span>
+                <span class="service-credit-status">ACREDITADO</span>
+              </div>
               <h4>${escapeHtml(s.serviceName || "Servicio")}</h4>
+              <p class="service-movement-meta">${escapeHtml(s.payment || "—")} · ${productsCount ? `${productsCount} producto${productsCount===1?"":"s"}` : "Sin productos"}</p>
             </div>
-            <span class="service-credit-status">ACREDITADO</span>
+
+            <div class="service-movement-earned">
+              <span>PARA TI</span>
+              <strong>${money(s.barberAmount)}</strong>
+            </div>
           </div>
 
           <div class="service-movement-details">
-            <div><span>Servicios</span><strong>${money(servicePay)}</strong></div>
-            <div><span>Productos</span><strong>${money(productPay)}</strong><small>${productsCount ? `${productsCount} producto${productsCount===1?"":"s"}` : "Sin productos"}</small></div>
-            <div><span>Método</span><strong>${escapeHtml(s.payment || "—")}</strong></div>
+            <div><span>Servicio</span><strong>${money(servicePay)}</strong></div>
+            <div><span>Productos</span><strong>${money(productPay)}</strong><small>${productsCount ? `${productsCount} vendido${productsCount===1?"":"s"}` : "Sin productos"}</small></div>
+            <div><span>Barbería</span><strong>${money(shopPay)}</strong></div>
+            <div><span>Total cobrado</span><strong>${money(totalCharged)}</strong></div>
           </div>
-        </div>
-
-        <div class="service-movement-earned">
-          <span>PARA TI</span>
-          <strong>${money(s.barberAmount)}</strong>
         </div>
       </article>`;
   }).join("") : `
