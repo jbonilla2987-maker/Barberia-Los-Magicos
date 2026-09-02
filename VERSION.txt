@@ -1,0 +1,8 @@
+BARBERÍA LOS MÁGICOS
+Versión: 1.0 PRODUCCIÓN
+Fecha de congelación: 2026-09-01
+Proyecto Firebase: barberialosmagicos
+Hosting actual: GitHub Pages
+
+Esta versión queda congelada como respaldo de producción.
+Realizar cambios futuros primero en una copia de prueba.
