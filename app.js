@@ -266,6 +266,7 @@ function wireStaticUI() {
   bind("saleForm", "submit", saveSale);
   bind("barberForm", "submit", createBarber);
   bind("commissionForm", "submit", saveBarberCommissions);
+  bind("barberChairForm", "submit", saveBarberFixedChair);
   bind("serviceForm", "submit", createService);
   bind("productForm", "submit", createProduct);
   bind("clientBookingForm", "submit", createAppointment);
@@ -533,6 +534,7 @@ function renderAdminAll() {
   renderServices();
   renderProducts();
   renderReports();
+  hydrateBarberChairSelectors();
 }
 
 function renderSelectors() {
@@ -916,11 +918,12 @@ async function saveBarberFixedChair(e) {
 
   try {
     const batch = writeBatch(db);
-    batch.update(doc(db, "users", barberId), {
+    batch.set(doc(db, "users", barberId), {
       chairId:chair.id,
       chairName:chair.name,
       updatedAt:serverTimestamp()
-    });
+    }, { merge:true });
+
     batch.set(doc(db, "publicBarbers", barberId), {
       name:barber.name || "Barbero",
       active:barber.active !== false,
@@ -934,7 +937,7 @@ async function saveBarberFixedChair(e) {
     toast(`${barber.name} ahora tiene ${chair.name} como puesto fijo.`);
   } catch (err) {
     console.error(err);
-    toast(firebaseErrorMessage(err, "No se pudo cambiar el puesto del barbero."));
+    toast(firebaseErrorMessage(err, `No se pudo asignar el puesto. ${err?.code || ""}`));
   }
 }
 
