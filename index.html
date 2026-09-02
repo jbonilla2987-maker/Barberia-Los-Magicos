@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260902-chair-barber-total">
+  <link rel="stylesheet" href="./styles.css?v=20260902-dashboard-day-v1">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -67,7 +67,10 @@
           <input id="adminEmail" type="email" autocomplete="username" placeholder="correo@ejemplo.com" required>
         </label>
         <label>Contraseña
-          <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Contraseña" required>
+          <div class="password-input-wrap">
+            <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Contraseña" required>
+            <button class="password-eye" data-password-target="adminPassword" type="button" aria-label="Mostrar contraseña">👁</button>
+          </div>
         </label>
         <button class="primary-btn" type="submit">Entrar al panel</button>
       </form>
@@ -85,7 +88,10 @@
           <input id="barberUsernameLogin" autocomplete="username" placeholder="Ej. carlos" required>
         </label>
         <label>Contraseña
-          <input id="barberPasswordLogin" type="password" autocomplete="current-password" placeholder="Contraseña" required>
+          <div class="password-input-wrap">
+            <input id="barberPasswordLogin" type="password" autocomplete="current-password" placeholder="Contraseña" required>
+            <button class="password-eye" data-password-target="barberPasswordLogin" type="button" aria-label="Mostrar contraseña">👁</button>
+          </div>
         </label>
         <button class="primary-btn" type="submit">Ingresar</button>
       </form>
@@ -127,13 +133,33 @@
           <article class="stat-card"><div class="stat-top"><span>Ventas de hoy</span><i>$</i></div><strong id="statSales">$0.00</strong><small id="statSalesCount">0 servicios</small></article>
           <article class="stat-card"><div class="stat-top"><span>Pago a barberos</span><i>✂</i></div><strong id="statBarbers">$0.00</strong><small>Comisiones del día</small></article>
           <article class="stat-card gold-card"><div class="stat-top"><span>Ingreso barbería</span><i>◆</i></div><strong id="statShop">$0.00</strong><small>Participación de la barbería</small></article>
-          <article class="stat-card"><div class="stat-top"><span>Citas de hoy</span><i>◷</i></div><strong id="statAppointments">0</strong><small id="statAppointmentsMeta">0 pendientes</small></article>
+          <article class="stat-card clickable-stat" id="todayAppointmentsCard" role="button" tabindex="0"><div class="stat-top"><span>Citas de hoy</span><i>◷</i></div><strong id="statAppointments">0</strong><small id="statAppointmentsMeta">0 pendientes · Ver detalle</small></article>
         </div>
 
         <div class="dashboard-grid">
-          <article class="panel"><div class="panel-head"><div><p class="eyebrow">ACTIVIDAD</p><h3>Últimos cobros</h3></div><button class="ghost-btn" data-go="sales" type="button">Ver todos</button></div><div id="recentSales" class="list"></div></article>
-          <article class="panel"><div class="panel-head"><div><p class="eyebrow">AGENDA</p><h3>Próximas citas</h3></div><button class="ghost-btn" data-go="appointments" type="button">Gestionar</button></div><div id="upcomingAppointments" class="list"></div></article>
+          <article class="panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">ACTIVIDAD</p><h3>Últimos 5 cobros</h3></div>
+              <button class="ghost-btn" data-go="sales" type="button">Ver todos</button>
+            </div>
+            <div id="recentSales" class="list"></div>
+          </article>
+          <article class="panel dashboard-today-appts">
+            <div class="panel-head">
+              <div><p class="eyebrow">AGENDA DE HOY</p><h3>Citas del día</h3></div>
+              <button class="ghost-btn" id="openTodayAppointmentsBtn" type="button">Ver citas de hoy</button>
+            </div>
+            <div id="upcomingAppointments" class="list"></div>
+          </article>
         </div>
+
+        <section class="dashboard-chair-section">
+          <div class="report-section-title dashboard-chair-title">
+            <div><p class="eyebrow">PUESTOS · HOY</p><h3>Producción diaria por puesto</h3></div>
+            <p>Barbero asignado, total generado y distribución del día.</p>
+          </div>
+          <div id="dashboardChairCards" class="dashboard-chair-grid"></div>
+        </section>
       </section>
 
       <section class="view" id="view-sales">
@@ -159,7 +185,7 @@
       </section>
 
       <section class="view" id="view-appointments">
-        <div class="section-head"><div><p class="eyebrow">AGENDA</p><h2>Citas</h2><p>Reservas creadas por clientes y su estado.</p></div></div>
+        <div class="section-head"><div><p class="eyebrow">AGENDA</p><h2>Citas</h2><p>Reservas creadas por clientes y su estado.</p></div><button class="primary-btn" id="appointmentsTodayBtn" type="button">Ver citas de hoy</button></div>
         <div class="filter-row"><select id="appointmentFilter"><option value="all">Todas</option><option value="pending">Pendientes</option><option value="confirmed">Confirmadas</option><option value="completed">Completadas</option><option value="cancelled">Canceladas</option></select></div>
         <div id="appointmentCards" class="appointment-grid"></div>
       </section>
@@ -432,11 +458,11 @@
       </article>
 
       <div class="stats-grid barber-money-grid">
-        <article class="stat-card"><span>Venta de hoy</span><strong id="myTodayGross">$0.00</strong><small id="myTodayCount">0 servicios</small></article>
-        <article class="stat-card gold-card"><span>Mi saldo de hoy</span><strong id="myTodayPay">$0.00</strong><small>Comisión ganada hoy</small></article>
-        <article class="stat-card"><span>Venta del mes</span><strong id="myMonthGross">$0.00</strong><small id="myMonthCount">0 servicios este mes</small></article>
-        <article class="stat-card gold-card"><span>Mi saldo del mes</span><strong id="myMonthPay">$0.00</strong><small>Comisión acumulada del mes</small></article>
-        <article class="stat-card"><span>Total histórico</span><strong id="myAllPay">$0.00</strong><small>Comisión desde el inicio</small></article>
+        <article class="stat-card gold-card"><span>Mi saldo de hoy</span><strong id="myTodayGross">$0.00</strong><small id="myTodayCount">0 servicios</small></article>
+        <article class="stat-card"><span>Servicios · hoy</span><strong id="myTodayPay">$0.00</strong><small>Mi comisión por servicios</small></article>
+        <article class="stat-card"><span>Productos · hoy</span><strong id="myMonthGross">$0.00</strong><small>Mi comisión por productos</small></article>
+        <article class="stat-card gold-card"><span>Mi saldo del mes</span><strong id="myMonthPay">$0.00</strong><small id="myMonthCount">Comisión acumulada del mes</small></article>
+        <article class="stat-card"><span>Total histórico</span><strong id="myAllPay">$0.00</strong><small>Solo mis comisiones</small></article>
         <article class="stat-card"><span>Citas de hoy</span><strong id="myTodayAppointments">0</strong><small>Agenda personal</small></article>
       </div>
       <article class="panel barber-daily-panel">
@@ -446,7 +472,7 @@
         </div>
         <div class="table-wrap">
           <table class="premium-report-table">
-            <thead><tr><th>Fecha</th><th>Servicios</th><th>Venta</th><th>Mi saldo</th></tr></thead>
+            <thead><tr><th>Fecha</th><th>Servicios</th><th>Comisión servicios</th><th>Comisión productos</th><th>Mi saldo</th></tr></thead>
             <tbody id="myDailyBalances"></tbody>
           </table>
         </div>
@@ -465,7 +491,7 @@
       <span></span>
     </header>
     <main class="booking-main">
-      <section class="booking-intro"><p class="eyebrow">RESERVA ONLINE</p><h1>Tu próximo corte empieza <span>aquí.</span></h1><p>Escoge servicio, barbero, fecha y hora.</p></section>
+      <section class="booking-intro"><p class="eyebrow">RESERVA ONLINE</p><h1>Tu próximo corte empieza <span>aquí.</span></h1><p>Escoge servicio, fecha y hora. Puedes elegir un barbero o reservar sin preferencia.</p></section>
       <div class="booking-layout">
         <form id="clientBookingForm" class="booking-card">
           <div class="step-title"><span>01</span><div><strong>Tus datos</strong><small>Para identificar tu reserva</small></div></div>
@@ -512,6 +538,34 @@
     </main>
   </section>
 
+  <div class="modal-backdrop" id="todayAppointmentsModal">
+    <div class="modal dashboard-submodal">
+      <button class="modal-close" data-close="todayAppointmentsModal" type="button">×</button>
+      <div class="submodal-heading">
+        <div><p class="eyebrow">AGENDA DE HOY</p><h2>Citas del día</h2><p class="modal-copy" id="todayAppointmentsDateLabel"></p></div>
+        <div class="submodal-count"><span>TOTAL</span><strong id="todayAppointmentsModalCount">0</strong></div>
+      </div>
+      <div id="todayAppointmentsModalList" class="today-appt-list"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="chairDayDetailModal">
+    <div class="modal dashboard-submodal chair-detail-modal">
+      <button class="modal-close" data-close="chairDayDetailModal" type="button">×</button>
+      <div class="submodal-heading">
+        <div><p class="eyebrow">DETALLE DEL DÍA</p><h2 id="chairDayDetailTitle">Puesto</h2><p class="modal-copy" id="chairDayDetailSubtitle"></p></div>
+        <div class="chair-detail-total"><span>TOTAL HOY</span><strong id="chairDayDetailTotal">USD 0.00</strong></div>
+      </div>
+      <div id="chairDayDetailSummary" class="chair-detail-summary"></div>
+      <div class="table-wrap">
+        <table class="premium-report-table chair-day-table">
+          <thead><tr><th>Hora</th><th>Servicio</th><th>Barbero</th><th>Método</th><th>Total</th><th>Barbero</th><th>Barbería</th></tr></thead>
+          <tbody id="chairDayDetailRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="saleModal">
     <div class="modal">
       <button class="modal-close" data-close="saleModal" type="button">×</button>
@@ -535,8 +589,18 @@
       <form id="barberForm" class="form-grid">
         <label>Nombre<input id="barberName" required placeholder="Nombre completo"></label>
         <label>Usuario<input id="barberUsername" required minlength="3" placeholder="Ej. carlos"></label>
-        <label>Contraseña<input id="barberPassword" type="password" required minlength="6" placeholder="Mínimo 6 caracteres"></label>
-        <label>Confirmar contraseña<input id="barberPassword2" type="password" required minlength="6" placeholder="Repite la contraseña"></label>
+        <label>Contraseña
+          <div class="password-input-wrap">
+            <input id="barberPassword" type="password" required minlength="6" placeholder="Mínimo 6 caracteres">
+            <button class="password-eye" data-password-target="barberPassword" type="button" aria-label="Mostrar contraseña">👁</button>
+          </div>
+        </label>
+        <label>Confirmar contraseña
+          <div class="password-input-wrap">
+            <input id="barberPassword2" type="password" required minlength="6" placeholder="Repite la contraseña">
+            <button class="password-eye" data-password-target="barberPassword2" type="button" aria-label="Mostrar contraseña">👁</button>
+          </div>
+        </label>
         <label>Comisión servicios (%)
           <input id="barberCommission" type="number" min="0" max="100" step="0.01" value="50" required>
         </label>
@@ -630,6 +694,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260902-chair-barber-total"></script>
+  <script type="module" src="./app.js?v=20260902-dashboard-day-v1"></script>
 </body>
 </html>

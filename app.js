@@ -52,6 +52,7 @@ let db;
 let currentRole = null;
 let currentBarber = null;
 let currentAdmin = null;
+const ANY_BARBER = "__ANY__";
 let booking = { serviceId: null, barberId: null };
 let barberProductCart = [];
 let unsubscribers = [];
@@ -243,6 +244,24 @@ function wireStaticUI() {
   document.querySelectorAll("[data-date-offset]").forEach(btn =>
     btn.addEventListener("click", () => setClientDateOffset(Number(btn.dataset.dateOffset || 0)))
   );
+
+  document.querySelectorAll("[data-password-target]").forEach(btn =>
+    btn.addEventListener("click", () => {
+      const input = $(btn.dataset.passwordTarget);
+      if (!input) return;
+      const showing = input.type === "text";
+      input.type = showing ? "password" : "text";
+      btn.classList.toggle("showing", !showing);
+      btn.setAttribute("aria-label", showing ? "Mostrar contraseña" : "Ocultar contraseña");
+    })
+  );
+
+  bind("openTodayAppointmentsBtn", "click", openTodayAppointmentsModal);
+  bind("appointmentsTodayBtn", "click", openTodayAppointmentsModal);
+  bind("todayAppointmentsCard", "click", openTodayAppointmentsModal);
+  bind("todayAppointmentsCard", "keydown", e => {
+    if (e.key === "Enter" || e.key === " ") openTodayAppointmentsModal();
+  });
   $("reportMonth").value = monthKey(new Date());
   bind("reportMonth", "change", renderReports);
   bind("printReportBtn", "click", () => window.print());
@@ -571,17 +590,128 @@ function renderDashboard() {
   $("statShop").textContent = money(ds.reduce((a,s)=>a+Number(s.shopAmount||0),0));
   $("statSalesCount").textContent = `${ds.length} servicio${ds.length===1?"":"s"}`;
   $("statAppointments").textContent = da.length;
-  $("statAppointmentsMeta").textContent = `${da.filter(a=>a.status==="pending").length} pendientes`;
+  $("statAppointmentsMeta").textContent = `${da.filter(a=>a.status==="pending").length} pendientes · Ver detalle`;
 
-  const recent = [...state.sales].sort((a,b)=>jsDate(b.date)-jsDate(a.date)).slice(0,6);
+  // Solo los cinco últimos cobros.
+  const recent = [...state.sales]
+    .sort((a,b)=>jsDate(b.date)-jsDate(a.date))
+    .slice(0,5);
+
   $("recentSales").innerHTML = recent.length ? recent.map(s => `
-    <div class="list-row"><div><div class="item-title">${escapeHtml(s.serviceName)}</div><div class="item-meta">${escapeHtml(s.barberName)} · ${fmtDateTime(s.date)}</div></div><div class="amount">${money(s.total)}</div></div>
+    <div class="list-row">
+      <div>
+        <div class="item-title">${escapeHtml(s.serviceName)}</div>
+        <div class="item-meta">${escapeHtml(s.barberName)} · ${fmtDateTime(s.date)}</div>
+      </div>
+      <div class="amount">${money(s.total)}</div>
+    </div>
   `).join("") : `<div class="empty">Aún no hay cobros.</div>`;
 
-  const upcoming = state.appointments.filter(a => !["cancelled","completed"].includes(a.status) && a.date >= isoDay()).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).slice(0,6);
-  $("upcomingAppointments").innerHTML = upcoming.length ? upcoming.map(a => `
-    <div class="list-row"><div><div class="item-title">${escapeHtml(a.clientName)} · ${escapeHtml(a.serviceName)}</div><div class="item-meta">${fmtDateOnly(a.date)} ${a.time} · ${escapeHtml(a.barberName)}</div></div><span class="status ${a.status}">${statusLabel(a.status)}</span></div>
-  `).join("") : `<div class="empty">No hay próximas citas.</div>`;
+  // Vista compacta de citas de hoy; el detalle abre en subventana.
+  const todayRows = [...da]
+    .sort((a,b)=>(a.time||"").localeCompare(b.time||""))
+    .slice(0,4);
+
+  $("upcomingAppointments").innerHTML = todayRows.length ? todayRows.map(a => `
+    <button class="list-row dashboard-appt-row" type="button" data-open-today-appts>
+      <div>
+        <div class="item-title">${a.time} · ${escapeHtml(a.clientName)}</div>
+        <div class="item-meta">${escapeHtml(a.serviceName)} · ${escapeHtml(a.barberName || "Por asignar")}</div>
+      </div>
+      <span class="status ${a.status}">${statusLabel(a.status)}</span>
+    </button>
+  `).join("") : `<div class="empty">No hay citas para hoy.</div>`;
+
+  document.querySelectorAll("[data-open-today-appts]").forEach(btn =>
+    btn.addEventListener("click", openTodayAppointmentsModal)
+  );
+
+  renderDashboardChairCards(ds);
+  renderTodayAppointmentsModal();
+}
+
+function renderDashboardChairCards(todaySales = state.sales.filter(s => todayIso(s.date))) {
+  const node = $("dashboardChairCards");
+  if (!node) return;
+
+  node.innerHTML = state.chairs.map((chair,index) => {
+    const sales = todaySales.filter(s => s.chairId === chair.id);
+    const total = sales.reduce((a,s)=>a+Number(s.total||0),0);
+    const barberPay = sales.reduce((a,s)=>a+Number(s.barberAmount||0),0);
+    const shopPay = sales.reduce((a,s)=>a+Number(s.shopAmount||0),0);
+    const assigned = state.barbers.filter(b => b.chairId === chair.id && b.active !== false);
+
+    return `
+      <article class="dashboard-chair-card">
+        <div class="dashboard-chair-top">
+          <div>
+            <span class="card-kicker">PUESTO ${String(index+1).padStart(2,"0")}</span>
+            <h4>${escapeHtml(chair.name)}</h4>
+          </div>
+          <div class="dashboard-chair-total"><span>GENERADO HOY</span><strong>${money(total)}</strong></div>
+        </div>
+
+        <div class="dashboard-chair-barber ${assigned.length ? "" : "empty-barber"}">
+          <span class="dashboard-chair-avatar">${assigned.length ? escapeHtml((assigned[0].name||"B").charAt(0).toUpperCase()) : "—"}</span>
+          <div>
+            <small>BARBERO ASIGNADO</small>
+            <strong>${assigned.length ? assigned.map(b=>escapeHtml(b.name)).join(", ") : "Sin barbero asignado"}</strong>
+          </div>
+        </div>
+
+        <div class="dashboard-chair-money">
+          <div><span>Barbero</span><strong>${money(barberPay)}</strong></div>
+          <div><span>Barbería</span><strong>${money(shopPay)}</strong></div>
+          <div><span>Servicios</span><strong>${sales.length}</strong></div>
+        </div>
+
+        <button class="chair-detail-btn" type="button" data-chair-day-detail="${chair.id}">
+          Ver detalle del día →
+        </button>
+      </article>`;
+  }).join("");
+
+  document.querySelectorAll("[data-chair-day-detail]").forEach(btn =>
+    btn.addEventListener("click", () => openChairDayDetail(btn.dataset.chairDayDetail))
+  );
+}
+
+function openChairDayDetail(chairId) {
+  const chair = state.chairs.find(c => c.id === chairId);
+  if (!chair) return;
+
+  const rows = state.sales
+    .filter(s => s.chairId === chairId && todayIso(s.date))
+    .sort((a,b)=>jsDate(b.date)-jsDate(a.date));
+
+  const assigned = state.barbers.filter(b => b.chairId === chairId);
+  const total = rows.reduce((a,s)=>a+Number(s.total||0),0);
+  const barberPay = rows.reduce((a,s)=>a+Number(s.barberAmount||0),0);
+  const shopPay = rows.reduce((a,s)=>a+Number(s.shopAmount||0),0);
+
+  $("chairDayDetailTitle").textContent = chair.name;
+  $("chairDayDetailSubtitle").textContent = `${assigned.length ? assigned.map(b=>b.name).join(", ") : "Sin barbero asignado"} · ${new Date().toLocaleDateString("es-PA",{weekday:"long",day:"2-digit",month:"long"})}`;
+  $("chairDayDetailTotal").textContent = money(total);
+
+  $("chairDayDetailSummary").innerHTML = `
+    <div><span>Servicios</span><strong>${rows.length}</strong></div>
+    <div><span>Pago barbero</span><strong>${money(barberPay)}</strong></div>
+    <div><span>Ingreso barbería</span><strong>${money(shopPay)}</strong></div>
+  `;
+
+  $("chairDayDetailRows").innerHTML = rows.length ? rows.map(s => `
+    <tr>
+      <td>${jsDate(s.date).toLocaleTimeString("es-PA",{hour:"2-digit",minute:"2-digit"})}</td>
+      <td>${escapeHtml(s.serviceName || "Servicio")}</td>
+      <td>${escapeHtml(s.barberName || "")}</td>
+      <td>${escapeHtml(s.payment || "")}</td>
+      <td><b>${money(s.total)}</b></td>
+      <td class="money-positive">${money(s.barberAmount)}</td>
+      <td>${money(s.shopAmount)}</td>
+    </tr>
+  `).join("") : `<tr><td colspan="7" class="empty">Este puesto todavía no tiene movimientos hoy.</td></tr>`;
+
+  openModal("chairDayDetailModal");
 }
 
 function renderSales() {
@@ -829,16 +959,192 @@ async function saveSale(e) {
   }
 }
 
+
+function appointmentNeedsBarber(a) {
+  return !a.barberId || a.barberId === "unassigned" || a.needsAssignment === true;
+}
+
+function barberIsFreeForAppointment(barberId, appointment) {
+  const targetSlotId = slotId(barberId, appointment.date, appointment.time);
+  return !state.bookedSlots.some(s =>
+    s.id === targetSlotId &&
+    s.status !== "cancelled" &&
+    s.id !== appointment.slotId
+  );
+}
+
+function assignmentOptionsForAppointment(appointment) {
+  const available = state.barbers.filter(b =>
+    b.active !== false && barberIsFreeForAppointment(b.id, appointment)
+  );
+  return `<option value="">Selecciona barbero...</option>` +
+    available.map(b => `<option value="${b.id}">${escapeHtml(b.name)} · ${escapeHtml(b.chairName || "Puesto sin asignar")}</option>`).join("");
+}
+
+function openTodayAppointmentsModal() {
+  renderTodayAppointmentsModal();
+  openModal("todayAppointmentsModal");
+}
+
+function renderTodayAppointmentsModal() {
+  const node = $("todayAppointmentsModalList");
+  if (!node || currentRole !== "admin") return;
+
+  const today = state.appointments
+    .filter(a => a.date === isoDay())
+    .sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+
+  $("todayAppointmentsModalCount").textContent = today.length;
+  $("todayAppointmentsDateLabel").textContent = new Date().toLocaleDateString("es-PA", {
+    weekday:"long", day:"2-digit", month:"long", year:"numeric"
+  });
+
+  node.innerHTML = today.length ? today.map(a => `
+    <article class="today-appt-card ${appointmentNeedsBarber(a) ? "needs-barber" : ""}">
+      <div class="today-appt-time">
+        <span>HORA</span><strong>${escapeHtml(a.time || "")}</strong>
+      </div>
+      <div class="today-appt-main">
+        <div class="today-appt-client">
+          <span class="status ${a.status}">${statusLabel(a.status)}</span>
+          <h4>${escapeHtml(a.clientName || "Cliente")}</h4>
+          <small>${escapeHtml(a.clientPhone || "")} · ${escapeHtml(a.serviceName || "")}</small>
+        </div>
+
+        ${appointmentNeedsBarber(a) ? `
+          <div class="today-assign-box">
+            <div><span>BARBERO</span><strong>Por asignar</strong></div>
+            <select data-assign-select="${a.id}">${assignmentOptionsForAppointment(a)}</select>
+            <button class="primary-btn tiny-assignment-btn" type="button" data-assign-appt="${a.id}">Asignar</button>
+          </div>
+        ` : `
+          <div class="today-assigned-barber">
+            <span>BARBERO</span>
+            <strong>${escapeHtml(a.barberName || "Barbero")}</strong>
+          </div>
+        `}
+      </div>
+      <div class="today-appt-actions">
+        ${a.status==="pending" ? `<button class="tiny-btn" data-today-appt="${a.id}" data-status="confirmed" type="button">Confirmar</button>` : ""}
+        ${a.status==="confirmed" ? `<button class="tiny-btn" data-today-appt="${a.id}" data-status="completed" type="button">Completar</button>` : ""}
+        ${!["completed","cancelled"].includes(a.status) ? `<button class="tiny-btn danger" data-today-appt="${a.id}" data-status="cancelled" type="button">Cancelar</button>` : ""}
+      </div>
+    </article>
+  `).join("") : `<div class="cash-empty"><span>◷</span><strong>Agenda libre</strong><p>No hay citas registradas para hoy.</p></div>`;
+
+  document.querySelectorAll("[data-assign-appt]").forEach(btn =>
+    btn.addEventListener("click", () => {
+      const select = document.querySelector(`[data-assign-select="${btn.dataset.assignAppt}"]`);
+      assignBarberToAppointment(btn.dataset.assignAppt, select?.value || "");
+    })
+  );
+
+  document.querySelectorAll("[data-today-appt]").forEach(btn =>
+    btn.addEventListener("click", () => changeAppointment(btn.dataset.todayAppt, btn.dataset.status))
+  );
+}
+
+async function assignBarberToAppointment(appointmentId, barberId) {
+  if (!barberId) return toast("Selecciona un barbero.");
+
+  const barber = state.barbers.find(b => b.id === barberId && b.active !== false);
+  const localAppt = state.appointments.find(a => a.id === appointmentId);
+  if (!barber || !localAppt) return toast("No se encontró la cita o el barbero.");
+
+  const newSlotId = slotId(barber.id, localAppt.date, localAppt.time);
+  const newSlotRef = doc(db, "bookedSlots", newSlotId);
+  const apptRef = doc(db, "appointments", appointmentId);
+
+  try {
+    await runTransaction(db, async tx => {
+      const apptSnap = await tx.get(apptRef);
+      if (!apptSnap.exists()) throw new Error("Cita no encontrada");
+
+      const appt = apptSnap.data();
+      const oldSlotId = appt.slotId || appointmentId;
+      const oldSlotRef = doc(db, "bookedSlots", oldSlotId);
+
+      const newSlotSnap = await tx.get(newSlotRef);
+      if (
+        newSlotId !== oldSlotId &&
+        newSlotSnap.exists() &&
+        newSlotSnap.data().status !== "cancelled"
+      ) {
+        throw new Error("BARBER_BUSY");
+      }
+
+      if (newSlotId !== oldSlotId) {
+        tx.delete(oldSlotRef);
+        tx.set(newSlotRef, {
+          slotId:newSlotId,
+          ownerUid:appt.ownerUid,
+          barberId:barber.id,
+          date:appt.date,
+          time:appt.time,
+          status:appt.status || "pending",
+          createdAt:appt.createdAt || serverTimestamp(),
+          updatedAt:serverTimestamp()
+        });
+      } else {
+        tx.set(newSlotRef, {
+          barberId:barber.id,
+          status:appt.status || "pending",
+          updatedAt:serverTimestamp()
+        }, { merge:true });
+      }
+
+      tx.update(apptRef, {
+        barberId:barber.id,
+        barberName:barber.name,
+        reservedBarberId:barber.id,
+        slotId:newSlotId,
+        needsAssignment:false,
+        assignedBy:auth.currentUser.uid,
+        assignedAt:serverTimestamp(),
+        updatedAt:serverTimestamp()
+      });
+    });
+
+    toast(`${barber.name} fue asignado a la cita.`);
+  } catch (err) {
+    console.error(err);
+    if (String(err?.message).includes("BARBER_BUSY")) {
+      return toast("Ese barbero ya tiene una cita en ese horario. Selecciona otro.");
+    }
+    toast(firebaseErrorMessage(err, "No se pudo asignar el barbero."));
+  }
+}
+
 function renderAppointments() {
   let rows = [...state.appointments].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
   const filter = $("appointmentFilter").value;
   if (filter !== "all") rows = rows.filter(x => x.status === filter);
 
   $("appointmentCards").innerHTML = rows.length ? rows.map(a => `
-    <article class="appointment-card">
-      <div class="appointment-top"><div><span class="status ${a.status}">${statusLabel(a.status)}</span><h3>${escapeHtml(a.clientName)}</h3><div class="card-meta">${escapeHtml(a.clientPhone)} · ${escapeHtml(a.serviceName)}</div></div><div class="appt-time">${a.time}</div></div>
-      <div class="card-meta" style="margin-top:12px">${fmtDateOnly(a.date)} · ${escapeHtml(a.barberName)} · ${money(a.servicePrice)}</div>
+    <article class="appointment-card ${appointmentNeedsBarber(a) ? "appointment-needs-barber" : ""}">
+      <div class="appointment-top">
+        <div>
+          <span class="status ${a.status}">${statusLabel(a.status)}</span>
+          <h3>${escapeHtml(a.clientName)}</h3>
+          <div class="card-meta">${escapeHtml(a.clientPhone)} · ${escapeHtml(a.serviceName)}</div>
+        </div>
+        <div class="appt-time">${a.time}</div>
+      </div>
+
+      <div class="card-meta" style="margin-top:12px">
+        ${fmtDateOnly(a.date)} · ${appointmentNeedsBarber(a) ? "Por asignar" : escapeHtml(a.barberName)} · ${money(a.servicePrice)}
+      </div>
+
+      ${appointmentNeedsBarber(a) ? `
+        <div class="appointment-assign-admin">
+          <div><span>BARBERO PENDIENTE</span><strong>Asigna un barbero disponible</strong></div>
+          <select data-full-assign-select="${a.id}">${assignmentOptionsForAppointment(a)}</select>
+          <button class="primary-btn tiny-assignment-btn" data-full-assign="${a.id}" type="button">Asignar barbero</button>
+        </div>
+      ` : ""}
+
       ${a.note ? `<div class="credential">Nota: ${escapeHtml(a.note)}</div>` : ""}
+
       <div class="appt-actions">
         ${a.status==="pending" ? `<button class="tiny-btn" data-appt="${a.id}" data-status="confirmed" type="button">Confirmar</button>` : ""}
         ${a.status==="confirmed" ? `<button class="tiny-btn" data-appt="${a.id}" data-status="completed" type="button">Completar</button>` : ""}
@@ -850,13 +1156,24 @@ function renderAppointments() {
   document.querySelectorAll("[data-appt][data-status]").forEach(btn =>
     btn.addEventListener("click", () => changeAppointment(btn.dataset.appt, btn.dataset.status))
   );
+
+  document.querySelectorAll("[data-full-assign]").forEach(btn =>
+    btn.addEventListener("click", () => {
+      const select = document.querySelector(`[data-full-assign-select="${btn.dataset.fullAssign}"]`);
+      assignBarberToAppointment(btn.dataset.fullAssign, select?.value || "");
+    })
+  );
 }
 
 async function changeAppointment(id, status) {
   try {
+    const appointment = state.appointments.find(a => a.id === id)
+      || state.clientAppointments?.find?.(a => a.id === id);
+    const bookedSlotId = appointment?.slotId || id;
+
     const batch = writeBatch(db);
     batch.update(doc(db, "appointments", id), { status, updatedAt:serverTimestamp() });
-    batch.update(doc(db, "bookedSlots", id), { status, updatedAt:serverTimestamp() });
+    batch.update(doc(db, "bookedSlots", bookedSlotId), { status, updatedAt:serverTimestamp() });
     await batch.commit();
     toast(`Cita ${statusLabel(status).toLowerCase()}.`);
   } catch (err) {
@@ -1800,46 +2117,67 @@ function renderBarberPortal() {
 
   $("barberWelcomeName").textContent = (currentBarber.name || "Barbero").split(" ")[0];
   $("barberWelcomeChair").textContent = currentBarber.chairName || "Puesto sin asignar";
-  $("myCommission").textContent = `${Number(currentBarber.commission ?? 50)}%`;
+  $("myCommission").textContent = `Svc ${Number(currentBarber.commission ?? 50)}% · Prod ${Number(currentBarber.productCommission ?? 0)}%`;
 
   const mine = state.sales.filter(s => s.barberId === currentBarber.id);
   const today = mine.filter(s => todayIso(s.date));
   const currentMonth = monthKey(new Date());
   const thisMonth = mine.filter(s => monthKey(s.date) === currentMonth);
 
-  $("myTodayGross").textContent = money(today.reduce((a,s)=>a+Number(s.total||0),0));
-  $("myTodayPay").textContent = money(today.reduce((a,s)=>a+Number(s.barberAmount||0),0));
-  $("myMonthGross").textContent = money(thisMonth.reduce((a,s)=>a+Number(s.total||0),0));
-  $("myMonthPay").textContent = money(thisMonth.reduce((a,s)=>a+Number(s.barberAmount||0),0));
+  const todayServicePay = today.reduce((a,s)=>a+Number(s.serviceBarberAmount ?? s.barberAmount ?? 0),0);
+  const todayProductPay = today.reduce((a,s)=>a+Number(s.productBarberAmount || 0),0);
+  const todayPay = today.reduce((a,s)=>a+Number(s.barberAmount||0),0);
+  const monthPay = thisMonth.reduce((a,s)=>a+Number(s.barberAmount||0),0);
+
+  $("myTodayGross").textContent = money(todayPay);
+  $("myTodayPay").textContent = money(todayServicePay);
+  $("myMonthGross").textContent = money(todayProductPay);
+  $("myMonthPay").textContent = money(monthPay);
   $("myAllPay").textContent = money(mine.reduce((a,s)=>a+Number(s.barberAmount||0),0));
-  $("myTodayCount").textContent = `${today.length} servicios`;
+  $("myTodayCount").textContent = `${today.length} servicio${today.length===1?"":"s"} hoy`;
   $("myMonthCount").textContent = `${thisMonth.length} servicio${thisMonth.length===1?"":"s"} este mes`;
   $("myMonthLabel").textContent = monthLabel(currentMonth);
 
   const daily = new Map();
   thisMonth.forEach(sale => {
     const date = dayKey(sale.date);
-    if (!daily.has(date)) daily.set(date, {date, count:0, gross:0, pay:0});
+    if (!daily.has(date)) daily.set(date, {date, count:0, servicePay:0, productPay:0, pay:0});
     const row = daily.get(date);
     row.count += 1;
-    row.gross += Number(sale.total || 0);
+    row.servicePay += Number(sale.serviceBarberAmount ?? sale.barberAmount ?? 0);
+    row.productPay += Number(sale.productBarberAmount || 0);
     row.pay += Number(sale.barberAmount || 0);
   });
+
   const dailyRows = [...daily.values()].sort((a,b)=>b.date.localeCompare(a.date));
   $("myDailyBalances").innerHTML = dailyRows.length ? dailyRows.map(r => `
     <tr>
       <td>${shortDayLabel(r.date)}</td>
       <td>${r.count}</td>
-      <td>${money(r.gross)}</td>
+      <td>${money(r.servicePay)}</td>
+      <td>${money(r.productPay)}</td>
       <td class="money-positive"><b>${money(r.pay)}</b></td>
     </tr>
-  `).join("") : `<tr><td colspan="4" class="empty">Aún no tienes servicios este mes.</td></tr>`;
+  `).join("") : `<tr><td colspan="5" class="empty">Aún no tienes servicios este mes.</td></tr>`;
 
-  const appts = state.appointments.filter(a => !["cancelled","completed"].includes(a.status) && a.date >= isoDay()).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const appts = state.appointments
+    .filter(a => !["cancelled","completed"].includes(a.status) && a.date >= isoDay())
+    .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+
   $("myTodayAppointments").textContent = appts.filter(a=>a.date===isoDay()).length;
 
   $("myAppointments").innerHTML = appts.length ? appts.map(a => `
-    <div class="list-row"><div><div class="item-title">${escapeHtml(a.clientName)} · ${escapeHtml(a.serviceName)}</div><div class="item-meta">${fmtDateOnly(a.date)} ${a.time} · ${escapeHtml(a.clientPhone)}</div></div><div class="barber-appt-actions"><span class="status ${a.status}">${statusLabel(a.status)}</span>${a.status==="pending"?`<button class="tiny-btn" data-myappt="${a.id}" data-status="confirmed" type="button">Confirmar</button>`:""}${a.status==="confirmed"?`<button class="tiny-btn" data-myappt="${a.id}" data-status="completed" type="button">Completar</button>`:""}</div></div>
+    <div class="list-row">
+      <div>
+        <div class="item-title">${escapeHtml(a.clientName)} · ${escapeHtml(a.serviceName)}</div>
+        <div class="item-meta">${fmtDateOnly(a.date)} ${a.time} · ${escapeHtml(a.clientPhone)}</div>
+      </div>
+      <div class="barber-appt-actions">
+        <span class="status ${a.status}">${statusLabel(a.status)}</span>
+        ${a.status==="pending"?`<button class="tiny-btn" data-myappt="${a.id}" data-status="confirmed" type="button">Confirmar</button>`:""}
+        ${a.status==="confirmed"?`<button class="tiny-btn" data-myappt="${a.id}" data-status="completed" type="button">Completar</button>`:""}
+      </div>
+    </div>
   `).join("") : `<div class="empty">No tienes citas próximas.</div>`;
 
   document.querySelectorAll("[data-myappt]").forEach(btn =>
@@ -1848,7 +2186,13 @@ function renderBarberPortal() {
 
   const recent = [...mine].sort((a,b)=>jsDate(b.date)-jsDate(a.date)).slice(0,8);
   $("mySales").innerHTML = recent.length ? recent.map(s => `
-    <div class="list-row"><div><div class="item-title">${escapeHtml(s.serviceName)}</div><div class="item-meta">${fmtDateTime(s.date)} · Venta ${money(s.total)} · Servicio ${money(s.serviceBarberAmount ?? s.barberAmount)}${Number(s.productTotal||0)>0 ? ` · Productos ${money(s.productBarberAmount||0)}` : ""}</div></div><div class="amount">${money(s.barberAmount)}</div></div>
+    <div class="list-row">
+      <div>
+        <div class="item-title">${escapeHtml(s.serviceName)}</div>
+        <div class="item-meta">${fmtDateTime(s.date)} · Mi servicio ${money(s.serviceBarberAmount ?? s.barberAmount)}${Number(s.productBarberAmount||0)>0 ? ` · Mis productos ${money(s.productBarberAmount||0)}` : ""}</div>
+      </div>
+      <div class="amount">${money(s.barberAmount)}</div>
+    </div>
   `).join("") : `<div class="empty">Aún no tienes servicios registrados.</div>`;
 }
 
@@ -1856,12 +2200,26 @@ function renderClientOptions() {
   if (currentRole !== "client") return;
 
   $("clientServiceOptions").innerHTML = state.services.length ? state.services.map(s => `
-    <button type="button" class="choice service-choice ${booking.serviceId===s.id?"selected":""}" data-service="${s.id}"><strong>${escapeHtml(s.name)}</strong><small>${money(s.price)} · ${Number(s.duration||30)} min</small></button>
+    <button type="button" class="choice service-choice ${booking.serviceId===s.id?"selected":""}" data-service="${s.id}">
+      <strong>${escapeHtml(s.name)}</strong>
+      <small>${money(s.price)} · ${Number(s.duration||30)} min</small>
+    </button>
   `).join("") : `<div class="empty">No hay servicios disponibles.</div>`;
 
-  $("clientBarberOptions").innerHTML = state.barbers.length ? state.barbers.map(b => `
-    <button type="button" class="choice barber-choice ${booking.barberId===b.id?"selected":""}" data-barber="${b.id}"><strong>${escapeHtml(b.name)}</strong><small>Barbero disponible</small></button>
-  `).join("") : `<div class="empty">No hay barberos disponibles.</div>`;
+  const anyChoice = `
+    <button type="button" class="choice barber-choice any-barber-choice ${booking.barberId===ANY_BARBER?"selected":""}" data-barber="${ANY_BARBER}">
+      <strong>Sin preferencia</strong>
+      <small>El administrador asignará un barbero disponible</small>
+    </button>`;
+
+  $("clientBarberOptions").innerHTML = state.barbers.length
+    ? anyChoice + state.barbers.map(b => `
+        <button type="button" class="choice barber-choice ${booking.barberId===b.id?"selected":""}" data-barber="${b.id}">
+          <strong>${escapeHtml(b.name)}</strong>
+          <small>${escapeHtml(b.chairName || "Barbero disponible")}</small>
+        </button>
+      `).join("")
+    : `<div class="empty">No hay barberos disponibles.</div>`;
 
   document.querySelectorAll(".service-choice").forEach(btn =>
     btn.addEventListener("click", () => {
@@ -1918,6 +2276,21 @@ function updateSelectedDateSummary() {
   box.innerHTML = `<span>✓</span><div><b>${selected.toLocaleDateString("es-PA", {weekday:"long", day:"2-digit", month:"long", year:"numeric"})}</b><small>Ahora selecciona un barbero para consultar sus horas disponibles.</small></div>`;
 }
 
+function isSlotOccupiedForBarber(barberId, day, time) {
+  return state.bookedSlots.some(s =>
+    s.date === day &&
+    s.time === time &&
+    s.barberId === barberId &&
+    s.status !== "cancelled"
+  );
+}
+
+function availableBarbersForSlot(day, time) {
+  return state.barbers.filter(b =>
+    b.active !== false && !isSlotOccupiedForBarber(b.id, day, time)
+  );
+}
+
 function renderAvailableTimes() {
   if (currentRole !== "client") return;
 
@@ -1930,12 +2303,6 @@ function renderAvailableTimes() {
     return;
   }
 
-  const occupied = new Set(
-    state.bookedSlots
-      .filter(s => s.date === day && s.barberId === barberId && s.status !== "cancelled")
-      .map(s => s.time)
-  );
-
   const slots = [];
   const now = new Date();
   const isToday = day === isoDay(now);
@@ -1946,7 +2313,13 @@ function renderAvailableTimes() {
       const t = `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
       const slotMinutes = (h * 60) + m;
       const isPast = isToday && slotMinutes < minMinutesToday;
-      if (!occupied.has(t) && !isPast) slots.push(t);
+      if (isPast) continue;
+
+      const available = barberId === ANY_BARBER
+        ? availableBarbersForSlot(day, t).length > 0
+        : !isSlotOccupiedForBarber(barberId, day, t);
+
+      if (available) slots.push(t);
     }
   }
 
@@ -1965,70 +2338,97 @@ async function createAppointment(e) {
   if (!auth.currentUser?.isAnonymous) return toast("Vuelve al inicio y entra nuevamente como Cliente.");
 
   const service = state.services.find(s => s.id === booking.serviceId);
-  const barber = state.barbers.find(b => b.id === booking.barberId);
   const day = $("clientDate").value;
   const time = $("clientTime").value;
+  const wantsAny = booking.barberId === ANY_BARBER;
 
   if (!service) return toast("Selecciona un servicio.");
-  if (!barber) return toast("Selecciona un barbero.");
+  if (!booking.barberId) return toast("Selecciona un barbero o 'Sin preferencia'.");
   if (!day || !time) return toast("Selecciona fecha y hora.");
 
-  const id = slotId(barber.id, day, time);
-  const apptRef = doc(db, "appointments", id);
-  const slotRef = doc(db, "bookedSlots", id);
+  const candidates = wantsAny
+    ? availableBarbersForSlot(day, time)
+    : state.barbers.filter(b => b.id === booking.barberId);
 
-  try {
-    await runTransaction(db, async tx => {
-      const slotSnap = await tx.get(slotRef);
-      if (slotSnap.exists() && slotSnap.data().status !== "cancelled") {
-        throw new Error("SLOT_TAKEN");
-      }
-
-      const baseSlot = {
-        slotId:id,
-        ownerUid:auth.currentUser.uid,
-        barberId:barber.id,
-        date:day,
-        time,
-        status:"pending",
-        createdAt:serverTimestamp(),
-        updatedAt:serverTimestamp()
-      };
-
-      tx.set(slotRef, baseSlot);
-      tx.set(apptRef, {
-        ...baseSlot,
-        clientName:$("clientName").value.trim(),
-        clientPhone:$("clientPhone").value.trim(),
-        serviceId:service.id,
-        serviceName:service.name,
-        servicePrice:Number(service.price),
-        barberName:barber.name,
-        note:$("clientNote").value.trim()
-      });
-    });
-
-    e.target.reset();
-    booking = { serviceId:null, barberId:null };
-    $("clientDate").value = isoDay();
-    updateSelectedDateSummary();
-    renderClientOptions();
-    toast("¡Cita reservada! Pendiente de confirmación.");
-  } catch (err) {
-    console.error(err);
-    if (String(err?.message).includes("SLOT_TAKEN")) {
-      renderAvailableTimes();
-      return toast("Ese horario acaba de ser reservado. Elige otro.");
-    }
-    toast(firebaseErrorMessage(err, "No se pudo reservar la cita."));
+  if (!candidates.length) {
+    renderAvailableTimes();
+    return toast("No hay barberos disponibles en ese horario.");
   }
+
+  const apptRef = doc(collection(db, "appointments"));
+  let reserved = false;
+
+  for (const candidate of candidates) {
+    const id = slotId(candidate.id, day, time);
+    const slotRef = doc(db, "bookedSlots", id);
+
+    try {
+      await runTransaction(db, async tx => {
+        const slotSnap = await tx.get(slotRef);
+        if (slotSnap.exists() && slotSnap.data().status !== "cancelled") {
+          throw new Error("SLOT_TAKEN");
+        }
+
+        const baseSlot = {
+          slotId:id,
+          ownerUid:auth.currentUser.uid,
+          barberId:candidate.id,
+          date:day,
+          time,
+          status:"pending",
+          createdAt:serverTimestamp(),
+          updatedAt:serverTimestamp()
+        };
+
+        tx.set(slotRef, baseSlot);
+        tx.set(apptRef, {
+          ...baseSlot,
+          clientName:$("clientName").value.trim(),
+          clientPhone:$("clientPhone").value.trim(),
+          serviceId:service.id,
+          serviceName:service.name,
+          servicePrice:Number(service.price),
+
+          // Si el cliente no tiene preferencia, el puesto se reserva
+          // internamente para evitar sobreventa, pero el admin decide
+          // qué barbero quedará finalmente asignado.
+          barberId:wantsAny ? "unassigned" : candidate.id,
+          barberName:wantsAny ? "Por asignar" : candidate.name,
+          reservedBarberId:candidate.id,
+          needsAssignment:wantsAny,
+
+          note:$("clientNote").value.trim()
+        });
+      });
+
+      reserved = true;
+      break;
+    } catch (err) {
+      if (!String(err?.message).includes("SLOT_TAKEN")) throw err;
+    }
+  }
+
+  if (!reserved) {
+    renderAvailableTimes();
+    return toast("Ese horario acaba de llenarse. Elige otro.");
+  }
+
+  e.target.reset();
+  booking = { serviceId:null, barberId:null };
+  $("clientDate").value = isoDay();
+  updateSelectedDateSummary();
+  renderClientOptions();
+  toast(wantsAny
+    ? "¡Cita reservada! El administrador asignará tu barbero."
+    : "¡Cita reservada! Pendiente de confirmación."
+  );
 }
 
 function renderClientAppointments() {
   if (currentRole !== "client") return;
   const rows = [...state.clientAppointments].sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
   $("clientAppointments").innerHTML = rows.length ? rows.map(a => `
-    <div class="client-appt"><strong>${fmtDateOnly(a.date)} · ${a.time}</strong><small>${escapeHtml(a.serviceName)} con ${escapeHtml(a.barberName)} · ${statusLabel(a.status)}</small></div>
+    <div class="client-appt"><strong>${fmtDateOnly(a.date)} · ${a.time}</strong><small>${escapeHtml(a.serviceName)} · ${appointmentNeedsBarber(a) ? "Barbero por asignar" : `con ${escapeHtml(a.barberName)}`} · ${statusLabel(a.status)}</small></div>
   `).join("") : `<div class="empty">Aún no has creado citas desde este dispositivo.</div>`;
 }
 
