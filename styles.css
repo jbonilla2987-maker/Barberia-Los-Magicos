@@ -952,3 +952,176 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 .barber-welcome-chair span{
   font-size:12px;
 }
+
+
+/* =========================================================
+   PUESTOS - BARBERO ASIGNADO + TOTAL GENERADO
+   ========================================================= */
+.premium-chair-admin-card{
+  position:relative;
+  overflow:hidden;
+  padding:18px!important;
+}
+.premium-chair-admin-card::after{
+  content:"";
+  position:absolute;
+  width:150px;
+  height:150px;
+  border-radius:50%;
+  right:-70px;
+  top:-80px;
+  background:radial-gradient(circle,rgba(215,173,86,.11),rgba(215,173,86,0) 70%);
+  pointer-events:none;
+}
+.chair-card-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:16px;
+}
+.chair-card-head h3{
+  margin:8px 0 4px;
+}
+.chair-total-badge{
+  min-width:145px;
+  text-align:right;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(215,173,86,.18);
+  background:linear-gradient(135deg,rgba(215,173,86,.11),rgba(215,173,86,.035));
+  position:relative;
+  z-index:1;
+}
+.chair-total-badge span,
+.chair-total-badge strong{
+  display:block;
+}
+.chair-total-badge span{
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:1px;
+  color:var(--gold);
+  margin-bottom:5px;
+}
+.chair-total-badge strong{
+  font-size:20px;
+  line-height:1;
+  color:var(--gold2);
+  white-space:nowrap;
+}
+.chair-assigned-barbers{
+  margin-top:15px;
+}
+.chair-assigned-label{
+  display:block;
+  font-size:7px;
+  color:var(--muted);
+  letter-spacing:1.2px;
+  font-weight:900;
+  margin-bottom:7px;
+}
+.chair-barber-chip{
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) auto;
+  gap:10px;
+  align-items:center;
+  padding:10px;
+  margin-bottom:7px;
+  border-radius:13px;
+  border:1px solid rgba(114,215,167,.13);
+  background:rgba(114,215,167,.035);
+}
+.chair-barber-chip.inactive{
+  border-color:rgba(255,124,124,.13);
+  background:rgba(255,124,124,.03);
+}
+.chair-barber-avatar{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  color:var(--gold2);
+  font-weight:900;
+  background:rgba(215,173,86,.09);
+  border:1px solid rgba(215,173,86,.14);
+}
+.chair-barber-chip strong,
+.chair-barber-chip small{
+  display:block;
+}
+.chair-barber-chip strong{
+  font-size:10px;
+}
+.chair-barber-chip small{
+  color:var(--muted);
+  font-size:8px;
+  margin-top:3px;
+}
+.chair-barber-state{
+  padding:5px 7px;
+  border-radius:999px;
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.6px;
+}
+.chair-barber-state.active{
+  color:#8de5b8;
+  background:rgba(114,215,167,.08);
+  border:1px solid rgba(114,215,167,.14);
+}
+.chair-barber-state.inactive{
+  color:#ff9e9e;
+  background:rgba(255,124,124,.08);
+  border:1px solid rgba(255,124,124,.14);
+}
+.chair-no-barber{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding:11px;
+  border-radius:13px;
+  border:1px dashed #33333a;
+  color:var(--muted);
+}
+.chair-no-barber>span{
+  width:34px;
+  height:34px;
+  min-width:34px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:rgba(215,173,86,.06);
+  color:var(--gold2);
+}
+.chair-no-barber strong,
+.chair-no-barber small{
+  display:block;
+}
+.chair-no-barber strong{
+  color:#d0d0d5;
+  font-size:9px;
+}
+.chair-no-barber small{
+  font-size:8px;
+  margin-top:2px;
+}
+.chair-stats-grid{
+  margin-top:12px!important;
+}
+@media(max-width:720px){
+  .chair-card-head{
+    flex-direction:column;
+  }
+  .chair-total-badge{
+    width:100%;
+    text-align:left;
+  }
+  .chair-barber-chip{
+    grid-template-columns:38px minmax(0,1fr);
+  }
+  .chair-barber-state{
+    grid-column:2;
+    justify-self:start;
+  }
+}

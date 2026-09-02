@@ -1213,9 +1213,60 @@ async function toggleBarberStatus(uid, nextActive) {
 }
 
 function renderChairs() {
-  $("chairCards").innerHTML = state.chairs.map((c,i) => `
-    <article class="chair-card"><span class="card-kicker">PUESTO ${String(i+1).padStart(2,"0")}</span><h3>${escapeHtml(c.name)}</h3><div class="card-meta">${c.active===false?"Inactivo":"Activo y disponible"}</div><div class="card-numbers"><div class="mini-stat"><span>Servicios</span><strong>${state.sales.filter(s=>s.chairId===c.id).length}</strong></div><div class="mini-stat"><span>Estado</span><strong>${c.active===false?"Inactivo":"Activo"}</strong></div></div></article>
-  `).join("");
+  $("chairCards").innerHTML = state.chairs.map((c,i) => {
+    const chairSales = state.sales.filter(s => s.chairId === c.id);
+    const chairTotal = chairSales.reduce((sum,s) => sum + Number(s.total || 0), 0);
+    const assignedBarbers = state.barbers.filter(b => b.chairId === c.id);
+
+    return `
+    <article class="chair-card premium-chair-admin-card">
+      <div class="chair-card-head">
+        <div>
+          <span class="card-kicker">PUESTO ${String(i+1).padStart(2,"0")}</span>
+          <h3>${escapeHtml(c.name)}</h3>
+          <div class="card-meta">${c.active===false?"Inactivo":"Activo y disponible"}</div>
+        </div>
+
+        <div class="chair-total-badge">
+          <span>TOTAL GENERADO</span>
+          <strong>${money(chairTotal)}</strong>
+        </div>
+      </div>
+
+      <div class="chair-assigned-barbers">
+        <span class="chair-assigned-label">BARBERO ASIGNADO</span>
+        ${assignedBarbers.length ? assignedBarbers.map(b => `
+          <div class="chair-barber-chip ${b.active===false ? "inactive" : ""}">
+            <span class="chair-barber-avatar">${escapeHtml((b.name || "B").charAt(0).toUpperCase())}</span>
+            <div>
+              <strong>${escapeHtml(b.name || "Barbero")}</strong>
+              <small>${b.active===false ? "Usuario deshabilitado" : `Comisión servicios ${Number(b.commission ?? 50)}%`}</small>
+            </div>
+            <span class="chair-barber-state ${b.active===false ? "inactive" : "active"}">${b.active===false ? "INACTIVO" : "ACTIVO"}</span>
+          </div>
+        `).join("") : `
+          <div class="chair-no-barber">
+            <span>⌖</span>
+            <div>
+              <strong>Sin barbero asignado</strong>
+              <small>Asigna un barbero desde Usuarios / Barberos.</small>
+            </div>
+          </div>
+        `}
+      </div>
+
+      <div class="card-numbers chair-stats-grid">
+        <div class="mini-stat">
+          <span>Servicios</span>
+          <strong>${chairSales.length}</strong>
+        </div>
+        <div class="mini-stat">
+          <span>Estado</span>
+          <strong>${c.active===false?"Inactivo":"Activo"}</strong>
+        </div>
+      </div>
+    </article>`;
+  }).join("");
 }
 
 async function createChair() {
