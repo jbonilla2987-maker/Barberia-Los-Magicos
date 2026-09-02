@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260902-production-inventory-v1">
+  <link rel="stylesheet" href="./styles.css?v=20260902-production-final-v3">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -227,7 +227,10 @@
             <h2>Productos</h2>
             <p>Configura los productos que los barberos pueden agregar a sus cobros.</p>
           </div>
-          <button class="primary-btn" id="addProductBtn" type="button">+ Agregar producto</button>
+          <div class="product-page-actions">
+            <button class="product-sales-today-btn" id="productSalesTodayBtn" type="button">◷ Productos vendidos hoy</button>
+            <button class="primary-btn" id="addProductBtn" type="button">+ Agregar producto</button>
+          </div>
         </div>
         <div id="productCards" class="cards-grid"></div>
       </section>
@@ -730,6 +733,38 @@
 
 
 
+  <div class="modal-backdrop" id="productSalesTodayModal">
+    <div class="modal product-sales-day-modal">
+      <button class="modal-close" data-close="productSalesTodayModal" type="button">×</button>
+      <div class="product-sales-day-head">
+        <div>
+          <p class="eyebrow">VENTAS DE PRODUCTOS · HOY</p>
+          <h2>Productos vendidos del día</h2>
+          <p class="modal-copy" id="productSalesTodayDate"></p>
+        </div>
+        <div class="product-sales-day-total">
+          <span>TOTAL VENDIDO</span>
+          <strong id="productSalesTodayTotal">USD 0.00</strong>
+        </div>
+      </div>
+
+      <div class="product-sales-day-summary">
+        <div><span>Unidades</span><strong id="productSalesTodayUnits">0</strong></div>
+        <div><span>Productos distintos</span><strong id="productSalesTodayDistinct">0</strong></div>
+        <div><span>Cobros con productos</span><strong id="productSalesTodayTickets">0</strong></div>
+      </div>
+
+      <div class="product-sales-day-list-wrap">
+        <table class="product-sales-day-table">
+          <thead>
+            <tr><th>Hora</th><th>Producto</th><th>Barbero</th><th>Cantidad</th><th>P. unitario</th><th>Subtotal</th></tr>
+          </thead>
+          <tbody id="productSalesTodayRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="productStockModal">
     <div class="modal small">
       <button class="modal-close" data-close="productStockModal" type="button">×</button>
@@ -768,6 +803,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260902-production-inventory-v1"></script>
+  <script type="module" src="./app.js?v=20260902-production-final-v3"></script>
 </body>
 </html>

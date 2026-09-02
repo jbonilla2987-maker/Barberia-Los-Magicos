@@ -280,6 +280,7 @@ function wireStaticUI() {
   bind("addBarberBtn", "click", () => openModal("barberModal"));
   bind("addServiceBtn", "click", () => openModal("serviceModal"));
   bind("addProductBtn", "click", () => openModal("productModal"));
+  bind("productSalesTodayBtn", "click", openProductSalesTodayModal);
 
   bind("adminLoginForm", "submit", adminLogin);
   bind("barberLoginForm", "submit", barberLogin);
@@ -1705,6 +1706,69 @@ async function createService(e) {
     console.error(err);
     toast(firebaseErrorMessage(err, "No se pudo crear el servicio."));
   }
+}
+
+function openProductSalesTodayModal() {
+  renderProductSalesToday();
+  openModal("productSalesTodayModal");
+}
+
+function renderProductSalesToday() {
+  if (currentRole !== "admin") return;
+
+  const todaySales = state.sales
+    .filter(s => todayIso(s.date) && Array.isArray(s.products) && s.products.length)
+    .sort((a,b) => jsDate(b.date) - jsDate(a.date));
+
+  const lines = [];
+  todaySales.forEach(sale => {
+    sale.products.forEach(item => {
+      const qty = Math.max(0, Number(item.qty || 0));
+      if (!qty) return;
+      const unitPrice = Number(item.unitPrice ?? item.price ?? 0);
+      const subtotal = Number(item.subtotal ?? (unitPrice * qty));
+      lines.push({
+        saleId:sale.id,
+        date:sale.date,
+        name:item.name || "Producto",
+        productId:item.productId || "",
+        qty,
+        unitPrice,
+        subtotal,
+        barberName:sale.barberName || "—"
+      });
+    });
+  });
+
+  const total = lines.reduce((sum,x)=>sum+Number(x.subtotal||0),0);
+  const units = lines.reduce((sum,x)=>sum+Number(x.qty||0),0);
+  const distinct = new Set(lines.map(x => x.productId || x.name)).size;
+
+  $("productSalesTodayDate").textContent = new Date().toLocaleDateString("es-PA", {
+    weekday:"long", day:"2-digit", month:"long", year:"numeric"
+  });
+  $("productSalesTodayTotal").textContent = money(total);
+  $("productSalesTodayUnits").textContent = units;
+  $("productSalesTodayDistinct").textContent = distinct;
+  $("productSalesTodayTickets").textContent = todaySales.length;
+
+  $("productSalesTodayRows").innerHTML = lines.length ? lines.map(line => `
+    <tr>
+      <td><strong>${jsDate(line.date).toLocaleTimeString("es-PA",{hour:"2-digit",minute:"2-digit"})}</strong></td>
+      <td><span class="product-day-name">${escapeHtml(line.name)}</span></td>
+      <td>${escapeHtml(line.barberName)}</td>
+      <td><span class="product-day-qty">${line.qty}</span></td>
+      <td>${money(line.unitPrice)}</td>
+      <td class="product-day-subtotal"><strong>${money(line.subtotal)}</strong></td>
+    </tr>
+  `).join("") : `
+    <tr><td colspan="6">
+      <div class="product-day-empty">
+        <span>▦</span>
+        <strong>No se han vendido productos hoy</strong>
+        <small>Cuando se confirme un cobro con productos aparecerá aquí.</small>
+      </div>
+    </td></tr>`;
 }
 
 function renderProducts() {

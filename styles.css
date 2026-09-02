@@ -1968,3 +1968,224 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   justify-content:start;
 }
 .barber-profit-filter-row input[type="month"]{margin-top:7px;}
+
+/* =========================================================
+   PRODUCCIÓN FINAL 02-09-2026 · MODAL CITAS BARBERO
+   Evita que TOTAL se superponga con el botón cerrar.
+   ========================================================= */
+.barber-appts-modal{
+  padding-top:30px!important;
+}
+.barber-appts-modal .modal-close{
+  top:16px;
+  right:16px;
+  z-index:20;
+}
+.barber-appts-modal .submodal-heading{
+  padding-right:58px;
+  min-height:64px;
+  align-items:flex-start;
+}
+.barber-appts-modal .submodal-heading>div:first-child{
+  min-width:0;
+  flex:1 1 auto;
+}
+.barber-appts-modal .submodal-count{
+  flex:0 0 104px;
+  min-width:104px;
+  width:104px;
+  padding:10px 12px;
+  margin:0;
+  text-align:center;
+  align-self:flex-start;
+}
+.barber-appts-modal .submodal-count strong{
+  font-size:19px;
+  line-height:1;
+  margin-top:5px;
+}
+
+@media(max-width:780px){
+  .barber-appts-modal .submodal-heading{
+    padding-right:50px;
+    gap:12px;
+  }
+  .barber-appts-modal .submodal-count{
+    width:100%;
+    min-width:0;
+    flex-basis:auto;
+    text-align:left;
+  }
+}
+
+@media(max-width:520px){
+  .barber-appts-modal{
+    padding:22px 16px 18px!important;
+  }
+  .barber-appts-modal .modal-close{
+    top:12px;
+    right:12px;
+  }
+  .barber-appts-modal .submodal-heading{
+    padding-right:42px;
+  }
+}
+
+
+/* =========================================================
+   PRODUCTOS VENDIDOS HOY
+   ========================================================= */
+.product-page-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.product-sales-today-btn{
+  min-height:40px;
+  padding:0 15px;
+  border-radius:12px;
+  border:1px solid rgba(215,173,86,.22);
+  background:linear-gradient(135deg,rgba(215,173,86,.12),rgba(215,173,86,.045));
+  color:var(--gold2);
+  font-weight:900;
+  font-size:10px;
+  cursor:pointer;
+}
+.product-sales-today-btn:hover{
+  background:linear-gradient(135deg,rgba(215,173,86,.18),rgba(215,173,86,.07));
+  border-color:rgba(215,173,86,.32);
+}
+.product-sales-day-modal{
+  width:min(980px,94vw)!important;
+  max-width:980px!important;
+  padding:24px!important;
+}
+.product-sales-day-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  padding-right:42px;
+}
+.product-sales-day-total{
+  min-width:190px;
+  padding:13px 15px;
+  border-radius:15px;
+  text-align:right;
+  border:1px solid rgba(215,173,86,.18);
+  background:linear-gradient(135deg,rgba(215,173,86,.13),rgba(215,173,86,.045));
+}
+.product-sales-day-total span,
+.product-sales-day-total strong{display:block}
+.product-sales-day-total span{
+  font-size:7px;
+  color:var(--gold);
+  letter-spacing:1px;
+  font-weight:900;
+}
+.product-sales-day-total strong{
+  margin-top:5px;
+  font-size:22px;
+  line-height:1;
+  color:var(--gold2);
+  white-space:nowrap;
+}
+.product-sales-day-summary{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin:18px 0 14px;
+}
+.product-sales-day-summary>div{
+  padding:12px 13px;
+  border-radius:13px;
+  border:1px solid #2b2b31;
+  background:#17171a;
+}
+.product-sales-day-summary span,
+.product-sales-day-summary strong{display:block}
+.product-sales-day-summary span{
+  color:var(--muted);
+  font-size:8px;
+  text-transform:uppercase;
+  letter-spacing:.8px;
+}
+.product-sales-day-summary strong{
+  margin-top:4px;
+  font-size:18px;
+  color:#f2f2f4;
+}
+.product-sales-day-list-wrap{
+  max-height:55vh;
+  overflow:auto;
+  border:1px solid #2a2a30;
+  border-radius:15px;
+}
+.product-sales-day-table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:720px;
+}
+.product-sales-day-table th{
+  position:sticky;
+  top:0;
+  z-index:1;
+  padding:11px 12px;
+  background:#17171b;
+  color:var(--muted);
+  font-size:7px;
+  text-transform:uppercase;
+  letter-spacing:.8px;
+  text-align:left;
+  border-bottom:1px solid #2a2a30;
+}
+.product-sales-day-table td{
+  padding:12px;
+  font-size:10px;
+  border-bottom:1px solid #24242a;
+}
+.product-sales-day-table tr:last-child td{border-bottom:0}
+.product-day-name{font-weight:900;color:#f1f1f3}
+.product-day-qty{
+  display:inline-grid;
+  place-items:center;
+  min-width:28px;
+  height:26px;
+  padding:0 8px;
+  border-radius:8px;
+  background:rgba(215,173,86,.08);
+  border:1px solid rgba(215,173,86,.14);
+  color:var(--gold2);
+  font-weight:900;
+}
+.product-day-subtotal strong{color:var(--gold2)}
+.product-day-empty{
+  min-height:190px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  color:var(--muted);
+  text-align:center;
+}
+.product-day-empty>span{
+  width:42px;
+  height:42px;
+  border-radius:13px;
+  display:grid;
+  place-items:center;
+  color:var(--gold2);
+  background:rgba(215,173,86,.07);
+}
+.product-day-empty strong{color:#e5e5e8;font-size:11px}
+.product-day-empty small{font-size:9px}
+@media(max-width:700px){
+  .product-page-actions{width:100%;justify-content:flex-start}
+  .product-sales-today-btn,.product-page-actions .primary-btn{flex:1 1 180px}
+  .product-sales-day-head{flex-direction:column;padding-right:38px}
+  .product-sales-day-total{width:100%;text-align:left}
+  .product-sales-day-summary{grid-template-columns:1fr}
+}
