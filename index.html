@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260902-report-barber-filter">
+  <link rel="stylesheet" href="./styles.css?v=20260902-production-inventory-v1">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -187,8 +187,21 @@
 
       <section class="view" id="view-appointments">
         <div class="section-head"><div><p class="eyebrow">AGENDA</p><h2>Citas</h2><p>Reservas creadas por clientes y su estado.</p></div><button class="primary-btn" id="appointmentsTodayBtn" type="button">Ver citas de hoy</button></div>
-        <div class="filter-row"><select id="appointmentFilter"><option value="all">Todas</option><option value="pending">Pendientes</option><option value="confirmed">Confirmadas</option><option value="completed">Completadas</option><option value="cancelled">Canceladas</option></select></div>
+        <div class="filter-row"><select id="appointmentFilter"><option value="all">Todas activas</option><option value="pending">Pendientes</option><option value="confirmed">Confirmadas</option></select></div>
         <div id="appointmentCards" class="appointment-grid"></div>
+
+        <div class="report-section-title completed-appts-title">
+          <div><p class="eyebrow">HISTORIAL</p><h3>Citas completadas</h3></div>
+          <p>Las citas finalizadas se guardan aquí automáticamente.</p>
+        </div>
+        <article class="panel completed-appts-panel">
+          <div class="table-wrap">
+            <table class="premium-report-table completed-appts-table">
+              <thead><tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Servicio</th><th>Barbero</th><th>Importe</th></tr></thead>
+              <tbody id="completedAppointmentsRows"></tbody>
+            </table>
+          </div>
+        </article>
       </section>
 
       <section class="view" id="view-barbers">
@@ -231,7 +244,7 @@
               <input id="reportMonth" type="month">
             </label>
             <button class="ghost-btn" id="printReportBtn" type="button">Imprimir / PDF</button>
-            <button class="ghost-btn" id="barberProfitFilterBtn" type="button">Ganancias por barbero</button>
+            <button class="primary-btn barber-profit-launch" id="barberProfitFilterBtn" type="button"><span>★</span> Ganancias por barbero</button>
             <button class="primary-btn" id="exportExcelBtn" type="button">Exportar Excel</button>
           </div>
         </div>
@@ -584,6 +597,9 @@
       </div>
 
       <div class="barber-profit-filter-row">
+        <label>Mes
+          <input id="barberProfitMonth" type="month">
+        </label>
         <label>Barbero
           <select id="barberProfitSelect"></select>
         </label>
@@ -713,6 +729,23 @@
   </div>
 
 
+
+  <div class="modal-backdrop" id="productStockModal">
+    <div class="modal small">
+      <button class="modal-close" data-close="productStockModal" type="button">×</button>
+      <p class="eyebrow">INVENTARIO</p>
+      <h2>Ajustar existencia</h2>
+      <p class="modal-copy" id="productStockName">Producto</p>
+      <form id="productStockForm" class="form-stack">
+        <input id="productStockId" type="hidden">
+        <label>Cantidad disponible
+          <input id="productStockQty" type="number" min="0" step="1" required>
+        </label>
+        <button class="primary-btn" type="submit">Guardar existencia</button>
+      </form>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="productModal">
     <div class="modal small">
       <button class="modal-close" data-close="productModal" type="button">×</button>
@@ -726,12 +759,15 @@
         <label>Precio de venta
           <input id="productPrice" type="number" min="0.01" step="0.01" required placeholder="0.00">
         </label>
+        <label>Cantidad inicial
+          <input id="productStock" type="number" min="0" step="1" required value="0">
+        </label>
         <button class="primary-btn" type="submit">Guardar producto</button>
       </form>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260902-report-barber-filter"></script>
+  <script type="module" src="./app.js?v=20260902-production-inventory-v1"></script>
 </body>
 </html>

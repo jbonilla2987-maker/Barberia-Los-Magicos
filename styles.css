@@ -1905,3 +1905,66 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .barber-profit-kpis{grid-template-columns:1fr;}
   .barber-profit-filter-row{grid-template-columns:1fr;}
 }
+
+
+/* =========================================================
+   PRODUCCIÓN: CITAS / CATÁLOGO / INVENTARIO / GANANCIAS
+   ========================================================= */
+.completed-appts-title{margin-top:28px}
+.completed-appts-panel{padding:0!important;overflow:hidden}
+.completed-appts-table{min-width:720px}
+
+.catalog-compact-card{
+  position:relative;
+  min-height:125px;
+  padding:15px!important;
+  border-radius:17px;
+  border:1px solid #2c2c32;
+  background:linear-gradient(180deg,#17171a,#121214);
+}
+.catalog-compact-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.catalog-compact-card h3{margin:14px 0 4px;font-size:16px}
+.catalog-compact-card>small{color:var(--muted);font-size:9px}
+.catalog-price{font-size:17px;color:var(--gold2);white-space:nowrap}
+.service-compact-card{min-height:110px}
+
+.product-compact-card{min-height:175px}
+.product-stock-line{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:12px;padding:9px 10px;border-radius:11px;
+  border:1px solid #2c2c32;background:#1a1a1f
+}
+.product-stock-line span{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+.product-stock-line strong{font-size:15px;color:#f2f2f4}
+.product-stock-line.low-stock{border-color:rgba(245,178,73,.25);background:rgba(215,173,86,.055)}
+.product-stock-line.low-stock strong{color:var(--gold2)}
+.product-compact-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.stock-adjust-btn{
+  padding:9px;border-radius:10px;border:1px solid rgba(215,173,86,.18);
+  background:rgba(215,173,86,.055);color:var(--gold2);font-size:8px;font-weight:900
+}
+.product-compact-actions .product-toggle-btn{margin:0!important;padding:9px!important;font-size:8px!important}
+
+.barber-profit-launch{
+  border:1px solid rgba(255,218,126,.4)!important;
+  background:linear-gradient(135deg,#d9aa4a,#f0ca75)!important;
+  color:#0b0b0c!important;
+  box-shadow:0 8px 25px rgba(215,173,86,.18);
+  font-weight:950!important
+}
+.barber-profit-launch:hover{transform:translateY(-1px);box-shadow:0 11px 30px rgba(215,173,86,.27)}
+.barber-profit-launch span{font-size:12px;margin-right:5px}
+.barber-profit-filter-row{grid-template-columns:minmax(180px,.6fr) minmax(230px,1fr)!important}
+.barber-profit-filter-row input[type="month"]{width:100%}
+
+@media(max-width:720px){
+  .product-compact-actions{grid-template-columns:1fr}
+  .barber-profit-filter-row{grid-template-columns:1fr!important}
+}
+
+#view-services .cards-grid,
+#view-products .cards-grid{
+  grid-template-columns:repeat(auto-fit,minmax(220px,280px));
+  justify-content:start;
+}
+.barber-profit-filter-row input[type="month"]{margin-top:7px;}

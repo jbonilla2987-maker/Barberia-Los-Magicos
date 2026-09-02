@@ -295,13 +295,17 @@ function wireStaticUI() {
   bind("barberChairForm", "submit", saveBarberFixedChair);
   bind("serviceForm", "submit", createService);
   bind("productForm", "submit", createProduct);
+  bind("productStockForm", "submit", saveProductStock);
   bind("clientBookingForm", "submit", createAppointment);
   bind("addChairBtn", "click", createChair);
   bind("barberProfitFilterBtn", "click", () => {
+    const modalMonth = $("barberProfitMonth");
+    if (modalMonth) modalMonth.value = $("reportMonth")?.value || monthKey(new Date());
     renderBarberProfitFilter();
     openModal("barberProfitModal");
   });
   bind("barberProfitSelect", "change", renderBarberProfitFilter);
+  bind("barberProfitMonth", "change", renderBarberProfitFilter);
   bind("exportExcelBtn", "click", exportExcelReport);
 }
 
@@ -612,7 +616,7 @@ function syncSalePrice() {
 
 function renderDashboard() {
   const ds = state.sales.filter(s => todayIso(s.date));
-  const da = state.appointments.filter(a => a.date === isoDay());
+  const da = state.appointments.filter(a => a.date === isoDay() && !["completed","cancelled"].includes(a.status));
 
   $("statSales").textContent = money(ds.reduce((a,s)=>a+Number(s.total||0),0));
   $("statBarbers").textContent = money(ds.reduce((a,s)=>a+Number(s.barberAmount||0),0));
@@ -852,6 +856,21 @@ async function approveChargeRequest(requestId) {
       const barber = barberSnap.data();
       if (barber.active === false || barber.role !== "barber") throw new Error("Barbero inactivo");
 
+      const requestedProducts = Array.isArray(request.products) ? request.products : [];
+      const productStockUpdates = [];
+      for (const item of requestedProducts) {
+        const productRef = doc(db, "products", item.productId);
+        const productSnap = await transaction.get(productRef);
+        if (!productSnap.exists()) throw new Error(`Producto no encontrado: ${item.name || "Producto"}`);
+        const productData = productSnap.data();
+        const availableStock = Math.max(0, Number(productData.stock || 0));
+        const soldQty = Math.max(0, Number(item.qty || 0));
+        if (soldQty > availableStock) {
+          throw new Error(`STOCK:${productData.name || item.name || "Producto"}:${availableStock}`);
+        }
+        productStockUpdates.push({ ref:productRef, stock:availableStock - soldQty });
+      }
+
       const servicePrice = Number(
         request.servicePrice ??
         (Number(request.price || 0) - Number(request.productTotal || 0))
@@ -874,6 +893,10 @@ async function approveChargeRequest(requestId) {
       const serviceShopAmount = +(servicePrice - serviceBarberAmount).toFixed(2);
       const productShopAmount = +(productTotal - productBarberAmount).toFixed(2);
       const shopAmount = +(serviceShopAmount + productShopAmount).toFixed(2);
+
+      productStockUpdates.forEach(item => {
+        transaction.update(item.ref, { stock:item.stock, updatedAt:serverTimestamp() });
+      });
 
       transaction.set(saleRef, {
         date:serverTimestamp(),
@@ -930,6 +953,11 @@ async function approveChargeRequest(requestId) {
     toast("Cobro confirmado. Las comisiones de servicio y productos fueron calculadas por separado.");
   } catch (err) {
     console.error(err);
+    const msg = String(err?.message || "");
+    if (msg.startsWith("STOCK:")) {
+      const [,product,available] = msg.split(":");
+      return toast(`Stock insuficiente de ${product}. Disponible: ${available}.`);
+    }
     toast(firebaseErrorMessage(err, err?.message || "No se pudo aprobar el cobro."));
   }
 }
@@ -1021,7 +1049,7 @@ function renderTodayAppointmentsModal() {
   if (!node || currentRole !== "admin") return;
 
   const today = state.appointments
-    .filter(a => a.date === isoDay())
+    .filter(a => a.date === isoDay() && !["completed","cancelled"].includes(a.status))
     .sort((a,b)=>(a.time||"").localeCompare(b.time||""));
 
   $("todayAppointmentsModalCount").textContent = today.length;
@@ -1146,8 +1174,12 @@ async function assignBarberToAppointment(appointmentId, barberId) {
 }
 
 function renderAppointments() {
-  let rows = [...state.appointments].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
   const filter = $("appointmentFilter").value;
+
+  let rows = state.appointments
+    .filter(a => !["completed","cancelled"].includes(a.status))
+    .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+
   if (filter !== "all") rows = rows.filter(x => x.status === filter);
 
   $("appointmentCards").innerHTML = rows.length ? rows.map(a => `
@@ -1178,10 +1210,28 @@ function renderAppointments() {
       <div class="appt-actions">
         ${a.status==="pending" ? `<button class="tiny-btn" data-appt="${a.id}" data-status="confirmed" type="button">Confirmar</button>` : ""}
         ${a.status==="confirmed" ? `<button class="tiny-btn" data-appt="${a.id}" data-status="completed" type="button">Completar</button>` : ""}
-        ${!["completed","cancelled"].includes(a.status) ? `<button class="tiny-btn" data-appt="${a.id}" data-status="cancelled" type="button">Cancelar</button>` : ""}
+        <button class="tiny-btn danger" data-appt="${a.id}" data-status="cancelled" type="button">Cancelar</button>
       </div>
     </article>
-  `).join("") : `<div class="empty">No hay citas en esta categoría.</div>`;
+  `).join("") : `<div class="empty">No hay citas activas en esta categoría.</div>`;
+
+  const completed = state.appointments
+    .filter(a => a.status === "completed")
+    .sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+
+  const completedNode = $("completedAppointmentsRows");
+  if (completedNode) {
+    completedNode.innerHTML = completed.length ? completed.map(a => `
+      <tr>
+        <td>${fmtDateOnly(a.date)}</td>
+        <td><b>${escapeHtml(a.time || "")}</b></td>
+        <td>${escapeHtml(a.clientName || "Cliente")}</td>
+        <td>${escapeHtml(a.serviceName || "Servicio")}</td>
+        <td>${escapeHtml(a.barberName || "Barbero")}</td>
+        <td>${money(a.servicePrice || 0)}</td>
+      </tr>
+    `).join("") : `<tr><td colspan="6" class="empty">Todavía no hay citas completadas.</td></tr>`;
+  }
 
   document.querySelectorAll("[data-appt][data-status]").forEach(btn =>
     btn.addEventListener("click", () => changeAppointment(btn.dataset.appt, btn.dataset.status))
@@ -1202,6 +1252,15 @@ async function changeAppointment(id, status) {
     const bookedSlotId = appointment?.slotId || id;
 
     const batch = writeBatch(db);
+
+    if (status === "cancelled") {
+      batch.delete(doc(db, "appointments", id));
+      batch.delete(doc(db, "bookedSlots", bookedSlotId));
+      await batch.commit();
+      toast("Cita cancelada y eliminada del sistema.");
+      return;
+    }
+
     batch.update(doc(db, "appointments", id), { status, updatedAt:serverTimestamp() });
     batch.update(doc(db, "bookedSlots", bookedSlotId), { status, updatedAt:serverTimestamp() });
     await batch.commit();
@@ -1296,9 +1355,6 @@ function renderBarbers() {
   });
 
   $("barberCards").innerHTML = orderedBarbers.length ? orderedBarbers.map(b => {
-    const sales = state.sales.filter(s => s.barberId === b.id);
-    const gross = sales.reduce((a,s)=>a+Number(s.total||0),0);
-    const pay = sales.reduce((a,s)=>a+Number(s.barberAmount||0),0);
     const active = b.active !== false;
 
     return `<article class="person-card barber-admin-card ${active ? "" : "is-disabled"}">
@@ -1334,17 +1390,6 @@ function renderBarbers() {
         <span>Usuario</span>
         <b>${escapeHtml(b.username || "")}</b>
         <small>Conserva su misma contraseña e historial</small>
-      </div>
-
-      <div class="card-numbers barber-admin-numbers">
-        <div class="mini-stat">
-          <span>Ventas</span>
-          <strong>${money(gross)}</strong>
-        </div>
-        <div class="mini-stat">
-          <span>Comisión</span>
-          <strong>${money(pay)}</strong>
-        </div>
       </div>
 
       <button class="barber-edit-commission-btn"
@@ -1630,9 +1675,16 @@ async function createChair() {
 }
 
 function renderServices() {
-  $("serviceCards").innerHTML = state.services.map(s => `
-    <article class="service-card"><span class="card-kicker">SERVICIO</span><h3>${escapeHtml(s.name)}</h3><div class="card-meta">${Number(s.duration||30)} min aprox.</div><div class="card-numbers"><div class="mini-stat"><span>Precio</span><strong>${money(s.price)}</strong></div><div class="mini-stat"><span>Reservas</span><strong>${state.appointments.filter(a=>a.serviceId===s.id).length}</strong></div></div></article>
-  `).join("");
+  $("serviceCards").innerHTML = state.services.length ? state.services.map(s => `
+    <article class="catalog-compact-card service-compact-card">
+      <div class="catalog-compact-head">
+        <span class="card-kicker">SERVICIO</span>
+        <strong class="catalog-price">${money(s.price)}</strong>
+      </div>
+      <h3>${escapeHtml(s.name)}</h3>
+      <small>${Number(s.duration||30)} min aprox.</small>
+    </article>
+  `).join("") : `<div class="empty">Todavía no has agregado servicios.</div>`;
 }
 
 async function createService(e) {
@@ -1660,28 +1712,24 @@ function renderProducts() {
 
   $("productCards").innerHTML = state.products.length ? state.products.map(p => {
     const active = p.active !== false;
-    const soldQty = state.sales.reduce((sum,sale) => {
-      const items = Array.isArray(sale.products) ? sale.products : [];
-      const found = items.find(x => x.productId === p.id);
-      return sum + Number(found?.qty || 0);
-    }, 0);
+    const stock = Math.max(0, Number(p.stock || 0));
 
-    return `<article class="service-card product-admin-card ${active ? "" : "product-disabled"}">
-      <div class="product-admin-top">
-        <span class="card-kicker">PRODUCTO</span>
+    return `<article class="catalog-compact-card product-compact-card ${active ? "" : "product-disabled"}">
+      <div class="catalog-compact-head">
         <span class="product-status ${active ? "active" : "inactive"}">${active ? "ACTIVO" : "DESHABILITADO"}</span>
+        <strong class="catalog-price">${money(p.price)}</strong>
       </div>
-      <div class="product-admin-icon">▦</div>
       <h3>${escapeHtml(p.name)}</h3>
-      <div class="card-meta">${active ? "Disponible para los barberos" : "No aparece en los cobros"}</div>
-      <div class="card-numbers">
-        <div class="mini-stat"><span>Precio</span><strong>${money(p.price)}</strong></div>
-        <div class="mini-stat"><span>Unidades vendidas</span><strong>${soldQty}</strong></div>
+      <div class="product-stock-line ${stock <= 2 ? "low-stock" : ""}">
+        <span>Existencia</span><strong>${stock}</strong>
       </div>
-      <button class="product-toggle-btn ${active ? "disable" : "enable"}"
-        data-toggle-product="${p.id}"
-        data-product-active="${active ? "false" : "true"}"
-        type="button">${active ? "Deshabilitar producto" : "Habilitar producto"}</button>
+      <div class="product-compact-actions">
+        <button class="stock-adjust-btn" data-stock-product="${p.id}" type="button">Ajustar cantidad</button>
+        <button class="product-toggle-btn ${active ? "disable" : "enable"}"
+          data-toggle-product="${p.id}"
+          data-product-active="${active ? "false" : "true"}"
+          type="button">${active ? "Deshabilitar" : "Habilitar"}</button>
+      </div>
     </article>`;
   }).join("") : `<div class="empty">Todavía no has agregado productos al catálogo.</div>`;
 
@@ -1690,6 +1738,9 @@ function renderProducts() {
       toggleProductStatus(btn.dataset.toggleProduct, btn.dataset.productActive === "true")
     )
   );
+  document.querySelectorAll("[data-stock-product]").forEach(btn =>
+    btn.addEventListener("click", () => openProductStockEditor(btn.dataset.stockProduct))
+  );
 }
 
 async function createProduct(e) {
@@ -1697,11 +1748,13 @@ async function createProduct(e) {
   try {
     const name = $("productName").value.trim();
     const price = Number($("productPrice").value);
+    const stock = Math.max(0, Math.floor(Number($("productStock").value || 0)));
     if (!name || !price || price <= 0) return toast("Revisa nombre y precio del producto.");
 
     await setDoc(doc(collection(db, "products")), {
       name,
       price:+price.toFixed(2),
+      stock,
       active:true,
       order:state.products.length+1,
       createdAt:serverTimestamp()
@@ -1712,6 +1765,30 @@ async function createProduct(e) {
   } catch (err) {
     console.error(err);
     toast(firebaseErrorMessage(err, "No se pudo crear el producto."));
+  }
+}
+
+function openProductStockEditor(productId) {
+  const product = state.products.find(p => p.id === productId);
+  if (!product) return;
+  $("productStockId").value = product.id;
+  $("productStockName").textContent = product.name || "Producto";
+  $("productStockQty").value = Math.max(0, Number(product.stock || 0));
+  openModal("productStockModal");
+}
+
+async function saveProductStock(e) {
+  e.preventDefault();
+  const productId = $("productStockId").value;
+  const stock = Math.max(0, Math.floor(Number($("productStockQty").value || 0)));
+  if (!productId) return;
+  try {
+    await updateDoc(doc(db, "products", productId), { stock, updatedAt:serverTimestamp() });
+    closeModal("productStockModal");
+    toast("Existencia actualizada.");
+  } catch (err) {
+    console.error(err);
+    toast(firebaseErrorMessage(err, "No se pudo actualizar el inventario."));
   }
 }
 
@@ -1874,7 +1951,7 @@ function renderBarberProfitFilter() {
   const select = $("barberProfitSelect");
   if (!select) return;
 
-  const selectedMonth = $("reportMonth")?.value || monthKey(new Date());
+  const selectedMonth = $("barberProfitMonth")?.value || $("reportMonth")?.value || monthKey(new Date());
   const previous = select.value;
   const barbers = [...state.barbers].sort((a,b)=>(a.name||"").localeCompare(b.name||""));
 
@@ -1931,11 +2008,12 @@ function renderBarberChargeOptions() {
     : `<option value="">No hay servicios activos</option>`;
 
   if (productSelect) {
-    productSelect.innerHTML = state.products.length
-      ? `<option value="">Selecciona un producto...</option>` + state.products.map(p =>
-          `<option value="${p.id}">${escapeHtml(p.name)} · ${money(p.price)}</option>`
+    const availableProducts = state.products.filter(p => Number(p.stock || 0) > 0);
+    productSelect.innerHTML = availableProducts.length
+      ? `<option value="">Selecciona un producto...</option>` + availableProducts.map(p =>
+          `<option value="${p.id}">${escapeHtml(p.name)} · ${money(p.price)} · Stock ${Number(p.stock || 0)}</option>`
         ).join("")
-      : `<option value="">No hay productos activos</option>`;
+      : `<option value="">No hay productos con existencia</option>`;
   }
 
   if (selectedService && state.services.some(s => s.id === selectedService)) {
@@ -2001,8 +2079,12 @@ function addProductToBarberCharge() {
   const qty = Math.max(1, Math.floor(Number($("barberChargeProductQty").value || 1)));
 
   if (!product) return toast("Selecciona un producto.");
+  const stock = Math.max(0, Number(product.stock || 0));
+  if (stock <= 0) return toast("Ese producto no tiene existencia.");
 
   const existing = barberProductCart.find(item => item.productId === product.id);
+  const currentQty = Number(existing?.qty || 0);
+  if (currentQty + qty > stock) return toast(`Solo hay ${stock} unidad${stock===1?"":"es"} disponibles.`);
   if (existing) {
     existing.qty += qty;
   } else {
@@ -2028,7 +2110,11 @@ function removeProductFromBarberCharge(productId) {
 function changeBarberProductQty(productId, delta) {
   const item = barberProductCart.find(x => x.productId === productId);
   if (!item) return;
-  item.qty = Math.max(1, Number(item.qty || 1) + delta);
+  const product = state.products.find(p => p.id === productId);
+  const stock = Math.max(0, Number(product?.stock || 0));
+  const nextQty = Math.max(1, Number(item.qty || 1) + delta);
+  if (delta > 0 && nextQty > stock) return toast(`Solo hay ${stock} unidad${stock===1?"":"es"} disponibles.`);
+  item.qty = nextQty;
   renderBarberProductCart();
   renderBarberChargePreview();
 }
@@ -2388,7 +2474,7 @@ function renderBarberTodayAppointmentsModal() {
   if (!node) return;
 
   const today = state.appointments
-    .filter(a => a.date === isoDay())
+    .filter(a => a.date === isoDay() && !["completed","cancelled"].includes(a.status))
     .sort((a,b)=>(a.time||"").localeCompare(b.time||""));
 
   $("barberTodayAppointmentsCount").textContent = today.length;
