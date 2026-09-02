@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260902-service-view-v1">
+  <link rel="stylesheet" href="./styles.css?v=20260902-report-barber-filter">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -231,7 +231,7 @@
               <input id="reportMonth" type="month">
             </label>
             <button class="ghost-btn" id="printReportBtn" type="button">Imprimir / PDF</button>
-            <button class="ghost-btn" id="exportBtn" type="button">Exportar CSV</button>
+            <button class="ghost-btn" id="barberProfitFilterBtn" type="button">Ganancias por barbero</button>
             <button class="primary-btn" id="exportExcelBtn" type="button">Exportar Excel</button>
           </div>
         </div>
@@ -249,7 +249,6 @@
           <article class="stat-card"><span>Total cobrado</span><strong id="reportTotal">$0.00</strong><small id="reportTotalMeta">0 servicios en el mes</small></article>
           <article class="stat-card"><span>Pago a barberos</span><strong id="reportBarbers">$0.00</strong><small>Comisiones generadas</small></article>
           <article class="stat-card gold-card"><span>Ingreso barbería</span><strong id="reportShop">$0.00</strong><small>Participación de la barbería</small></article>
-          <article class="stat-card"><span>Ticket promedio</span><strong id="reportAverage">$0.00</strong><small id="reportCount">0 servicios</small></article>
         </div>
 
         <div class="report-section-title">
@@ -573,6 +572,38 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="barberProfitModal">
+    <div class="modal dashboard-submodal barber-profit-modal">
+      <button class="modal-close" data-close="barberProfitModal" type="button">×</button>
+      <div class="submodal-heading">
+        <div>
+          <p class="eyebrow">GANANCIAS POR BARBERO</p>
+          <h2>Detalle individual</h2>
+          <p class="modal-copy" id="barberProfitPeriodLabel">Mes seleccionado</p>
+        </div>
+      </div>
+
+      <div class="barber-profit-filter-row">
+        <label>Barbero
+          <select id="barberProfitSelect"></select>
+        </label>
+      </div>
+
+      <div class="barber-profit-kpis">
+        <article><span>Ganado en el mes</span><strong id="barberProfitTotal">USD 0.00</strong><small>Solo lo correspondiente al barbero</small></article>
+        <article><span>Por servicios</span><strong id="barberProfitServices">USD 0.00</strong><small id="barberProfitServiceCount">0 servicios</small></article>
+        <article><span>Por productos</span><strong id="barberProfitProducts">USD 0.00</strong><small>Ganancia por productos vendidos</small></article>
+      </div>
+
+      <div class="barber-profit-table-wrap">
+        <table class="premium-report-table barber-profit-table">
+          <thead><tr><th>Fecha / hora</th><th>Servicio</th><th>Servicios</th><th>Productos</th><th>Para el barbero</th></tr></thead>
+          <tbody id="barberProfitRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="saleModal">
     <div class="modal">
       <button class="modal-close" data-close="saleModal" type="button">×</button>
@@ -701,6 +732,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260902-service-view-v1"></script>
+  <script type="module" src="./app.js?v=20260902-report-barber-filter"></script>
 </body>
 </html>

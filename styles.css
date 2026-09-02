@@ -1878,3 +1878,30 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
     flex-direction:column;
   }
 }
+
+
+/* REPORTES · FILTRO DE GANANCIAS POR BARBERO */
+.report-stats{grid-template-columns:repeat(3,minmax(0,1fr));}
+.barber-profit-modal{width:min(980px,95vw)!important;max-width:980px!important;}
+.barber-profit-filter-row{display:grid;grid-template-columns:minmax(220px,360px);gap:12px;margin:4px 0 16px;}
+.barber-profit-filter-row label{font-size:10px;color:#cfcfd4;font-weight:700;}
+.barber-profit-filter-row select{margin-top:7px;width:100%;}
+.barber-profit-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 16px;}
+.barber-profit-kpis article{padding:16px;border-radius:16px;border:1px solid #2c2c32;background:linear-gradient(180deg,#19191d,#131315);}
+.barber-profit-kpis article:first-child{border-color:rgba(215,173,86,.22);background:linear-gradient(135deg,rgba(215,173,86,.12),#151518 58%);}
+.barber-profit-kpis span,.barber-profit-kpis strong,.barber-profit-kpis small{display:block;}
+.barber-profit-kpis span{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;}
+.barber-profit-kpis strong{font-size:22px;margin-top:6px;color:#fff;}
+.barber-profit-kpis article:first-child strong{color:var(--gold2);}
+.barber-profit-kpis small{font-size:8px;color:var(--muted);margin-top:5px;}
+.barber-profit-table-wrap{max-height:55vh;overflow:auto;border:1px solid #29292f;border-radius:16px;}
+.barber-profit-table{min-width:720px;}
+
+@media(max-width:1050px){
+  .report-stats{grid-template-columns:repeat(3,1fr)!important;}
+}
+@media(max-width:760px){
+  .report-stats{grid-template-columns:1fr!important;}
+  .barber-profit-kpis{grid-template-columns:1fr;}
+  .barber-profit-filter-row{grid-template-columns:1fr;}
+}

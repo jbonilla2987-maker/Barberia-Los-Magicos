@@ -297,7 +297,11 @@ function wireStaticUI() {
   bind("productForm", "submit", createProduct);
   bind("clientBookingForm", "submit", createAppointment);
   bind("addChairBtn", "click", createChair);
-  bind("exportBtn", "click", exportCsv);
+  bind("barberProfitFilterBtn", "click", () => {
+    renderBarberProfitFilter();
+    openModal("barberProfitModal");
+  });
+  bind("barberProfitSelect", "change", renderBarberProfitFilter);
   bind("exportExcelBtn", "click", exportExcelReport);
 }
 
@@ -1738,13 +1742,10 @@ function renderReports() {
   const total = monthSales.reduce((a,s) => a + Number(s.total || 0), 0);
   const barberTotal = monthSales.reduce((a,s) => a + Number(s.barberAmount || 0), 0);
   const shopTotal = monthSales.reduce((a,s) => a + Number(s.shopAmount || 0), 0);
-  const average = monthSales.length ? total / monthSales.length : 0;
 
   $("reportTotal").textContent = money(total);
   $("reportBarbers").textContent = money(barberTotal);
   $("reportShop").textContent = money(shopTotal);
-  $("reportAverage").textContent = money(average);
-  $("reportCount").textContent = `${monthSales.length} servicios`;
   $("reportTotalMeta").textContent = `${monthSales.length} servicio${monthSales.length === 1 ? "" : "s"} en el mes`;
   $("reportPeriodTitle").textContent = `Reporte · ${monthLabel(selectedMonth)}`;
   $("reportGeneratedAt").textContent = `Generado el ${new Date().toLocaleString("es-PA", {dateStyle:"long", timeStyle:"short"})}`;
@@ -1863,6 +1864,54 @@ function renderReports() {
       <td>${money(r.shop)}</td>
     </tr>
   `).join("") : `<tr><td colspan="6" class="empty">No hay movimientos diarios en este mes.</td></tr>`;
+
+  renderBarberProfitFilter();
+}
+
+function renderBarberProfitFilter() {
+  if (currentRole !== "admin") return;
+
+  const select = $("barberProfitSelect");
+  if (!select) return;
+
+  const selectedMonth = $("reportMonth")?.value || monthKey(new Date());
+  const previous = select.value;
+  const barbers = [...state.barbers].sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+
+  select.innerHTML = barbers.length
+    ? barbers.map(b => `<option value="${b.id}">${escapeHtml(b.name || "Barbero")}</option>`).join("")
+    : `<option value="">No hay barberos</option>`;
+
+  if (previous && barbers.some(b => b.id === previous)) select.value = previous;
+
+  const barberId = select.value || barbers[0]?.id || "";
+  if (barberId) select.value = barberId;
+  const barber = barbers.find(b => b.id === barberId);
+
+  $("barberProfitPeriodLabel").textContent = `${barber?.name || "Barbero"} · ${monthLabel(selectedMonth)}`;
+
+  const sales = state.sales
+    .filter(s => monthKey(s.date) === selectedMonth && s.barberId === barberId)
+    .sort((a,b)=>jsDate(b.date)-jsDate(a.date));
+
+  const servicePay = sales.reduce((sum,s)=>sum + Number(s.serviceBarberAmount ?? s.barberAmount ?? 0),0);
+  const productPay = sales.reduce((sum,s)=>sum + Number(s.productBarberAmount || 0),0);
+  const totalPay = sales.reduce((sum,s)=>sum + Number(s.barberAmount || 0),0);
+
+  $("barberProfitTotal").textContent = money(totalPay);
+  $("barberProfitServices").textContent = money(servicePay);
+  $("barberProfitProducts").textContent = money(productPay);
+  $("barberProfitServiceCount").textContent = `${sales.length} servicio${sales.length===1?"":"s"}`;
+
+  $("barberProfitRows").innerHTML = sales.length ? sales.map(s => `
+    <tr>
+      <td>${fmtDateTime(s.date)}</td>
+      <td><b>${escapeHtml(s.serviceName || "Servicio")}</b></td>
+      <td>${money(Number(s.serviceBarberAmount ?? s.barberAmount ?? 0))}</td>
+      <td>${money(Number(s.productBarberAmount || 0))}</td>
+      <td class="money-positive"><b>${money(Number(s.barberAmount || 0))}</b></td>
+    </tr>
+  `).join("") : `<tr><td colspan="5" class="empty">Este barbero no tiene ganancias registradas en el mes seleccionado.</td></tr>`;
 }
 
 
@@ -2804,8 +2853,7 @@ async function exportExcelReport() {
     const total = monthSales.reduce((a,s)=>a+Number(s.total||0),0);
     const barberTotal = monthSales.reduce((a,s)=>a+Number(s.barberAmount||0),0);
     const shopTotal = monthSales.reduce((a,s)=>a+Number(s.shopAmount||0),0);
-    const average = monthSales.length ? total / monthSales.length : 0;
-
+  
     const chairRows = state.chairs.map(chair => {
       const sales = monthSales.filter(s => s.chairId === chair.id);
       return {
