@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260902-production-final-v3">
+  <link rel="stylesheet" href="./styles.css?v=20260902-dashboard-filter-v4">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -126,20 +126,49 @@
       <section class="view active" id="view-dashboard">
         <div class="hero">
           <div class="hero-content"><span class="hero-badge">CONTROL EN TIEMPO REAL</span><h2>Haz crecer la magia <span>de cada corte.</span></h2><p>Ventas, comisiones, citas y rendimiento del equipo en un solo panel.</p></div>
-          <button class="hero-action" id="heroSaleBtn" type="button"><span>Registrar servicio</span><strong>→</strong></button>
+          <div class="dashboard-period-filter" id="dashboardPeriodFilter">
+            <div class="dashboard-filter-head">
+              <div>
+                <span class="dashboard-filter-kicker">FILTRAR DASHBOARD</span>
+                <strong id="dashboardPeriodLabel">Hoy</strong>
+              </div>
+              <button class="dashboard-filter-today" id="dashboardFilterTodayBtn" type="button">Hoy</button>
+            </div>
+
+            <div class="dashboard-filter-modes" role="group" aria-label="Tipo de período">
+              <button class="active" data-dashboard-filter-mode="day" type="button">Día</button>
+              <button data-dashboard-filter-mode="week" type="button">Semana</button>
+              <button data-dashboard-filter-mode="range" type="button">Rango</button>
+              <button data-dashboard-filter-mode="month" type="button">Mes</button>
+            </div>
+
+            <div class="dashboard-filter-control active" data-dashboard-filter-control="day">
+              <label>Fecha<input id="dashboardFilterDay" type="date"></label>
+            </div>
+            <div class="dashboard-filter-control" data-dashboard-filter-control="week">
+              <label>Semana<input id="dashboardFilterWeek" type="week"></label>
+            </div>
+            <div class="dashboard-filter-control dashboard-range-control" data-dashboard-filter-control="range">
+              <label>Desde<input id="dashboardFilterStart" type="date"></label>
+              <label>Hasta<input id="dashboardFilterEnd" type="date"></label>
+            </div>
+            <div class="dashboard-filter-control" data-dashboard-filter-control="month">
+              <label>Mes<input id="dashboardFilterMonth" type="month"></label>
+            </div>
+          </div>
         </div>
 
         <div class="stats-grid">
-          <article class="stat-card"><div class="stat-top"><span>Ventas de hoy</span><i>$</i></div><strong id="statSales">$0.00</strong><small id="statSalesCount">0 servicios</small></article>
-          <article class="stat-card"><div class="stat-top"><span>Pago a barberos</span><i>✂</i></div><strong id="statBarbers">$0.00</strong><small>Comisiones del día</small></article>
-          <article class="stat-card gold-card"><div class="stat-top"><span>Ingreso barbería</span><i>◆</i></div><strong id="statShop">$0.00</strong><small>Participación de la barbería</small></article>
-          <article class="stat-card clickable-stat" id="todayAppointmentsCard" role="button" tabindex="0"><div class="stat-top"><span>Citas de hoy</span><i>◷</i></div><strong id="statAppointments">0</strong><small id="statAppointmentsMeta">0 pendientes · Ver detalle</small></article>
+          <article class="stat-card"><div class="stat-top"><span id="statSalesLabel">Ventas de hoy</span><i>$</i></div><strong id="statSales">$0.00</strong><small id="statSalesCount">0 servicios</small></article>
+          <article class="stat-card"><div class="stat-top"><span id="statBarbersLabel">Pago a barberos</span><i>✂</i></div><strong id="statBarbers">$0.00</strong><small id="statBarbersMeta">Comisiones del día</small></article>
+          <article class="stat-card gold-card"><div class="stat-top"><span id="statShopLabel">Ingreso barbería</span><i>◆</i></div><strong id="statShop">$0.00</strong><small id="statShopMeta">Participación de la barbería</small></article>
+          <article class="stat-card clickable-stat" id="todayAppointmentsCard" role="button" tabindex="0"><div class="stat-top"><span id="statAppointmentsLabel">Citas de hoy</span><i>◷</i></div><strong id="statAppointments">0</strong><small id="statAppointmentsMeta">0 pendientes · Ver detalle</small></article>
         </div>
 
         <section class="dashboard-chair-section">
           <div class="report-section-title dashboard-chair-title">
-            <div><p class="eyebrow">PUESTOS · HOY</p><h3>Producción diaria por puesto</h3></div>
-            <p>Barbero asignado, total generado y distribución del día.</p>
+            <div><p class="eyebrow" id="dashboardChairKicker">PUESTOS · HOY</p><h3 id="dashboardChairHeading">Producción diaria por puesto</h3></div>
+            <p id="dashboardChairCaption">Barbero asignado, total generado y distribución del período.</p>
           </div>
           <div id="dashboardChairCards" class="dashboard-chair-grid"></div>
         </section>
@@ -154,8 +183,8 @@
           </article>
           <article class="panel dashboard-today-appts">
             <div class="panel-head">
-              <div><p class="eyebrow">AGENDA DE HOY</p><h3>Citas del día</h3></div>
-              <button class="ghost-btn" id="openTodayAppointmentsBtn" type="button">Ver citas de hoy</button>
+              <div><p class="eyebrow" id="dashboardAgendaKicker">AGENDA DE HOY</p><h3 id="dashboardAgendaHeading">Citas del día</h3></div>
+              <button class="ghost-btn" id="openTodayAppointmentsBtn" type="button">Ver citas del período</button>
             </div>
             <div id="upcomingAppointments" class="list"></div>
           </article>
@@ -553,7 +582,7 @@
     <div class="modal dashboard-submodal">
       <button class="modal-close" data-close="todayAppointmentsModal" type="button">×</button>
       <div class="submodal-heading">
-        <div><p class="eyebrow">AGENDA DE HOY</p><h2>Citas del día</h2><p class="modal-copy" id="todayAppointmentsDateLabel"></p></div>
+        <div><p class="eyebrow" id="adminAppointmentsModalEyebrow">AGENDA DE HOY</p><h2 id="adminAppointmentsModalTitle">Citas del día</h2><p class="modal-copy" id="todayAppointmentsDateLabel"></p></div>
         <div class="submodal-count"><span>TOTAL</span><strong id="todayAppointmentsModalCount">0</strong></div>
       </div>
       <div id="todayAppointmentsModalList" class="today-appt-list"></div>
@@ -564,8 +593,8 @@
     <div class="modal dashboard-submodal chair-detail-modal">
       <button class="modal-close" data-close="chairDayDetailModal" type="button">×</button>
       <div class="submodal-heading">
-        <div><p class="eyebrow">DETALLE DEL DÍA</p><h2 id="chairDayDetailTitle">Puesto</h2><p class="modal-copy" id="chairDayDetailSubtitle"></p></div>
-        <div class="chair-detail-total"><span>TOTAL HOY</span><strong id="chairDayDetailTotal">USD 0.00</strong></div>
+        <div><p class="eyebrow" id="chairDetailEyebrow">DETALLE DEL PERÍODO</p><h2 id="chairDayDetailTitle">Puesto</h2><p class="modal-copy" id="chairDayDetailSubtitle"></p></div>
+        <div class="chair-detail-total"><span id="chairDetailTotalLabel">TOTAL PERÍODO</span><strong id="chairDayDetailTotal">USD 0.00</strong></div>
       </div>
       <div id="chairDayDetailSummary" class="chair-detail-summary"></div>
       <div class="table-wrap">
@@ -803,6 +832,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260902-production-final-v3"></script>
+  <script type="module" src="./app.js?v=20260902-dashboard-filter-v4"></script>
 </body>
 </html>
