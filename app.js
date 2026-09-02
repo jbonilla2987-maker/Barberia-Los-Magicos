@@ -55,6 +55,7 @@ let currentAdmin = null;
 const ANY_BARBER = "__ANY__";
 let booking = { serviceId: null, barberId: null };
 let barberProductCart = [];
+let barberServiceViewMode = "cards";
 let unsubscribers = [];
 
 function money(v) {
@@ -255,6 +256,10 @@ function wireStaticUI() {
       btn.classList.toggle("showing", !showing);
       btn.setAttribute("aria-label", showing ? "Mostrar contraseña" : "Ocultar contraseña");
     })
+  );
+
+  document.querySelectorAll("[data-service-view]").forEach(btn =>
+    btn.addEventListener("click", () => setBarberServiceView(btn.dataset.serviceView))
   );
 
   bind("openTodayAppointmentsBtn", "click", openTodayAppointmentsModal);
@@ -2138,6 +2143,111 @@ function renderMyChargeRequests() {
   }).join("") : `<div class="empty">Todavía no has enviado trabajos a Caja.</div>`;
 }
 
+function setBarberServiceView(mode) {
+  barberServiceViewMode = mode === "table" ? "table" : "cards";
+  document.querySelectorAll("[data-service-view]").forEach(btn =>
+    btn.classList.toggle("active", btn.dataset.serviceView === barberServiceViewMode)
+  );
+  if (currentRole === "barber") renderBarberPortal();
+}
+
+function renderBarberRecentServices(recent) {
+  const node = $("mySales");
+  if (!node) return;
+
+  document.querySelectorAll("[data-service-view]").forEach(btn =>
+    btn.classList.toggle("active", btn.dataset.serviceView === barberServiceViewMode)
+  );
+
+  if (!recent.length) {
+    node.className = "premium-service-list";
+    node.innerHTML = `
+      <div class="premium-empty-state">
+        <span>✂</span>
+        <strong>Aún no tienes servicios registrados</strong>
+        <small>Cuando el administrador confirme tus cobros aparecerán aquí.</small>
+      </div>`;
+    return;
+  }
+
+  if (barberServiceViewMode === "table") {
+    node.className = "barber-service-table-wrap";
+    node.innerHTML = `
+      <div class="table-wrap">
+        <table class="premium-report-table barber-service-table">
+          <thead>
+            <tr>
+              <th>Fecha / hora</th>
+              <th>Servicio</th>
+              <th>Método</th>
+              <th>Servicios</th>
+              <th>Productos</th>
+              <th>Para ti</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${recent.map(s => {
+              const dt = jsDate(s.date);
+              const time = dt.toLocaleTimeString("es-PA", {hour:"2-digit",minute:"2-digit"});
+              const day = dt.toLocaleDateString("es-PA", {day:"2-digit",month:"short",year:"numeric"});
+              const servicePay = Number(s.serviceBarberAmount ?? s.barberAmount ?? 0);
+              const productPay = Number(s.productBarberAmount || 0);
+              return `
+                <tr>
+                  <td><b>${escapeHtml(time)}</b><small class="table-date-sub">${escapeHtml(day)}</small></td>
+                  <td><b>${escapeHtml(s.serviceName || "Servicio")}</b><small class="table-status-sub">Acreditado</small></td>
+                  <td>${escapeHtml(s.payment || "—")}</td>
+                  <td>${money(servicePay)}</td>
+                  <td>${money(productPay)}</td>
+                  <td class="money-positive"><b>${money(s.barberAmount)}</b></td>
+                </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>`;
+    return;
+  }
+
+  node.className = "premium-service-list premium-service-card-grid";
+  node.innerHTML = recent.map((s,index) => {
+    const dt = jsDate(s.date);
+    const time = dt.toLocaleTimeString("es-PA", {hour:"2-digit",minute:"2-digit"});
+    const day = dt.toLocaleDateString("es-PA", {day:"2-digit",month:"short"});
+    const servicePay = Number(s.serviceBarberAmount ?? s.barberAmount ?? 0);
+    const productPay = Number(s.productBarberAmount || 0);
+    const productsCount = Array.isArray(s.products)
+      ? s.products.reduce((sum,p)=>sum+Number(p.qty||0),0)
+      : 0;
+
+    return `
+      <article class="barber-service-card">
+        <div class="barber-service-card-head">
+          <div class="barber-service-time-pill">
+            <strong>${escapeHtml(time)}</strong>
+            <span>${escapeHtml(day)}</span>
+          </div>
+          <span class="service-credit-status">ACREDITADO</span>
+        </div>
+
+        <div class="barber-service-card-title">
+          <span>#${String(index+1).padStart(2,"0")}</span>
+          <h4>${escapeHtml(s.serviceName || "Servicio")}</h4>
+          <small>${escapeHtml(s.payment || "—")}${productsCount ? ` · ${productsCount} producto${productsCount===1?"":"s"}` : " · Sin productos"}</small>
+        </div>
+
+        <div class="barber-service-earnings">
+          <div><span>Servicios</span><strong>${money(servicePay)}</strong></div>
+          <div><span>Productos</span><strong>${money(productPay)}</strong></div>
+        </div>
+
+        <div class="barber-service-total">
+          <span>ACREDITADO PARA TI</span>
+          <strong>${money(s.barberAmount)}</strong>
+        </div>
+      </article>`;
+  }).join("");
+}
+
 function renderBarberPortal() {
   if (currentRole !== "barber" || !currentBarber) return;
 
@@ -2215,54 +2325,7 @@ function renderBarberPortal() {
   );
 
   const recent = [...mine].sort((a,b)=>jsDate(b.date)-jsDate(a.date)).slice(0,8);
-  $("mySales").innerHTML = recent.length ? recent.map((s,index) => {
-    const dt = jsDate(s.date);
-    const time = dt.toLocaleTimeString("es-PA", {hour:"2-digit",minute:"2-digit"});
-    const day = dt.toLocaleDateString("es-PA", {day:"2-digit",month:"short"});
-    const servicePay = Number(s.serviceBarberAmount ?? s.barberAmount ?? 0);
-    const productPay = Number(s.productBarberAmount || 0);
-    const shopPay = Number(s.shopAmount || 0);
-    const totalCharged = Number(s.total || (servicePay + productPay + shopPay) || 0);
-    const productsCount = Array.isArray(s.products)
-      ? s.products.reduce((sum,p)=>sum+Number(p.qty||0),0)
-      : 0;
-
-    return `
-      <article class="premium-service-movement">
-        <div class="service-movement-header">
-          <div class="service-movement-time-inline">
-            <strong>${escapeHtml(time)}</strong>
-            <span>${escapeHtml(day)}</span>
-          </div>
-
-          <div class="service-movement-title-wrap">
-            <div class="service-movement-title-row">
-              <span class="service-movement-number">#${String(index+1).padStart(2,"0")}</span>
-              <span class="service-credit-status">ACREDITADO</span>
-            </div>
-            <h4>${escapeHtml(s.serviceName || "Servicio")}</h4>
-            <p class="service-movement-meta">${escapeHtml(s.payment || "—")} · ${productsCount ? `${productsCount} producto${productsCount===1?"":"s"}` : "Sin productos"}</p>
-          </div>
-
-          <div class="service-movement-earned compact">
-            <span>PARA TI</span>
-            <strong>${money(s.barberAmount)}</strong>
-          </div>
-        </div>
-
-        <div class="service-movement-details four-up">
-          <div><span>Servicio</span><strong>${money(servicePay)}</strong></div>
-          <div><span>Productos</span><strong>${money(productPay)}</strong><small>${productsCount ? `${productsCount} vendido${productsCount===1?"":"s"}` : "Sin productos"}</small></div>
-          <div><span>Barbería</span><strong>${money(shopPay)}</strong></div>
-          <div><span>Total cobrado</span><strong>${money(totalCharged)}</strong></div>
-        </div>
-      </article>`;
-  }).join("") : `
-    <div class="premium-empty-state">
-      <span>✂</span>
-      <strong>Aún no tienes servicios registrados</strong>
-      <small>Cuando el administrador confirme tus cobros aparecerán aquí.</small>
-    </div>`;
+  renderBarberRecentServices(recent);
 }
 
 function openBarberTodayAppointmentsModal() {

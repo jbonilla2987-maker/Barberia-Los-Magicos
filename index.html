@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260902-barbero-premium-v4">
+  <link rel="stylesheet" href="./styles.css?v=20260902-service-view-v1">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -468,7 +468,11 @@
         <article class="panel barber-agenda-panel"><div class="panel-head"><div><p class="eyebrow">MI AGENDA</p><h3>Próximas citas</h3></div></div><div id="myAppointments" class="list"></div></article>
         <article class="panel barber-sales-panel premium-my-sales-panel">
           <div class="panel-head premium-my-sales-head">
-            <div><p class="eyebrow">MI PRODUCCIÓN</p><h3>Últimos servicios</h3><p class="panel-subcopy">Tus movimientos más recientes y el monto acreditado para ti.</p></div>
+            <div><p class="eyebrow">MI PRODUCCIÓN</p><h3>Últimos servicios</h3><p class="panel-subcopy">Tus movimientos recientes y solamente lo acreditado para ti.</p></div>
+            <div class="service-view-toggle" role="group" aria-label="Vista de últimos servicios">
+              <button class="service-view-btn active" data-service-view="cards" type="button">▦ Tarjetas</button>
+              <button class="service-view-btn" data-service-view="table" type="button">☷ Tabla</button>
+            </div>
           </div>
           <div id="mySales" class="premium-service-list"></div>
         </article>
@@ -697,6 +701,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260902-barbero-premium-v4"></script>
+  <script type="module" src="./app.js?v=20260902-service-view-v1"></script>
 </body>
 </html>

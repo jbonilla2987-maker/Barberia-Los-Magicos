@@ -1675,3 +1675,206 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
     grid-template-columns:1fr;
   }
 }
+
+
+/* =========================================================
+   ÚLTIMOS SERVICIOS · TARJETAS + TABLA COMPACTA
+   ========================================================= */
+.premium-my-sales-head{
+  align-items:flex-start;
+  gap:16px;
+}
+.service-view-toggle{
+  display:inline-flex;
+  gap:4px;
+  padding:4px;
+  border-radius:12px;
+  border:1px solid #2c2c32;
+  background:#111214;
+  flex-shrink:0;
+}
+.service-view-btn{
+  border:0;
+  border-radius:9px;
+  padding:8px 11px;
+  background:transparent;
+  color:var(--muted);
+  font-size:9px;
+  font-weight:800;
+  cursor:pointer;
+}
+.service-view-btn.active{
+  color:#141414;
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+}
+.premium-service-card-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px!important;
+  margin-top:12px!important;
+}
+.barber-service-card{
+  min-width:0;
+  padding:14px;
+  border-radius:18px;
+  border:1px solid #2b2c31;
+  background:linear-gradient(160deg,#18191c 0%,#121315 72%);
+  box-shadow:0 12px 28px rgba(0,0,0,.12);
+}
+.barber-service-card-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+.barber-service-time-pill{
+  display:flex;
+  align-items:baseline;
+  gap:7px;
+  min-width:0;
+}
+.barber-service-time-pill strong{
+  color:var(--gold2);
+  font-size:18px;
+  line-height:1;
+  white-space:nowrap;
+}
+.barber-service-time-pill span{
+  color:var(--muted);
+  font-size:8px;
+  text-transform:uppercase;
+  letter-spacing:.8px;
+}
+.barber-service-card-title{
+  margin-top:14px;
+  min-width:0;
+}
+.barber-service-card-title>span{
+  display:block;
+  color:var(--gold);
+  font-size:7px;
+  letter-spacing:1px;
+  font-weight:900;
+}
+.barber-service-card-title h4{
+  margin:4px 0 3px;
+  font-size:15px;
+  line-height:1.2;
+}
+.barber-service-card-title small{
+  display:block;
+  color:var(--muted);
+  font-size:8px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.barber-service-earnings{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:12px;
+}
+.barber-service-earnings>div{
+  min-width:0;
+  padding:9px 10px;
+  border-radius:11px;
+  border:1px solid #292a30;
+  background:#1b1c20;
+}
+.barber-service-earnings span,
+.barber-service-earnings strong{
+  display:block;
+}
+.barber-service-earnings span{
+  color:var(--muted);
+  font-size:7px;
+  text-transform:uppercase;
+  letter-spacing:.7px;
+}
+.barber-service-earnings strong{
+  margin-top:4px;
+  font-size:12px;
+  white-space:nowrap;
+}
+.barber-service-total{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-top:10px;
+  padding:11px 12px;
+  border-radius:12px;
+  border:1px solid rgba(215,173,86,.18);
+  background:linear-gradient(135deg,rgba(215,173,86,.13),rgba(215,173,86,.035));
+}
+.barber-service-total span{
+  color:var(--gold);
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.8px;
+}
+.barber-service-total strong{
+  color:var(--gold2);
+  font-size:18px;
+  white-space:nowrap;
+}
+.barber-service-table-wrap{
+  margin-top:12px;
+}
+.barber-service-table{
+  min-width:720px;
+}
+.barber-service-table th{
+  font-size:7px!important;
+  letter-spacing:.8px;
+}
+.barber-service-table td{
+  vertical-align:middle;
+  font-size:9px!important;
+}
+.table-date-sub,
+.table-status-sub{
+  display:block;
+  margin-top:3px;
+  color:var(--muted);
+  font-size:7px;
+}
+.table-status-sub{
+  color:#7fd9a9;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+}
+@media(max-width:980px){
+  .premium-service-card-grid{
+    grid-template-columns:1fr;
+  }
+}
+@media(max-width:680px){
+  .premium-my-sales-head{
+    flex-direction:column;
+  }
+  .service-view-toggle{
+    width:100%;
+  }
+  .service-view-btn{
+    flex:1;
+  }
+  .barber-service-card{
+    padding:12px;
+  }
+  .barber-service-card-head{
+    align-items:flex-start;
+  }
+  .barber-service-time-pill{
+    flex-direction:column;
+    gap:4px;
+  }
+  .barber-service-earnings{
+    grid-template-columns:1fr;
+  }
+  .barber-service-total{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+}
