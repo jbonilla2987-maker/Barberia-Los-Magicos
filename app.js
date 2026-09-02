@@ -232,6 +232,7 @@ function wireStaticUI() {
   bind("adminMenuBtn", "click", () => $("adminSidebar").classList.toggle("open"));
   bind("appointmentFilter", "change", renderAppointments);
   bind("saleService", "change", syncSalePrice);
+  bind("saleBarber", "change", syncSaleChair);
   bind("clientDate", "change", () => {
     updateSelectedDateSummary();
     renderAvailableTimes();
@@ -559,22 +560,40 @@ function renderAdminAll() {
 
 function renderSelectors() {
   const barbers = state.barbers.filter(x => x.active !== false);
-  const chairs = state.chairs.filter(x => x.active !== false);
   const services = state.services.filter(x => x.active !== false);
 
   $("saleBarber").innerHTML = barbers.length
-    ? barbers.map(x => `<option value="${x.id}">${escapeHtml(x.name)} · ${Number(x.commission ?? 50)}%</option>`).join("")
+    ? barbers.map(x => `<option value="${x.id}">${escapeHtml(x.name)} · ${escapeHtml(x.chairName || "Sin puesto fijo")} · ${Number(x.commission ?? 50)}%</option>`).join("")
     : `<option value="">Sin barberos activos</option>`;
-
-  $("saleChair").innerHTML = chairs.length
-    ? chairs.map(x => `<option value="${x.id}">${escapeHtml(x.name)}</option>`).join("")
-    : `<option value="">Sin puestos</option>`;
 
   $("saleService").innerHTML = services.length
     ? services.map(x => `<option value="${x.id}">${escapeHtml(x.name)} · ${money(x.price)}</option>`).join("")
     : `<option value="">Sin servicios</option>`;
 
+  syncSaleChair();
   syncSalePrice();
+}
+
+function syncSaleChair() {
+  const barber = state.barbers.find(x => x.id === $("saleBarber").value && x.active !== false);
+  const chairSelect = $("saleChair");
+  if (!chairSelect) return;
+
+  if (!barber || !barber.chairId) {
+    chairSelect.innerHTML = `<option value="">Barbero sin puesto fijo</option>`;
+    chairSelect.value = "";
+    return;
+  }
+
+  const chair = state.chairs.find(c => c.id === barber.chairId && c.active !== false);
+  if (!chair) {
+    chairSelect.innerHTML = `<option value="">Puesto no disponible</option>`;
+    chairSelect.value = "";
+    return;
+  }
+
+  chairSelect.innerHTML = `<option value="${chair.id}">${escapeHtml(chair.name)}</option>`;
+  chairSelect.value = chair.id;
 }
 
 function syncSalePrice() {
@@ -928,7 +947,8 @@ async function saveSale(e) {
   const service = state.services.find(x => x.id === $("saleService").value);
   const total = Number($("salePrice").value);
 
-  if (!barber || !chair || !service || total <= 0) return toast("Revisa los datos del cobro.");
+  if (!barber || !service || total <= 0) return toast("Revisa los datos del cobro.");
+  if (!chair) return toast("Ese barbero no tiene puesto fijo asignado.");
 
   try {
     const commission = Number(barber.commission ?? 50);
@@ -2209,34 +2229,32 @@ function renderBarberPortal() {
 
     return `
       <article class="premium-service-movement">
-        <div class="service-movement-time">
-          <strong>${escapeHtml(time)}</strong>
-          <span>${escapeHtml(day)}</span>
+        <div class="service-movement-header">
+          <div class="service-movement-time-inline">
+            <strong>${escapeHtml(time)}</strong>
+            <span>${escapeHtml(day)}</span>
+          </div>
+
+          <div class="service-movement-title-wrap">
+            <div class="service-movement-title-row">
+              <span class="service-movement-number">#${String(index+1).padStart(2,"0")}</span>
+              <span class="service-credit-status">ACREDITADO</span>
+            </div>
+            <h4>${escapeHtml(s.serviceName || "Servicio")}</h4>
+            <p class="service-movement-meta">${escapeHtml(s.payment || "—")} · ${productsCount ? `${productsCount} producto${productsCount===1?"":"s"}` : "Sin productos"}</p>
+          </div>
+
+          <div class="service-movement-earned compact">
+            <span>PARA TI</span>
+            <strong>${money(s.barberAmount)}</strong>
+          </div>
         </div>
 
-        <div class="service-movement-main">
-          <div class="service-movement-top">
-            <div class="service-movement-title-wrap">
-              <div class="service-movement-title-row">
-                <span class="service-movement-number">#${String(index+1).padStart(2,"0")}</span>
-                <span class="service-credit-status">ACREDITADO</span>
-              </div>
-              <h4>${escapeHtml(s.serviceName || "Servicio")}</h4>
-              <p class="service-movement-meta">${escapeHtml(s.payment || "—")} · ${productsCount ? `${productsCount} producto${productsCount===1?"":"s"}` : "Sin productos"}</p>
-            </div>
-
-            <div class="service-movement-earned">
-              <span>PARA TI</span>
-              <strong>${money(s.barberAmount)}</strong>
-            </div>
-          </div>
-
-          <div class="service-movement-details">
-            <div><span>Servicio</span><strong>${money(servicePay)}</strong></div>
-            <div><span>Productos</span><strong>${money(productPay)}</strong><small>${productsCount ? `${productsCount} vendido${productsCount===1?"":"s"}` : "Sin productos"}</small></div>
-            <div><span>Barbería</span><strong>${money(shopPay)}</strong></div>
-            <div><span>Total cobrado</span><strong>${money(totalCharged)}</strong></div>
-          </div>
+        <div class="service-movement-details four-up">
+          <div><span>Servicio</span><strong>${money(servicePay)}</strong></div>
+          <div><span>Productos</span><strong>${money(productPay)}</strong><small>${productsCount ? `${productsCount} vendido${productsCount===1?"":"s"}` : "Sin productos"}</small></div>
+          <div><span>Barbería</span><strong>${money(shopPay)}</strong></div>
+          <div><span>Total cobrado</span><strong>${money(totalCharged)}</strong></div>
         </div>
       </article>`;
   }).join("") : `
