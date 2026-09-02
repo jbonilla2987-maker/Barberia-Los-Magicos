@@ -1238,3 +1238,26 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .submodal-heading{flex-direction:column}
   .submodal-count,.chair-detail-total{width:100%;text-align:left}
 }
+
+
+/* AJUSTES BARBERO · UI MÁS LIMPIA */
+.barber-hero-actions{display:flex;align-items:center;justify-content:flex-end}
+.barber-today-btn{min-width:190px}
+.premium-flow-spacer{width:1px;height:1px;opacity:0;pointer-events:none}
+.barber-money-grid{grid-template-columns:repeat(3,1fr);gap:12px}
+.barber-money-grid .stat-card{padding:16px 18px;border-radius:18px}
+.barber-money-grid .stat-card strong{font-size:22px;margin:8px 0 2px}
+.barber-money-grid .stat-card>span,.barber-money-grid .stat-top{font-size:10px}
+.barber-money-grid .stat-card small{font-size:9px}
+.barber-appts-modal .today-appt-list{max-height:60vh}
+.barber-today-card .today-appt-main{grid-template-columns:minmax(0,1fr) 180px}
+
+@media(max-width:900px){
+  .barber-money-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:600px){
+  .barber-hero-actions{width:100%;justify-content:flex-start}
+  .barber-today-btn{width:100%}
+  .barber-money-grid{grid-template-columns:1fr}
+  .barber-today-card .today-appt-main{grid-template-columns:1fr}
+}

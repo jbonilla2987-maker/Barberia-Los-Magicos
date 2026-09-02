@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260902-dashboard-day-v1">
+  <link rel="stylesheet" href="./styles.css?v=20260902-barbero-ui-v2">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -299,7 +299,9 @@
     <main class="barber-main">
       <section class="barber-welcome">
         <div><p class="eyebrow">MI PANEL</p><h1>Hola, <span id="barberWelcomeName">Barbero</span></h1><p>Aquí puedes ver tu producción y tus próximas citas.</p><div class="barber-welcome-chair"><span>⌖</span><b id="barberWelcomeChair">Puesto sin asignar</b></div></div>
-        <div class="commission-badge"><small>MI COMISIÓN</small><strong id="myCommission">50%</strong></div>
+        <div class="barber-hero-actions">
+          <button class="primary-btn barber-today-btn" id="openBarberTodayAppointmentsBtn" type="button">Ver mis citas de hoy</button>
+        </div>
       </section>
       <section class="barber-cash-module barber-cash-premium">
         <div class="barber-cash-intro premium-cash-head">
@@ -308,11 +310,7 @@
             <h2>Registrar trabajo realizado</h2>
             <p>Selecciona el servicio realizado. Tu puesto se carga automáticamente desde tu perfil y puedes ajustar el precio final antes de enviarlo al administrador.</p>
           </div>
-          <div class="cash-flow-badge premium-flow">
-            <div><span>01</span><b>Preparas</b></div><i>→</i>
-            <div><span>02</span><b>Admin confirma</b></div><i>→</i>
-            <div><span>03</span><b>Se acredita</b></div>
-          </div>
+          <div class="premium-flow-spacer" aria-hidden="true"></div>
         </div>
 
         <div class="barber-charge-layout">
@@ -426,18 +424,6 @@
               <small id="barberChargePaymentPreview">Efectivo</small>
             </div>
 
-            <div class="preview-commission-split">
-              <div>
-                <span>Comisión servicio</span>
-                <strong id="barberChargeServiceCommissionPreview">0%</strong>
-                <small id="barberChargeServicePayPreview">USD 0.00</small>
-              </div>
-              <div>
-                <span>Comisión productos</span>
-                <strong id="barberChargeProductCommissionPreview">0%</strong>
-                <small id="barberChargeProductPayPreview">USD 0.00</small>
-              </div>
-            </div>
 
             <div class="preview-money-grid">
               <div class="preview-gold"><span>Tu saldo total</span><strong id="barberChargeBarberPreview">USD 0.00</strong></div>
@@ -459,11 +445,11 @@
 
       <div class="stats-grid barber-money-grid">
         <article class="stat-card gold-card"><span>Mi saldo de hoy</span><strong id="myTodayGross">$0.00</strong><small id="myTodayCount">0 servicios</small></article>
-        <article class="stat-card"><span>Servicios · hoy</span><strong id="myTodayPay">$0.00</strong><small>Mi comisión por servicios</small></article>
-        <article class="stat-card"><span>Productos · hoy</span><strong id="myMonthGross">$0.00</strong><small>Mi comisión por productos</small></article>
-        <article class="stat-card gold-card"><span>Mi saldo del mes</span><strong id="myMonthPay">$0.00</strong><small id="myMonthCount">Comisión acumulada del mes</small></article>
-        <article class="stat-card"><span>Total histórico</span><strong id="myAllPay">$0.00</strong><small>Solo mis comisiones</small></article>
-        <article class="stat-card"><span>Citas de hoy</span><strong id="myTodayAppointments">0</strong><small>Agenda personal</small></article>
+        <article class="stat-card"><span>Servicios · hoy</span><strong id="myTodayPay">$0.00</strong><small>Ganado por servicios</small></article>
+        <article class="stat-card"><span>Productos · hoy</span><strong id="myMonthGross">$0.00</strong><small>Ganado por productos</small></article>
+        <article class="stat-card gold-card"><span>Mi saldo del mes</span><strong id="myMonthPay">$0.00</strong><small id="myMonthCount">Saldo acumulado del mes</small></article>
+        <article class="stat-card"><span>Total histórico</span><strong id="myAllPay">$0.00</strong><small>Ganado desde el inicio</small></article>
+        <article class="stat-card"><span>Citas de hoy</span><strong id="myTodayAppointments">0</strong><small>Ver agenda del día</small></article>
       </div>
       <article class="panel barber-daily-panel">
         <div class="panel-head">
@@ -472,7 +458,7 @@
         </div>
         <div class="table-wrap">
           <table class="premium-report-table">
-            <thead><tr><th>Fecha</th><th>Servicios</th><th>Comisión servicios</th><th>Comisión productos</th><th>Mi saldo</th></tr></thead>
+            <thead><tr><th>Fecha</th><th>Servicios</th><th>Ganado servicios</th><th>Ganado productos</th><th>Mi saldo</th></tr></thead>
             <tbody id="myDailyBalances"></tbody>
           </table>
         </div>
@@ -563,6 +549,17 @@
           <tbody id="chairDayDetailRows"></tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="barberTodayAppointmentsModal">
+    <div class="modal dashboard-submodal barber-appts-modal">
+      <button class="modal-close" data-close="barberTodayAppointmentsModal" type="button">×</button>
+      <div class="submodal-heading">
+        <div><p class="eyebrow">MI AGENDA DE HOY</p><h2>Mis citas del día</h2><p class="modal-copy" id="barberTodayAppointmentsDateLabel"></p></div>
+        <div class="submodal-count"><span>TOTAL</span><strong id="barberTodayAppointmentsCount">0</strong></div>
+      </div>
+      <div id="barberTodayAppointmentsList" class="today-appt-list"></div>
     </div>
   </div>
 
@@ -694,6 +691,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260902-dashboard-day-v1"></script>
+  <script type="module" src="./app.js?v=20260902-barbero-ui-v2"></script>
 </body>
 </html>

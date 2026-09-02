@@ -262,6 +262,7 @@ function wireStaticUI() {
   bind("todayAppointmentsCard", "keydown", e => {
     if (e.key === "Enter" || e.key === " ") openTodayAppointmentsModal();
   });
+  bind("openBarberTodayAppointmentsBtn", "click", openBarberTodayAppointmentsModal);
   $("reportMonth").value = monthKey(new Date());
   bind("reportMonth", "change", renderReports);
   bind("printReportBtn", "click", () => window.print());
@@ -2012,11 +2013,6 @@ function renderBarberChargePreview() {
   $("barberChargeTotalPreview").textContent = money(total);
   $("barberChargePaymentPreview").textContent = payment;
 
-  $("barberChargeServiceCommissionPreview").textContent = `${serviceCommission}%`;
-  $("barberChargeProductCommissionPreview").textContent = `${productCommission}%`;
-  $("barberChargeServicePayPreview").textContent = money(serviceBarberAmount);
-  $("barberChargeProductPayPreview").textContent = money(productBarberAmount);
-
   $("barberChargeBarberPreview").textContent = money(barberAmount);
   $("barberChargeShopPreview").textContent = money(shopAmount);
 
@@ -2103,7 +2099,7 @@ function renderMyChargeRequests() {
         </div>
         <div class="barber-charge-credit">
           <span class="request-status ${status}">${statusText}</span>
-          <small>${status === "approved" ? `Mi comisión: ${credited}` : status === "rejected" ? "No acreditado" : "Esperando confirmación"}</small>
+          <small>${status === "approved" ? `Acreditado: ${credited}` : status === "rejected" ? "No acreditado" : "Esperando confirmación"}</small>
         </div>
       </div>`;
   }).join("") : `<div class="empty">Todavía no has enviado trabajos a Caja.</div>`;
@@ -2117,7 +2113,6 @@ function renderBarberPortal() {
 
   $("barberWelcomeName").textContent = (currentBarber.name || "Barbero").split(" ")[0];
   $("barberWelcomeChair").textContent = currentBarber.chairName || "Puesto sin asignar";
-  $("myCommission").textContent = `Svc ${Number(currentBarber.commission ?? 50)}% · Prod ${Number(currentBarber.productCommission ?? 0)}%`;
 
   const mine = state.sales.filter(s => s.barberId === currentBarber.id);
   const today = mine.filter(s => todayIso(s.date));
@@ -2164,7 +2159,9 @@ function renderBarberPortal() {
     .filter(a => !["cancelled","completed"].includes(a.status) && a.date >= isoDay())
     .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
 
-  $("myTodayAppointments").textContent = appts.filter(a=>a.date===isoDay()).length;
+  const todayAppts = appts.filter(a=>a.date===isoDay());
+  $("myTodayAppointments").textContent = todayAppts.length;
+  renderBarberTodayAppointmentsModal();
 
   $("myAppointments").innerHTML = appts.length ? appts.map(a => `
     <div class="list-row">
@@ -2189,11 +2186,58 @@ function renderBarberPortal() {
     <div class="list-row">
       <div>
         <div class="item-title">${escapeHtml(s.serviceName)}</div>
-        <div class="item-meta">${fmtDateTime(s.date)} · Mi servicio ${money(s.serviceBarberAmount ?? s.barberAmount)}${Number(s.productBarberAmount||0)>0 ? ` · Mis productos ${money(s.productBarberAmount||0)}` : ""}</div>
+        <div class="item-meta">${fmtDateTime(s.date)} · Servicios ${money(s.serviceBarberAmount ?? s.barberAmount)}${Number(s.productBarberAmount||0)>0 ? ` · Productos ${money(s.productBarberAmount||0)}` : ""}</div>
       </div>
       <div class="amount">${money(s.barberAmount)}</div>
     </div>
   `).join("") : `<div class="empty">Aún no tienes servicios registrados.</div>`;
+}
+
+function openBarberTodayAppointmentsModal() {
+  renderBarberTodayAppointmentsModal();
+  openModal("barberTodayAppointmentsModal");
+}
+
+function renderBarberTodayAppointmentsModal() {
+  if (currentRole !== "barber") return;
+  const node = $("barberTodayAppointmentsList");
+  if (!node) return;
+
+  const today = state.appointments
+    .filter(a => a.date === isoDay())
+    .sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+
+  $("barberTodayAppointmentsCount").textContent = today.length;
+  $("barberTodayAppointmentsDateLabel").textContent = new Date().toLocaleDateString("es-PA", {
+    weekday:"long", day:"2-digit", month:"long", year:"numeric"
+  });
+
+  node.innerHTML = today.length ? today.map(a => `
+    <article class="today-appt-card barber-today-card">
+      <div class="today-appt-time">
+        <span>HORA</span><strong>${escapeHtml(a.time || "")}</strong>
+      </div>
+      <div class="today-appt-main">
+        <div class="today-appt-client">
+          <span class="status ${a.status}">${statusLabel(a.status)}</span>
+          <h4>${escapeHtml(a.clientName || "Cliente")}</h4>
+          <small>${escapeHtml(a.clientPhone || "")} · ${escapeHtml(a.serviceName || "")}</small>
+        </div>
+        <div class="today-assigned-barber">
+          <span>BARBERO</span>
+          <strong>${escapeHtml(currentBarber?.name || "Barbero")}</strong>
+        </div>
+      </div>
+      <div class="today-appt-actions">
+        ${a.status==="pending" ? `<button class="tiny-btn" data-myapptmodal="${a.id}" data-status="confirmed" type="button">Confirmar</button>` : ""}
+        ${a.status==="confirmed" ? `<button class="tiny-btn" data-myapptmodal="${a.id}" data-status="completed" type="button">Completar</button>` : ""}
+      </div>
+    </article>
+  `).join("") : `<div class="cash-empty"><span>◷</span><strong>No tienes citas hoy</strong><p>Tu agenda del día está libre.</p></div>`;
+
+  document.querySelectorAll("[data-myapptmodal]").forEach(btn =>
+    btn.addEventListener("click", () => changeAppointment(btn.dataset.myapptmodal, btn.dataset.status))
+  );
 }
 
 function renderClientOptions() {
