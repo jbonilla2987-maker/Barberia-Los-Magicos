@@ -863,6 +863,81 @@ async function changeAppointment(id, status) {
   }
 }
 
+
+function activeChairOptions(selectedId = "") {
+  const chairs = state.chairs.filter(c => c.active !== false);
+  if (!chairs.length) return `<option value="">No hay puestos activos</option>`;
+  return `<option value="">Selecciona un puesto...</option>` + chairs.map(c =>
+    `<option value="${c.id}" ${c.id === selectedId ? "selected" : ""}>${escapeHtml(c.name)}</option>`
+  ).join("");
+}
+
+function hydrateBarberChairSelectors() {
+  const createSelect = $("barberFixedChair");
+  if (createSelect) {
+    const current = createSelect.value;
+    createSelect.innerHTML = activeChairOptions(current);
+    if (current && state.chairs.some(c => c.id === current && c.active !== false)) {
+      createSelect.value = current;
+    }
+  }
+
+  const editSelect = $("barberChairEditorSelect");
+  if (editSelect && $("barberChairEditorId")?.value) {
+    const barber = state.barbers.find(b => b.id === $("barberChairEditorId").value);
+    editSelect.innerHTML = activeChairOptions(barber?.chairId || "");
+  }
+}
+
+function openBarberChairEditor(barberId) {
+  const barber = state.barbers.find(b => b.id === barberId);
+  if (!barber) return;
+
+  $("barberChairEditorId").value = barber.id;
+  $("barberChairEditorName").textContent = barber.name || "Barbero";
+  $("barberChairEditorSelect").innerHTML = activeChairOptions(barber.chairId || "");
+  if (barber.chairId && state.chairs.some(c => c.id === barber.chairId && c.active !== false)) {
+    $("barberChairEditorSelect").value = barber.chairId;
+  }
+  openModal("barberChairModal");
+}
+
+async function saveBarberFixedChair(e) {
+  e.preventDefault();
+
+  const barberId = $("barberChairEditorId").value;
+  const chairId = $("barberChairEditorSelect").value;
+  const chair = state.chairs.find(c => c.id === chairId && c.active !== false);
+
+  if (!barberId || !chair) return toast("Selecciona un puesto activo.");
+
+  const barber = state.barbers.find(b => b.id === barberId);
+  if (!barber) return;
+
+  try {
+    const batch = writeBatch(db);
+    batch.update(doc(db, "users", barberId), {
+      chairId:chair.id,
+      chairName:chair.name,
+      updatedAt:serverTimestamp()
+    });
+    batch.set(doc(db, "publicBarbers", barberId), {
+      name:barber.name || "Barbero",
+      active:barber.active !== false,
+      chairId:chair.id,
+      chairName:chair.name,
+      updatedAt:serverTimestamp()
+    }, { merge:true });
+
+    await batch.commit();
+    closeModal("barberChairModal");
+    toast(`${barber.name} ahora tiene ${chair.name} como puesto fijo.`);
+  } catch (err) {
+    console.error(err);
+    toast(firebaseErrorMessage(err, "No se pudo cambiar el puesto del barbero."));
+  }
+}
+
 function renderBarbers() {
   const orderedBarbers = [...state.barbers].sort((a,b) => {
     const aActive = a.active !== false ? 0 : 1;
@@ -892,6 +967,18 @@ function renderBarbers() {
         <div><span>Servicios</span><strong>${Number(b.commission ?? 50)}%</strong></div>
         <div><span>Productos</span><strong>${Number(b.productCommission ?? 0)}%</strong></div>
       </div>
+
+      <div class="barber-fixed-chair-card ${b.chairId ? "assigned" : "unassigned"}">
+        <span class="barber-fixed-chair-icon">⌖</span>
+        <div>
+          <small>PUESTO FIJO</small>
+          <strong>${escapeHtml(b.chairName || "Sin asignar")}</strong>
+        </div>
+      </div>
+
+      <button class="barber-edit-chair-btn"
+        data-edit-chair="${b.id}"
+        type="button">${b.chairId ? "⌖ Cambiar puesto" : "+ Asignar puesto"}</button>
 
       <div class="credential">
         <span>Usuario</span>
@@ -956,6 +1043,10 @@ function renderBarbers() {
   document.querySelectorAll("[data-edit-commission]").forEach(btn =>
     btn.addEventListener("click", () => openCommissionEditor(btn.dataset.editCommission))
   );
+
+  document.querySelectorAll("[data-edit-chair]").forEach(btn =>
+    btn.addEventListener("click", () => openBarberChairEditor(btn.dataset.editChair))
+  );
 }
 
 
@@ -1008,12 +1099,15 @@ async function createBarber(e) {
   const password2 = $("barberPassword2").value;
   const commission = Number($("barberCommission").value);
   const productCommission = Number($("barberProductCommission").value);
+  const chairId = $("barberFixedChair").value;
+  const fixedChair = state.chairs.find(c => c.id === chairId && c.active !== false);
 
   if (!/^[a-z0-9._-]{3,30}$/.test(username)) return toast("El usuario debe tener mínimo 3 caracteres, sin espacios.");
   if (password.length < 6) return toast("La contraseña debe tener mínimo 6 caracteres.");
   if (password !== password2) return toast("Las contraseñas no coinciden.");
   if (commission < 0 || commission > 100) return toast("La comisión de servicios debe estar entre 0 y 100%.");
   if (productCommission < 0 || productCommission > 100) return toast("La comisión de productos debe estar entre 0 y 100%.");
+  if (!fixedChair) return toast("Selecciona el puesto fijo del barbero.");
 
   let secondaryApp = null;
   try {
@@ -1035,6 +1129,8 @@ async function createBarber(e) {
       emailAlias:usernameToEmail(username),
       commission,
       productCommission,
+      chairId:fixedChair.id,
+      chairName:fixedChair.name,
       active:true,
       createdAt:serverTimestamp(),
       createdBy:auth.currentUser.uid
@@ -1043,6 +1139,8 @@ async function createBarber(e) {
     await setDoc(doc(db, "publicBarbers", uid), {
       name,
       active:true,
+      chairId:fixedChair.id,
+      chairName:fixedChair.name,
       createdAt:serverTimestamp()
     });
 
@@ -1054,7 +1152,8 @@ async function createBarber(e) {
     e.target.reset();
     $("barberCommission").value = 50;
     $("barberProductCommission").value = 0;
-    toast(`Usuario ${username} creado correctamente.`);
+    hydrateBarberChairSelectors();
+    toast(`Usuario ${username} creado en ${fixedChair.name}.`);
   } catch (err) {
     console.error(err);
     if (secondaryApp) {
@@ -1374,29 +1473,55 @@ function renderBarberChargeOptions() {
   if (currentRole !== "barber") return;
 
   const serviceSelect = $("barberChargeService");
-  const chairSelect = $("barberChargeChair");
+  const chairInput = $("barberChargeChair");
   const productSelect = $("barberChargeProduct");
   const selectedService = serviceSelect.value;
-  const selectedChair = chairSelect.value;
   const selectedProduct = productSelect?.value || "";
 
   serviceSelect.innerHTML = state.services.length
-    ? `<option value="">Selecciona un servicio...</option>` + state.services.map(s => `<option value="${s.id}">${escapeHtml(s.name)} · ${money(s.price)}</option>`).join("")
+    ? `<option value="">Selecciona un servicio...</option>` + state.services.map(s =>
+        `<option value="${s.id}">${escapeHtml(s.name)} · ${money(s.price)}</option>`
+      ).join("")
     : `<option value="">No hay servicios activos</option>`;
-
-  chairSelect.innerHTML = state.chairs.length
-    ? `<option value="">Selecciona un puesto...</option>` + state.chairs.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("")
-    : `<option value="">No hay puestos activos</option>`;
 
   if (productSelect) {
     productSelect.innerHTML = state.products.length
-      ? `<option value="">Selecciona un producto...</option>` + state.products.map(p => `<option value="${p.id}">${escapeHtml(p.name)} · ${money(p.price)}</option>`).join("")
+      ? `<option value="">Selecciona un producto...</option>` + state.products.map(p =>
+          `<option value="${p.id}">${escapeHtml(p.name)} · ${money(p.price)}</option>`
+        ).join("")
       : `<option value="">No hay productos activos</option>`;
   }
 
-  if (selectedService && state.services.some(s => s.id === selectedService)) serviceSelect.value = selectedService;
-  if (selectedChair && state.chairs.some(c => c.id === selectedChair)) chairSelect.value = selectedChair;
-  if (selectedProduct && state.products.some(p => p.id === selectedProduct)) productSelect.value = selectedProduct;
+  if (selectedService && state.services.some(s => s.id === selectedService)) {
+    serviceSelect.value = selectedService;
+  }
+  if (selectedProduct && state.products.some(p => p.id === selectedProduct)) {
+    productSelect.value = selectedProduct;
+  }
+
+  const fixedChair = state.chairs.find(c =>
+    c.id === currentBarber?.chairId && c.active !== false
+  );
+
+  if (chairInput) chairInput.value = fixedChair?.id || "";
+
+  const chairName = $("barberFixedChairName");
+  const chairHelp = $("barberFixedChairHelp");
+  const chairDisplay = $("barberFixedChairDisplay");
+
+  if (fixedChair) {
+    if (chairName) chairName.textContent = fixedChair.name;
+    if (chairHelp) chairHelp.textContent = "Asignado por el administrador · se usa automáticamente.";
+    chairDisplay?.classList.remove("chair-missing");
+    chairDisplay?.classList.add("chair-ready");
+  } else {
+    if (chairName) chairName.textContent = currentBarber?.chairName || "Sin puesto asignado";
+    if (chairHelp) chairHelp.textContent = currentBarber?.chairId
+      ? "Tu puesto está inactivo. Solicita al administrador que te reasigne."
+      : "El administrador debe asignarte un puesto antes de cobrar.";
+    chairDisplay?.classList.remove("chair-ready");
+    chairDisplay?.classList.add("chair-missing");
+  }
 
   renderBarberProductCart();
   renderBarberChargePreview();
@@ -1497,7 +1622,7 @@ function renderBarberChargePreview() {
   if (currentRole !== "barber") return;
 
   const service = state.services.find(s => s.id === $("barberChargeService").value);
-  const chair = state.chairs.find(c => c.id === $("barberChargeChair").value);
+  const chair = state.chairs.find(c => c.id === currentBarber?.chairId && c.active !== false);
   const servicePrice = Math.max(0, Number($("barberChargePrice").value || 0));
   const productsTotal = barberProductSubtotal();
   const total = servicePrice + productsTotal;
@@ -1539,7 +1664,7 @@ async function submitBarberChargeRequest(e) {
   if (currentRole !== "barber" || !currentBarber) return;
 
   const service = state.services.find(s => s.id === $("barberChargeService").value);
-  const chair = state.chairs.find(c => c.id === $("barberChargeChair").value);
+  const chair = state.chairs.find(c => c.id === currentBarber?.chairId && c.active !== false);
   const servicePrice = Number($("barberChargePrice").value);
   const products = barberProductCart.map(item => ({
     productId:item.productId,
@@ -1554,7 +1679,7 @@ async function submitBarberChargeRequest(e) {
   const note = $("barberChargeNote").value.trim();
 
   if (!service || !chair || !servicePrice || servicePrice <= 0 || !payment) {
-    return toast("Revisa servicio, puesto, precio y método de pago.");
+    return toast(!chair ? "No tienes un puesto fijo activo. Solicita al administrador que te asigne uno." : "Revisa servicio, precio y método de pago.");
   }
 
   try {
@@ -1620,6 +1745,7 @@ function renderBarberPortal() {
   renderMyChargeRequests();
 
   $("barberWelcomeName").textContent = (currentBarber.name || "Barbero").split(" ")[0];
+  $("barberWelcomeChair").textContent = currentBarber.chairName || "Puesto sin asignar";
   $("myCommission").textContent = `${Number(currentBarber.commission ?? 50)}%`;
 
   const mine = state.sales.filter(s => s.barberId === currentBarber.id);

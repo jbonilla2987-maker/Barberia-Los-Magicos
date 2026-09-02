@@ -801,3 +801,154 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
     grid-template-columns:1fr;
   }
 }
+
+
+/* =========================================================
+   PUESTO FIJO POR BARBERO
+   ========================================================= */
+.field-help{
+  display:block;
+  color:var(--muted);
+  font-size:8px;
+  margin-top:5px;
+}
+.fixed-chair-field{
+  display:flex;
+  flex-direction:column;
+}
+.fixed-chair-display{
+  min-height:43px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:9px 11px;
+  border-radius:12px;
+  border:1px solid rgba(215,173,86,.18);
+  background:linear-gradient(135deg,rgba(215,173,86,.07),rgba(255,255,255,.01));
+}
+.fixed-chair-display.chair-ready{
+  border-color:rgba(114,215,167,.18);
+  background:linear-gradient(135deg,rgba(114,215,167,.055),rgba(255,255,255,.01));
+}
+.fixed-chair-display.chair-missing{
+  border-color:rgba(255,124,124,.2);
+  background:rgba(255,124,124,.04);
+}
+.fixed-chair-icon{
+  width:30px;
+  height:30px;
+  min-width:30px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  background:rgba(215,173,86,.1);
+  color:var(--gold2);
+  font-size:14px;
+}
+.fixed-chair-display>div{
+  min-width:0;
+  flex:1;
+}
+.fixed-chair-display strong,
+.fixed-chair-display small{
+  display:block;
+}
+.fixed-chair-display strong{
+  font-size:11px;
+}
+.fixed-chair-display small{
+  color:var(--muted);
+  font-size:8px;
+  margin-top:2px;
+}
+.fixed-chair-lock{
+  padding:5px 7px;
+  border-radius:999px;
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.8px;
+  color:var(--gold2);
+  border:1px solid rgba(215,173,86,.18);
+  background:rgba(215,173,86,.06);
+}
+.barber-fixed-chair-card{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:10px 11px;
+  margin:0 0 8px;
+  border-radius:12px;
+  border:1px solid rgba(215,173,86,.14);
+  background:rgba(215,173,86,.04);
+}
+.barber-fixed-chair-card.unassigned{
+  border-color:rgba(255,124,124,.17);
+  background:rgba(255,124,124,.035);
+}
+.barber-fixed-chair-icon{
+  width:30px;
+  height:30px;
+  border-radius:9px;
+  display:grid;
+  place-items:center;
+  color:var(--gold2);
+  background:rgba(215,173,86,.08);
+}
+.barber-fixed-chair-card small,
+.barber-fixed-chair-card strong{
+  display:block;
+}
+.barber-fixed-chair-card small{
+  font-size:7px;
+  color:var(--muted);
+  letter-spacing:.8px;
+}
+.barber-fixed-chair-card strong{
+  font-size:11px;
+  margin-top:2px;
+}
+.barber-edit-chair-btn{
+  width:100%;
+  margin:0 0 8px;
+  padding:9px 11px;
+  border-radius:11px;
+  border:1px solid rgba(215,173,86,.2);
+  background:rgba(215,173,86,.055);
+  color:var(--gold2);
+  font-size:9px;
+  font-weight:900;
+}
+.fixed-chair-explain{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  padding:11px;
+  border-radius:12px;
+  border:1px solid rgba(215,173,86,.14);
+  background:rgba(215,173,86,.045);
+}
+.fixed-chair-explain>span{
+  color:var(--gold2);
+  font-size:17px;
+}
+.fixed-chair-explain p{
+  margin:0;
+  color:#bcbcc1;
+  font-size:9px;
+  line-height:1.5;
+}
+.barber-welcome-chair{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-top:8px;
+  padding:6px 9px;
+  border-radius:999px;
+  border:1px solid rgba(215,173,86,.16);
+  background:rgba(215,173,86,.05);
+  color:var(--gold2);
+  font-size:9px;
+}
+.barber-welcome-chair span{
+  font-size:12px;
+}
