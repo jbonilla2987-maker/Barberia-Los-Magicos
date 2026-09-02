@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260902-barbero-ui-v2">
+  <link rel="stylesheet" href="./styles.css?v=20260902-barbero-premium-v4">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -136,6 +136,14 @@
           <article class="stat-card clickable-stat" id="todayAppointmentsCard" role="button" tabindex="0"><div class="stat-top"><span>Citas de hoy</span><i>◷</i></div><strong id="statAppointments">0</strong><small id="statAppointmentsMeta">0 pendientes · Ver detalle</small></article>
         </div>
 
+        <section class="dashboard-chair-section">
+          <div class="report-section-title dashboard-chair-title">
+            <div><p class="eyebrow">PUESTOS · HOY</p><h3>Producción diaria por puesto</h3></div>
+            <p>Barbero asignado, total generado y distribución del día.</p>
+          </div>
+          <div id="dashboardChairCards" class="dashboard-chair-grid"></div>
+        </section>
+
         <div class="dashboard-grid">
           <article class="panel">
             <div class="panel-head">
@@ -153,13 +161,6 @@
           </article>
         </div>
 
-        <section class="dashboard-chair-section">
-          <div class="report-section-title dashboard-chair-title">
-            <div><p class="eyebrow">PUESTOS · HOY</p><h3>Producción diaria por puesto</h3></div>
-            <p>Barbero asignado, total generado y distribución del día.</p>
-          </div>
-          <div id="dashboardChairCards" class="dashboard-chair-grid"></div>
-        </section>
       </section>
 
       <section class="view" id="view-sales">
@@ -463,9 +464,14 @@
           </table>
         </div>
       </article>
-      <div class="dashboard-grid">
-        <article class="panel"><div class="panel-head"><div><p class="eyebrow">MI AGENDA</p><h3>Próximas citas</h3></div></div><div id="myAppointments" class="list"></div></article>
-        <article class="panel"><div class="panel-head"><div><p class="eyebrow">MI PRODUCCIÓN</p><h3>Últimos servicios</h3></div></div><div id="mySales" class="list"></div></article>
+      <div class="dashboard-grid barber-bottom-grid">
+        <article class="panel barber-agenda-panel"><div class="panel-head"><div><p class="eyebrow">MI AGENDA</p><h3>Próximas citas</h3></div></div><div id="myAppointments" class="list"></div></article>
+        <article class="panel barber-sales-panel premium-my-sales-panel">
+          <div class="panel-head premium-my-sales-head">
+            <div><p class="eyebrow">MI PRODUCCIÓN</p><h3>Últimos servicios</h3><p class="panel-subcopy">Tus movimientos más recientes y el monto acreditado para ti.</p></div>
+          </div>
+          <div id="mySales" class="premium-service-list"></div>
+        </article>
       </div>
     </main>
   </section>
@@ -556,7 +562,7 @@
     <div class="modal dashboard-submodal barber-appts-modal">
       <button class="modal-close" data-close="barberTodayAppointmentsModal" type="button">×</button>
       <div class="submodal-heading">
-        <div><p class="eyebrow">MI AGENDA DE HOY</p><h2>Mis citas del día</h2><p class="modal-copy" id="barberTodayAppointmentsDateLabel"></p></div>
+        <div><p class="eyebrow">MI AGENDA DE HOY</p><h2>Mis citas del día</h2><p class="modal-copy" id="barberTodayAppointmentsDateLabel"></p><p class="barber-appt-modal-help">Consulta cliente, servicio, hora y estado sin salir de tu panel.</p></div>
         <div class="submodal-count"><span>TOTAL</span><strong id="barberTodayAppointmentsCount">0</strong></div>
       </div>
       <div id="barberTodayAppointmentsList" class="today-appt-list"></div>
@@ -691,6 +697,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260902-barbero-ui-v2"></script>
+  <script type="module" src="./app.js?v=20260902-barbero-premium-v4"></script>
 </body>
 </html>

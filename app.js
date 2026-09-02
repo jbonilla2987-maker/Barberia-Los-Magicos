@@ -1895,6 +1895,19 @@ function renderBarberChargeOptions() {
     chairDisplay?.classList.add("chair-missing");
   }
 
+  // Si no hay servicio seleccionado, usar automáticamente el primero del catálogo
+  if (!serviceSelect.value && state.services.length) {
+    serviceSelect.value = state.services[0].id;
+  }
+
+  const chosenService = state.services.find(s => s.id === serviceSelect.value);
+  const priceInput = $("barberChargePrice");
+  if (priceInput) {
+    if (chosenService && (!priceInput.value || Number(priceInput.value) <= 0 || !selectedService)) {
+      priceInput.value = Number(chosenService.price || 0).toFixed(2);
+    }
+  }
+
   renderBarberProductCart();
   renderBarberChargePreview();
 }
@@ -2009,7 +2022,7 @@ function renderBarberChargePreview() {
   const shopAmount = total - barberAmount;
 
   $("barberChargeServicePreview").textContent = service?.name || "Selecciona un servicio";
-  $("barberChargeChairPreview").textContent = chair?.name || "Selecciona un puesto";
+  $("barberChargeChairPreview").textContent = chair?.name || "Puesto no asignado";
   $("barberChargeTotalPreview").textContent = money(total);
   $("barberChargePaymentPreview").textContent = payment;
 
@@ -2182,15 +2195,50 @@ function renderBarberPortal() {
   );
 
   const recent = [...mine].sort((a,b)=>jsDate(b.date)-jsDate(a.date)).slice(0,8);
-  $("mySales").innerHTML = recent.length ? recent.map(s => `
-    <div class="list-row">
-      <div>
-        <div class="item-title">${escapeHtml(s.serviceName)}</div>
-        <div class="item-meta">${fmtDateTime(s.date)} · Servicios ${money(s.serviceBarberAmount ?? s.barberAmount)}${Number(s.productBarberAmount||0)>0 ? ` · Productos ${money(s.productBarberAmount||0)}` : ""}</div>
-      </div>
-      <div class="amount">${money(s.barberAmount)}</div>
-    </div>
-  `).join("") : `<div class="empty">Aún no tienes servicios registrados.</div>`;
+  $("mySales").innerHTML = recent.length ? recent.map((s,index) => {
+    const dt = jsDate(s.date);
+    const time = dt.toLocaleTimeString("es-PA", {hour:"2-digit",minute:"2-digit"});
+    const day = dt.toLocaleDateString("es-PA", {day:"2-digit",month:"short"});
+    const servicePay = Number(s.serviceBarberAmount ?? s.barberAmount ?? 0);
+    const productPay = Number(s.productBarberAmount || 0);
+    const productsCount = Array.isArray(s.products)
+      ? s.products.reduce((sum,p)=>sum+Number(p.qty||0),0)
+      : 0;
+
+    return `
+      <article class="premium-service-movement">
+        <div class="service-movement-time">
+          <strong>${escapeHtml(time)}</strong>
+          <span>${escapeHtml(day)}</span>
+        </div>
+
+        <div class="service-movement-main">
+          <div class="service-movement-title-row">
+            <div>
+              <span class="service-movement-number">#${String(index+1).padStart(2,"0")}</span>
+              <h4>${escapeHtml(s.serviceName || "Servicio")}</h4>
+            </div>
+            <span class="service-credit-status">ACREDITADO</span>
+          </div>
+
+          <div class="service-movement-details">
+            <div><span>Servicios</span><strong>${money(servicePay)}</strong></div>
+            <div><span>Productos</span><strong>${money(productPay)}</strong><small>${productsCount ? `${productsCount} producto${productsCount===1?"":"s"}` : "Sin productos"}</small></div>
+            <div><span>Método</span><strong>${escapeHtml(s.payment || "—")}</strong></div>
+          </div>
+        </div>
+
+        <div class="service-movement-earned">
+          <span>PARA TI</span>
+          <strong>${money(s.barberAmount)}</strong>
+        </div>
+      </article>`;
+  }).join("") : `
+    <div class="premium-empty-state">
+      <span>✂</span>
+      <strong>Aún no tienes servicios registrados</strong>
+      <small>Cuando el administrador confirme tus cobros aparecerán aquí.</small>
+    </div>`;
 }
 
 function openBarberTodayAppointmentsModal() {
@@ -2212,28 +2260,52 @@ function renderBarberTodayAppointmentsModal() {
     weekday:"long", day:"2-digit", month:"long", year:"numeric"
   });
 
-  node.innerHTML = today.length ? today.map(a => `
-    <article class="today-appt-card barber-today-card">
-      <div class="today-appt-time">
-        <span>HORA</span><strong>${escapeHtml(a.time || "")}</strong>
+  node.innerHTML = today.length ? today.map((a,index) => `
+    <article class="barber-premium-appt-card ${a.status}">
+      <div class="barber-appt-time-block">
+        <span>CITA ${String(index+1).padStart(2,"0")}</span>
+        <strong>${escapeHtml(a.time || "")}</strong>
       </div>
-      <div class="today-appt-main">
-        <div class="today-appt-client">
+
+      <div class="barber-appt-info">
+        <div class="barber-appt-info-top">
+          <div>
+            <span class="barber-appt-client-label">CLIENTE</span>
+            <h4>${escapeHtml(a.clientName || "Cliente")}</h4>
+          </div>
           <span class="status ${a.status}">${statusLabel(a.status)}</span>
-          <h4>${escapeHtml(a.clientName || "Cliente")}</h4>
-          <small>${escapeHtml(a.clientPhone || "")} · ${escapeHtml(a.serviceName || "")}</small>
         </div>
-        <div class="today-assigned-barber">
-          <span>BARBERO</span>
-          <strong>${escapeHtml(currentBarber?.name || "Barbero")}</strong>
+
+        <div class="barber-appt-detail-grid">
+          <div>
+            <span>Servicio</span>
+            <strong>${escapeHtml(a.serviceName || "Servicio")}</strong>
+          </div>
+          <div>
+            <span>Teléfono</span>
+            <strong>${escapeHtml(a.clientPhone || "Sin teléfono")}</strong>
+          </div>
+          <div>
+            <span>Puesto</span>
+            <strong>${escapeHtml(currentBarber?.chairName || "Puesto asignado")}</strong>
+          </div>
         </div>
+
+        ${a.note ? `<div class="barber-appt-note"><span>NOTA</span><p>${escapeHtml(a.note)}</p></div>` : ""}
       </div>
-      <div class="today-appt-actions">
-        ${a.status==="pending" ? `<button class="tiny-btn" data-myapptmodal="${a.id}" data-status="confirmed" type="button">Confirmar</button>` : ""}
-        ${a.status==="confirmed" ? `<button class="tiny-btn" data-myapptmodal="${a.id}" data-status="completed" type="button">Completar</button>` : ""}
+
+      <div class="barber-appt-modal-actions">
+        ${a.status==="pending" ? `<button class="appt-action-primary" data-myapptmodal="${a.id}" data-status="confirmed" type="button">✓ Confirmar cita</button>` : ""}
+        ${a.status==="confirmed" ? `<button class="appt-action-primary complete" data-myapptmodal="${a.id}" data-status="completed" type="button">✓ Marcar completada</button>` : ""}
+        ${a.status==="completed" ? `<span class="appt-done-chip">SERVICIO COMPLETADO</span>` : ""}
       </div>
     </article>
-  `).join("") : `<div class="cash-empty"><span>◷</span><strong>No tienes citas hoy</strong><p>Tu agenda del día está libre.</p></div>`;
+  `).join("") : `
+    <div class="barber-premium-empty-appts">
+      <span>◷</span>
+      <strong>No tienes citas programadas para hoy</strong>
+      <p>Tu agenda del día está libre.</p>
+    </div>`;
 
   document.querySelectorAll("[data-myapptmodal]").forEach(btn =>
     btn.addEventListener("click", () => changeAppointment(btn.dataset.myapptmodal, btn.dataset.status))
