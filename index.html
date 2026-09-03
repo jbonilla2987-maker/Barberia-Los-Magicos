@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260902-dashboard-filter-v4">
+  <link rel="stylesheet" href="./styles.css?v=20260903-payment-receipt-v1">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -594,7 +594,10 @@
       <button class="modal-close" data-close="chairDayDetailModal" type="button">×</button>
       <div class="submodal-heading">
         <div><p class="eyebrow" id="chairDetailEyebrow">DETALLE DEL PERÍODO</p><h2 id="chairDayDetailTitle">Puesto</h2><p class="modal-copy" id="chairDayDetailSubtitle"></p></div>
-        <div class="chair-detail-total"><span id="chairDetailTotalLabel">TOTAL PERÍODO</span><strong id="chairDayDetailTotal">USD 0.00</strong></div>
+        <div class="chair-detail-header-actions">
+          <div class="chair-detail-total"><span id="chairDetailTotalLabel">TOTAL PERÍODO</span><strong id="chairDayDetailTotal">USD 0.00</strong></div>
+          <button class="chair-receipt-btn" id="printChairPaymentReceiptBtn" type="button">Imprimir / PDF</button>
+        </div>
       </div>
       <div id="chairDayDetailSummary" class="chair-detail-summary"></div>
       <div class="table-wrap">
@@ -832,6 +835,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260902-dashboard-filter-v4"></script>
+  <script type="module" src="./app.js?v=20260903-payment-receipt-v1"></script>
 </body>
 </html>

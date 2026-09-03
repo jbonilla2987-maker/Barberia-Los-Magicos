@@ -57,6 +57,7 @@ let booking = { serviceId: null, barberId: null };
 let barberProductCart = [];
 let barberServiceViewMode = "cards";
 let dashboardFilterMode = "day";
+let currentChairReceiptContext = null;
 let unsubscribers = [];
 
 function money(v) {
@@ -397,6 +398,7 @@ function wireStaticUI() {
   bind("addServiceBtn", "click", () => openModal("serviceModal"));
   bind("addProductBtn", "click", () => openModal("productModal"));
   bind("productSalesTodayBtn", "click", openProductSalesTodayModal);
+  bind("printChairPaymentReceiptBtn", "click", printChairPaymentReceipt);
 
   bind("adminLoginForm", "submit", adminLogin);
   bind("barberLoginForm", "submit", barberLogin);
@@ -885,7 +887,148 @@ function openChairDayDetail(chairId) {
     </tr>
   `).join("") : `<tr><td colspan="7" class="empty">No hay movimientos para este puesto en ${escapeHtml(period.label)}.</td></tr>`;
 
+  currentChairReceiptContext = {
+    chair,
+    period,
+    rows,
+    assigned,
+    total,
+    barberPay,
+    shopPay
+  };
+
   openModal("chairDayDetailModal");
+}
+
+function receiptSafeText(value) {
+  return escapeHtml(value ?? "");
+}
+
+function printChairPaymentReceipt() {
+  const ctx = currentChairReceiptContext;
+  if (!ctx?.chair) return toast("Abre primero el detalle de un puesto.");
+  if (!ctx.rows?.length) return toast("No hay movimientos en este período para generar un comprobante.");
+
+  const { chair, period, rows, assigned, total, barberPay, shopPay } = ctx;
+  const saleBarberNames = [...new Set(rows.map(s => String(s.barberName || "").trim()).filter(Boolean))];
+  const assignedNames = assigned.map(b => String(b.name || "").trim()).filter(Boolean);
+  const barberNames = saleBarberNames.length ? saleBarberNames : assignedNames;
+  const barberName = barberNames.length ? barberNames.join(", ") : "Barbero";
+  const adminName = currentAdmin?.name || "Administrador";
+  const periodCode = period.start === period.end
+    ? period.start.replaceAll("-","")
+    : `${period.start.replaceAll("-","")}-${period.end.replaceAll("-","")}`;
+  const chairCode = String(chair.name || chair.id || "PUESTO").toUpperCase().replace(/[^A-Z0-9]+/g,"-").replace(/^-|-$/g,"");
+  const receiptNo = `LM-${chairCode || "PUESTO"}-${periodCode}`;
+  const generatedAt = new Date().toLocaleString("es-PA", {
+    day:"2-digit", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit"
+  });
+  const singleDay = period.start === period.end;
+
+  const detailRows = rows.map((s,index) => `
+    <tr>
+      <td>${index+1}</td>
+      <td>${receiptSafeText(fmtDateTime(s.date))}</td>
+      <td>${receiptSafeText(s.serviceName || "Servicio")}</td>
+      <td>${receiptSafeText(s.payment || "—")}</td>
+      <td class="num">${receiptSafeText(money(s.total))}</td>
+      <td class="num barber-pay">${receiptSafeText(money(s.barberAmount))}</td>
+    </tr>
+  `).join("");
+
+  const printWindow = window.open("", "_blank", "width=1000,height=820");
+  if (!printWindow) return toast("El navegador bloqueó la ventana de impresión. Permite ventanas emergentes e inténtalo otra vez.");
+
+  printWindow.document.open();
+  printWindow.document.write(`<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Comprobante de pago - ${receiptSafeText(receiptNo)}</title>
+<style>
+  @page{size:A4;margin:14mm}
+  *{box-sizing:border-box}
+  body{margin:0;background:#f4f1ea;color:#171717;font-family:Arial,Helvetica,sans-serif;font-size:12px}
+  .page{width:100%;max-width:190mm;margin:0 auto;background:#fff;padding:18px 20px;border:1px solid #ddd7ca}
+  .head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;border-bottom:2px solid #c59a45;padding-bottom:14px}
+  .brand{display:flex;gap:12px;align-items:center}
+  .logo{width:48px;height:48px;border-radius:12px;background:#d5aa54;display:grid;place-items:center;font-family:Georgia,serif;font-size:20px;font-weight:700;color:#17120b}
+  .brand h1{margin:0;font-family:Georgia,serif;font-size:24px}.brand p{margin:4px 0 0;color:#666;font-size:10px;letter-spacing:.8px;text-transform:uppercase}
+  .doc{text-align:right}.doc h2{margin:0;font-size:17px}.doc p{margin:4px 0;color:#666;font-size:10px}.receipt-no{font-weight:700;color:#8b651e}
+  .intro{margin:17px 0 12px;padding:12px 14px;border:1px solid #e4dfd5;background:#faf8f3;border-radius:8px}
+  .meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 18px}.meta div{display:grid;grid-template-columns:105px 1fr;gap:8px}.meta span{color:#777}.meta strong{font-weight:700}
+  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}.sum{border:1px solid #e1ddd4;border-radius:8px;padding:12px}.sum span{display:block;color:#777;font-size:9px;text-transform:uppercase;letter-spacing:.7px}.sum strong{display:block;margin-top:5px;font-size:17px}.sum.primary{background:#f4e4bd;border-color:#d7b66e}.sum.primary strong{font-size:21px;color:#5f430d}
+  .section-title{margin:18px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.9px;color:#775511}
+  table{width:100%;border-collapse:collapse;font-size:10px}th{background:#222;color:#fff;text-align:left;padding:8px 7px;font-size:9px;text-transform:uppercase;letter-spacing:.5px}td{padding:8px 7px;border-bottom:1px solid #e6e2da;vertical-align:top}.num{text-align:right;white-space:nowrap}.barber-pay{font-weight:700;color:#775511}
+  .ack{margin:18px 0 28px;padding:12px 14px;border-left:4px solid #c59a45;background:#faf8f3;line-height:1.5;color:#444}
+  .signatures{display:grid;grid-template-columns:1fr 1fr;gap:55px;margin-top:54px}.sig{text-align:center}.line{border-top:1px solid #222;padding-top:7px;font-weight:700}.sig small{display:block;color:#666;margin-top:4px}.sig .name{margin-top:5px;color:#333;font-size:10px}
+  .footer{margin-top:34px;padding-top:9px;border-top:1px solid #ddd;text-align:center;color:#777;font-size:9px}
+  .print-note{margin:0 0 10px;text-align:center;color:#666;font-size:10px}
+  @media print{body{background:#fff}.page{border:0;padding:0}.print-note{display:none}}
+</style>
+</head>
+<body>
+  <div class="print-note">En la ventana de impresión puedes elegir <b>Guardar como PDF</b>.</div>
+  <main class="page">
+    <header class="head">
+      <div class="brand">
+        <div class="logo">LM</div>
+        <div><h1>Barbería Los Mágicos</h1><p>Comprobante de pago al barbero</p></div>
+      </div>
+      <div class="doc">
+        <h2>${singleDay ? "Comprobante diario" : "Comprobante del período"}</h2>
+        <p class="receipt-no">No. ${receiptSafeText(receiptNo)}</p>
+        <p>Generado: ${receiptSafeText(generatedAt)}</p>
+      </div>
+    </header>
+
+    <section class="intro">
+      <div class="meta">
+        <div><span>Barbero:</span><strong>${receiptSafeText(barberName)}</strong></div>
+        <div><span>Puesto:</span><strong>${receiptSafeText(chair.name)}</strong></div>
+        <div><span>${singleDay ? "Fecha:" : "Período:"}</span><strong>${receiptSafeText(period.label)}</strong></div>
+        <div><span>Administrador:</span><strong>${receiptSafeText(adminName)}</strong></div>
+      </div>
+    </section>
+
+    <section class="summary">
+      <div class="sum"><span>Total cobrado</span><strong>${receiptSafeText(money(total))}</strong></div>
+      <div class="sum primary"><span>Monto pagado al barbero</span><strong>${receiptSafeText(money(barberPay))}</strong></div>
+      <div class="sum"><span>Ingreso barbería</span><strong>${receiptSafeText(money(shopPay))}</strong></div>
+    </section>
+
+    <h3 class="section-title">Detalle de movimientos</h3>
+    <table>
+      <thead><tr><th>#</th><th>Fecha / Hora</th><th>Servicio</th><th>Método</th><th class="num">Total</th><th class="num">Pago barbero</th></tr></thead>
+      <tbody>${detailRows}</tbody>
+    </table>
+
+    <div class="ack">
+      Con las firmas al pie, ambas partes dejan constancia de que el monto indicado como <b>pago al barbero (${receiptSafeText(money(barberPay))})</b> corresponde a los movimientos detallados en este comprobante para ${receiptSafeText(period.label)}.
+    </div>
+
+    <section class="signatures">
+      <div class="sig">
+        <div class="line">Firma Barbería / Administrador</div>
+        <div class="name">${receiptSafeText(adminName)} · Barbería Los Mágicos</div>
+        <small>Fecha de firma: __________________</small>
+      </div>
+      <div class="sig">
+        <div class="line">Firma Barbero</div>
+        <div class="name">${receiptSafeText(barberName)}</div>
+        <small>Fecha de firma: __________________</small>
+      </div>
+    </section>
+
+    <footer class="footer">Barbería Los Mágicos · Comprobante generado por el sistema de gestión</footer>
+  </main>
+<script>
+  window.addEventListener('load',()=>setTimeout(()=>window.print(),250));
+</script>
+</body>
+</html>`);
+  printWindow.document.close();
 }
 
 function renderSales() {

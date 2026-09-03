@@ -2320,3 +2320,44 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .dashboard-range-control.active{grid-template-columns:1fr}
   .chair-detail-modal .submodal-heading{padding-right:48px;padding-top:8px}
 }
+
+
+/* =========================================================
+   COMPROBANTE DE PAGO DESDE DETALLE DE PUESTO
+   ========================================================= */
+.chair-detail-header-actions{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:8px;
+  flex:0 0 168px;
+  min-width:168px;
+}
+.chair-detail-modal .chair-detail-total{
+  width:100%;
+  min-width:0;
+  margin:0;
+}
+.chair-receipt-btn{
+  width:100%;
+  min-height:36px;
+  padding:9px 12px;
+  border-radius:11px;
+  border:1px solid rgba(215,173,86,.32);
+  background:linear-gradient(135deg,#e9c77d,#c9973f);
+  color:#17120b;
+  font-size:10px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 7px 18px rgba(201,151,63,.14);
+}
+.chair-receipt-btn:hover{filter:brightness(1.05);transform:translateY(-1px)}
+.chair-detail-modal .submodal-heading{padding-right:62px}
+@media(max-width:820px){
+  .chair-detail-header-actions{width:100%;min-width:0;flex-basis:auto}
+  .chair-detail-modal .submodal-heading{padding-right:54px}
+}
+@media(max-width:520px){
+  .chair-detail-modal .submodal-heading{padding-right:48px}
+  .chair-receipt-btn{min-height:40px}
+}
