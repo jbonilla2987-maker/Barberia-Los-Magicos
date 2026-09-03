@@ -195,6 +195,16 @@ function appointmentInDashboardPeriod(appt, period = dashboardPeriod()) {
   return dateKeyInPeriod(appt.date, period);
 }
 
+function openNativeDatePicker(input) {
+  if (!input) return;
+  try {
+    input.focus({ preventScroll:true });
+    if (typeof input.showPicker === "function") input.showPicker();
+  } catch (_) {
+    input.focus();
+  }
+}
+
 function setDashboardFilterMode(mode, render = true) {
   dashboardFilterMode = ["day","week","range","month"].includes(mode) ? mode : "day";
   document.querySelectorAll("[data-dashboard-filter-mode]").forEach(btn =>
@@ -203,6 +213,11 @@ function setDashboardFilterMode(mode, render = true) {
   document.querySelectorAll("[data-dashboard-filter-control]").forEach(node =>
     node.classList.toggle("active", node.dataset.dashboardFilterControl === dashboardFilterMode)
   );
+
+  // Al seleccionar Rango, abrir inmediatamente el calendario "Desde".
+  // Si el navegador no soporta showPicker(), el campo queda enfocado y usa el selector nativo.
+  if (dashboardFilterMode === "range") openNativeDatePicker($("dashboardFilterStart"));
+
   if (render && currentRole === "admin") renderDashboard();
 }
 
@@ -380,9 +395,15 @@ function wireStaticUI() {
   document.querySelectorAll("[data-dashboard-filter-mode]").forEach(btn =>
     btn.addEventListener("click", () => setDashboardFilterMode(btn.dataset.dashboardFilterMode))
   );
-  ["dashboardFilterDay","dashboardFilterWeek","dashboardFilterStart","dashboardFilterEnd","dashboardFilterMonth"].forEach(id =>
-    bind(id, "change", () => currentRole === "admin" && renderDashboard())
-  );
+  ["dashboardFilterDay","dashboardFilterWeek","dashboardFilterStart","dashboardFilterEnd","dashboardFilterMonth"].forEach(id => {
+    bind(id, "change", () => currentRole === "admin" && renderDashboard());
+    bind(id, "click", e => {
+      const input = e.currentTarget;
+      if (typeof input?.showPicker === "function") {
+        try { input.showPicker(); } catch (_) {}
+      }
+    });
+  });
   bind("dashboardFilterTodayBtn", "click", resetDashboardFilterToToday);
   initializeDashboardFilter();
 
@@ -909,7 +930,7 @@ function printChairPaymentReceipt() {
   if (!ctx?.chair) return toast("Abre primero el detalle de un puesto.");
   if (!ctx.rows?.length) return toast("No hay movimientos en este período para generar un comprobante.");
 
-  const { chair, period, rows, assigned, total, barberPay, shopPay } = ctx;
+  const { chair, period, rows, assigned, barberPay } = ctx;
   const saleBarberNames = [...new Set(rows.map(s => String(s.barberName || "").trim()).filter(Boolean))];
   const assignedNames = assigned.map(b => String(b.name || "").trim()).filter(Boolean);
   const barberNames = saleBarberNames.length ? saleBarberNames : assignedNames;
@@ -931,7 +952,6 @@ function printChairPaymentReceipt() {
       <td>${receiptSafeText(fmtDateTime(s.date))}</td>
       <td>${receiptSafeText(s.serviceName || "Servicio")}</td>
       <td>${receiptSafeText(s.payment || "—")}</td>
-      <td class="num">${receiptSafeText(money(s.total))}</td>
       <td class="num barber-pay">${receiptSafeText(money(s.barberAmount))}</td>
     </tr>
   `).join("");
@@ -958,7 +978,7 @@ function printChairPaymentReceipt() {
   .doc{text-align:right}.doc h2{margin:0;font-size:17px}.doc p{margin:4px 0;color:#666;font-size:10px}.receipt-no{font-weight:700;color:#8b651e}
   .intro{margin:17px 0 12px;padding:12px 14px;border:1px solid #e4dfd5;background:#faf8f3;border-radius:8px}
   .meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 18px}.meta div{display:grid;grid-template-columns:105px 1fr;gap:8px}.meta span{color:#777}.meta strong{font-weight:700}
-  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}.sum{border:1px solid #e1ddd4;border-radius:8px;padding:12px}.sum span{display:block;color:#777;font-size:9px;text-transform:uppercase;letter-spacing:.7px}.sum strong{display:block;margin-top:5px;font-size:17px}.sum.primary{background:#f4e4bd;border-color:#d7b66e}.sum.primary strong{font-size:21px;color:#5f430d}
+  .summary{display:grid;grid-template-columns:minmax(260px,420px);justify-content:center;gap:10px;margin:18px 0}.sum{border:1px solid #e1ddd4;border-radius:8px;padding:12px}.sum span{display:block;color:#777;font-size:9px;text-transform:uppercase;letter-spacing:.7px}.sum strong{display:block;margin-top:5px;font-size:17px}.sum.primary{background:#f4e4bd;border-color:#d7b66e}.sum.primary strong{font-size:21px;color:#5f430d}
   .section-title{margin:18px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.9px;color:#775511}
   table{width:100%;border-collapse:collapse;font-size:10px}th{background:#222;color:#fff;text-align:left;padding:8px 7px;font-size:9px;text-transform:uppercase;letter-spacing:.5px}td{padding:8px 7px;border-bottom:1px solid #e6e2da;vertical-align:top}.num{text-align:right;white-space:nowrap}.barber-pay{font-weight:700;color:#775511}
   .ack{margin:18px 0 28px;padding:12px 14px;border-left:4px solid #c59a45;background:#faf8f3;line-height:1.5;color:#444}
@@ -993,19 +1013,17 @@ function printChairPaymentReceipt() {
     </section>
 
     <section class="summary">
-      <div class="sum"><span>Total cobrado</span><strong>${receiptSafeText(money(total))}</strong></div>
-      <div class="sum primary"><span>Monto pagado al barbero</span><strong>${receiptSafeText(money(barberPay))}</strong></div>
-      <div class="sum"><span>Ingreso barbería</span><strong>${receiptSafeText(money(shopPay))}</strong></div>
+      <div class="sum primary"><span>Monto a pagar al barbero</span><strong>${receiptSafeText(money(barberPay))}</strong><small>${rows.length} movimiento${rows.length===1?"":"s"} incluido${rows.length===1?"":"s"}</small></div>
     </section>
 
     <h3 class="section-title">Detalle de movimientos</h3>
     <table>
-      <thead><tr><th>#</th><th>Fecha / Hora</th><th>Servicio</th><th>Método</th><th class="num">Total</th><th class="num">Pago barbero</th></tr></thead>
+      <thead><tr><th>#</th><th>Fecha / Hora</th><th>Servicio</th><th>Método</th><th class="num">Pago al barbero</th></tr></thead>
       <tbody>${detailRows}</tbody>
     </table>
 
     <div class="ack">
-      Con las firmas al pie, ambas partes dejan constancia de que el monto indicado como <b>pago al barbero (${receiptSafeText(money(barberPay))})</b> corresponde a los movimientos detallados en este comprobante para ${receiptSafeText(period.label)}.
+      Con las firmas al pie, ambas partes dejan constancia de que <b>Barbería Los Mágicos entrega al barbero la suma de ${receiptSafeText(money(barberPay))}</b>, correspondiente exclusivamente a los movimientos detallados en este comprobante para ${receiptSafeText(period.label)}.
     </div>
 
     <section class="signatures">

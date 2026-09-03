@@ -2361,3 +2361,93 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .chair-detail-modal .submodal-heading{padding-right:48px}
   .chair-receipt-btn{min-height:40px}
 }
+
+
+/* =========================================================
+   V6 · FILTRO MÁS LEGIBLE + CALENDARIO DE RANGO
+   ========================================================= */
+.dashboard-period-filter{
+  width:min(500px,100%);
+  flex-basis:min(500px,46%);
+  padding:18px;
+}
+.dashboard-filter-kicker{
+  font-size:9px;
+  letter-spacing:1.45px;
+}
+.dashboard-filter-head strong{
+  margin-top:5px;
+  font-size:14px;
+  line-height:1.2;
+}
+.dashboard-filter-today{
+  min-width:58px;
+  height:34px;
+  padding:0 12px;
+  font-size:10px;
+}
+.dashboard-filter-modes{
+  gap:7px;
+  padding:5px;
+}
+.dashboard-filter-modes button{
+  min-height:36px;
+  padding:9px 7px;
+  font-size:10px;
+  letter-spacing:.1px;
+}
+.dashboard-filter-control{
+  margin-top:12px;
+}
+.dashboard-filter-control label{
+  font-size:9px;
+  color:#b9b9c1;
+  letter-spacing:.9px;
+  font-weight:800;
+}
+.dashboard-filter-control input{
+  width:100%;
+  min-height:42px;
+  margin-top:6px;
+  padding:10px 12px;
+  border-radius:11px;
+  font-size:13px;
+  font-weight:800;
+  color:#f4f4f6;
+  cursor:pointer;
+  color-scheme:dark;
+}
+.dashboard-filter-control input::-webkit-calendar-picker-indicator{
+  cursor:pointer;
+  opacity:.95;
+  width:18px;
+  height:18px;
+}
+.dashboard-range-control.active{
+  gap:10px;
+}
+.dashboard-date-label{
+  position:relative;
+}
+.dashboard-date-label::after{
+  content:"CALENDARIO";
+  position:absolute;
+  right:36px;
+  bottom:14px;
+  pointer-events:none;
+  font-size:7px;
+  letter-spacing:.8px;
+  color:var(--gold);
+  font-weight:900;
+}
+@media(max-width:1100px){
+  .dashboard-period-filter{flex-basis:min(460px,100%);width:min(460px,100%)}
+}
+@media(max-width:520px){
+  .dashboard-filter-kicker{font-size:8px}
+  .dashboard-filter-head strong{font-size:13px}
+  .dashboard-filter-modes button{font-size:10px}
+  .dashboard-filter-control label{font-size:9px}
+  .dashboard-filter-control input{font-size:13px}
+  .dashboard-date-label::after{display:none}
+}

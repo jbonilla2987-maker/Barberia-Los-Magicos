@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260903-payment-receipt-v1">
+  <link rel="stylesheet" href="./styles.css?v=20260903-receipt-filter-v6">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -149,8 +149,8 @@
               <label>Semana<input id="dashboardFilterWeek" type="week"></label>
             </div>
             <div class="dashboard-filter-control dashboard-range-control" data-dashboard-filter-control="range">
-              <label>Desde<input id="dashboardFilterStart" type="date"></label>
-              <label>Hasta<input id="dashboardFilterEnd" type="date"></label>
+              <label class="dashboard-date-label">Desde<input id="dashboardFilterStart" type="date" aria-label="Fecha desde"></label>
+              <label class="dashboard-date-label">Hasta<input id="dashboardFilterEnd" type="date" aria-label="Fecha hasta"></label>
             </div>
             <div class="dashboard-filter-control" data-dashboard-filter-control="month">
               <label>Mes<input id="dashboardFilterMonth" type="month"></label>
@@ -835,6 +835,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260903-payment-receipt-v1"></script>
+  <script type="module" src="./app.js?v=20260903-receipt-filter-v6"></script>
 </body>
 </html>
