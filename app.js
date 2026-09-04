@@ -432,6 +432,7 @@ function wireStaticUI() {
   bind("bulkPasteImportBtn", "click", importBulkPasteText);
   bind("bulkProductsSaveBtn", "click", saveBulkProducts);
   bind("productSalesTodayBtn", "click", openProductSalesTodayModal);
+  bind("printInventoryBtn", "click", printInventoryReport);
   bind("exportApprovedSalesBtn", "click", exportApprovedSalesExcel);
   bind("printChairPaymentReceiptBtn", "click", printChairPaymentReceipt);
 
@@ -2244,6 +2245,95 @@ function renderProductSalesToday() {
 }
 
 
+function printInventoryReport() {
+  if (currentRole !== "admin") return toast("Solo el administrador puede imprimir el inventario.");
+  const products = [...state.products].sort((a,b) => String(a.name||"").localeCompare(String(b.name||""), "es", {sensitivity:"base"}));
+  if (!products.length) return toast("No hay productos en el inventario.");
+
+  const totalUnits = products.reduce((sum,p) => sum + Math.max(0, Number(p.stock || 0)), 0);
+  const totalValue = products.reduce((sum,p) => sum + (Math.max(0, Number(p.stock || 0)) * Number(p.price || 0)), 0);
+  const activeCount = products.filter(p => p.active !== false).length;
+  const generatedAt = new Date().toLocaleString("es-PA", { dateStyle:"long", timeStyle:"short" });
+  const rows = products.map((p, index) => {
+    const stock = Math.max(0, Number(p.stock || 0));
+    const price = Number(p.price || 0);
+    const subtotal = +(stock * price).toFixed(2);
+    const status = p.active !== false ? "Activo" : "Deshabilitado";
+    return `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${receiptSafeText(p.name || "Producto")}</td>
+        <td class="num">${receiptSafeText(money(price))}</td>
+        <td class="num">${stock}</td>
+        <td>${status}</td>
+        <td class="num">${receiptSafeText(money(subtotal))}</td>
+      </tr>`;
+  }).join("");
+
+  const printWindow = window.open("", "_blank", "width=1200,height=900");
+  if (!printWindow) return toast("Tu navegador bloqueó la ventana de impresión.");
+
+  printWindow.document.write(`<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Inventario - Barbería Los Mágicos</title>
+<style>
+  :root{color-scheme:light;}
+  *{box-sizing:border-box} body{margin:0;background:#fff;color:#222;font-family:Arial,Helvetica,sans-serif} 
+  .page{padding:20px 22px 28px;max-width:1100px;margin:0 auto} 
+  .topnote{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:#666;margin-bottom:10px} 
+  .head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;padding-bottom:14px;border-bottom:2px solid #c8a35a} 
+  .brand{display:flex;gap:14px;align-items:center} .logo{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;background:#e8d7ac;color:#4e3708;font-weight:800;font-size:20px} 
+  h1{margin:0;font-size:24px} .sub{margin:3px 0 0;color:#7a6b50;font-size:12px;text-transform:uppercase;letter-spacing:.7px} 
+  .doc{text-align:right} .doc h2{margin:0;font-size:18px} .doc p{margin:4px 0 0;color:#666;font-size:11px} 
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0} .kpi{border:1px solid #ddd3c2;border-radius:10px;padding:12px} .kpi.highlight{background:#f5e8c8;border-color:#d5b06d} .kpi span{display:block;color:#7a6b50;font-size:10px;text-transform:uppercase;letter-spacing:.7px} .kpi strong{display:block;margin-top:5px;font-size:22px;color:#1d1d1d} .kpi small{display:block;margin-top:4px;color:#666;font-size:10px} 
+  .section-title{margin:12px 0 8px;font-size:13px;font-weight:800;color:#7a5b1f;text-transform:uppercase;letter-spacing:.7px} 
+  table{width:100%;border-collapse:collapse;font-size:11px} th{background:#202020;color:#fff;text-align:left;padding:9px 8px;font-size:10px;text-transform:uppercase;letter-spacing:.5px} td{padding:8px;border-bottom:1px solid #e9e4da} .num{text-align:right;white-space:nowrap} 
+  .foot{margin-top:26px;padding-top:10px;border-top:1px solid #ddd;color:#666;font-size:10px;text-align:center} 
+  .print-note{margin:0 0 10px;text-align:center;color:#666;font-size:10px} 
+  @media print{body{background:#fff}.page{padding:0}.print-note{display:none}@page{size:A4;margin:10mm}}
+</style>
+</head>
+<body>
+<div class="print-note">En la ventana de impresión puedes elegir <b>Guardar como PDF</b>.</div>
+<main class="page">
+  <div class="topnote"><span>${receiptSafeText(new Date().toLocaleString("es-PA"))}</span><span>Barbería Los Mágicos</span></div>
+  <header class="head">
+    <div class="brand">
+      <div class="logo">LM</div>
+      <div>
+        <h1>Barbería Los Mágicos</h1>
+        <p class="sub">Inventario general de productos</p>
+      </div>
+    </div>
+    <div class="doc">
+      <h2>Reporte de inventario</h2>
+      <p>Generado: ${receiptSafeText(generatedAt)}</p>
+    </div>
+  </header>
+
+  <section class="kpis">
+    <div class="kpi"><span>Productos registrados</span><strong>${products.length}</strong><small>Total en catálogo</small></div>
+    <div class="kpi"><span>Productos activos</span><strong>${activeCount}</strong><small>Disponibles para venta</small></div>
+    <div class="kpi"><span>Unidades en inventario</span><strong>${totalUnits}</strong><small>Suma de existencias</small></div>
+    <div class="kpi highlight"><span>Valor estimado</span><strong>${receiptSafeText(money(totalValue))}</strong><small>Precio x existencia</small></div>
+  </section>
+
+  <h3 class="section-title">Detalle de inventario</h3>
+  <table>
+    <thead><tr><th>#</th><th>Producto</th><th>Precio</th><th>Existencia</th><th>Estado</th><th>Valor en stock</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <footer class="foot">Barbería Los Mágicos · Inventario generado por el sistema de gestión</footer>
+</main>
+<script>window.addEventListener("load",()=>setTimeout(()=>window.print(),250));</script>
+</body>
+</html>`);
+  printWindow.document.close();
+}
+
 function normalizeProductName(value) {
   return String(value || "")
     .trim()
@@ -2643,7 +2733,7 @@ function renderReports() {
     };
   }).sort((a,b) => b.gross - a.gross);
 
-  $("reportBarberMonthly").innerHTML = barberMonthly.length ? barberMonthly.map((r,index) => `
+  if ($("reportBarberMonthly")) $("reportBarberMonthly").innerHTML = barberMonthly.length ? barberMonthly.map((r,index) => `
     <article class="report-barber-card premium-card">
       <div class="report-card-top">
         <span class="report-rank">#${String(index+1).padStart(2,"0")}</span>
