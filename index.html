@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260904-dashboard-reports-v1">
+  <link rel="stylesheet" href="./styles.css?v=20260904-premium-headers-v8">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -201,7 +201,7 @@
       </section>
 
       <section class="view" id="view-sales">
-        <div class="section-head"><div><p class="eyebrow">CAJA Y TRANSACCIONES</p><h2>Cobros</h2><p>El barbero prepara el cobro completo. El administrador solo confirma que el trabajo se realizó y que el pago fue recibido.</p></div><button class="primary-btn" id="newSaleBtn" type="button">+ Cobro manual</button></div>
+        <div class="section-head module-intro"><div><p class="eyebrow">CAJA Y TRANSACCIONES</p><p class="module-intro-copy">Confirma los trabajos enviados por los barberos y registra cobros manuales cuando sea necesario.</p></div><button class="primary-btn" id="newSaleBtn" type="button">+ Cobro manual</button></div>
 
         <article class="panel cash-queue-panel">
           <div class="panel-head cash-queue-head">
@@ -223,7 +223,7 @@
       </section>
 
       <section class="view" id="view-appointments">
-        <div class="section-head"><div><p class="eyebrow">AGENDA</p><h2>Citas</h2><p>Reservas creadas por clientes y su estado.</p></div><button class="primary-btn" id="appointmentsTodayBtn" type="button">Ver citas de hoy</button></div>
+        <div class="section-head module-intro"><div><p class="eyebrow">AGENDA Y RESERVAS</p><p class="module-intro-copy">Gestiona las reservas activas, asignaciones y citas completadas.</p></div><button class="primary-btn" id="appointmentsTodayBtn" type="button">Ver citas de hoy</button></div>
         <div class="filter-row"><select id="appointmentFilter"><option value="all">Todas activas</option><option value="pending">Pendientes</option><option value="confirmed">Confirmadas</option></select></div>
         <div id="appointmentCards" class="appointment-grid"></div>
 
@@ -242,27 +242,26 @@
       </section>
 
       <section class="view" id="view-barbers">
-        <div class="section-head"><div><p class="eyebrow">USUARIOS</p><h2>Barberos</h2><p>Crea cada usuario con su propia contraseña y comisión.</p></div><button class="primary-btn" id="addBarberBtn" type="button">+ Crear usuario</button></div>
+        <div class="section-head module-intro"><div><p class="eyebrow">GESTIÓN DE EQUIPO</p><p class="module-intro-copy">Crea usuarios, asigna puestos, configura comisiones y controla el acceso de cada barbero.</p></div><button class="primary-btn" id="addBarberBtn" type="button">+ Crear usuario</button></div>
         <div id="barberCards" class="cards-grid"></div>
       </section>
 
       <section class="view" id="view-chairs">
-        <div class="section-head"><div><p class="eyebrow">CAPACIDAD</p><h2>Puestos</h2><p>Comienza con 4 y agrega más cuando lo necesites.</p></div><button class="primary-btn" id="addChairBtn" type="button">+ Agregar puesto</button></div>
+        <div class="section-head module-intro"><div><p class="eyebrow">CAPACIDAD DEL LOCAL</p><p class="module-intro-copy">Administra los puestos disponibles y la asignación fija de cada barbero.</p></div><button class="primary-btn" id="addChairBtn" type="button">+ Agregar puesto</button></div>
         <div id="chairCards" class="cards-grid"></div>
       </section>
 
       <section class="view" id="view-services">
-        <div class="section-head"><div><p class="eyebrow">CATÁLOGO</p><h2>Servicios</h2><p>Precios para cobros y reservas.</p></div><button class="primary-btn" id="addServiceBtn" type="button">+ Agregar servicio</button></div>
+        <div class="section-head module-intro"><div><p class="eyebrow">CATÁLOGO DE SERVICIOS</p><p class="module-intro-copy">Configura los servicios, precios y duración disponibles para cobros y reservas.</p></div><button class="primary-btn" id="addServiceBtn" type="button">+ Agregar servicio</button></div>
         <div id="serviceCards" class="cards-grid"></div>
       </section>
 
 
       <section class="view" id="view-products">
-        <div class="section-head">
+        <div class="section-head module-intro">
           <div>
-            <p class="eyebrow">VENTA ADICIONAL</p>
-            <h2>Productos</h2>
-            <p>Configura los productos que los barberos pueden agregar a sus cobros.</p>
+            <p class="eyebrow">INVENTARIO Y VENTA ADICIONAL</p>
+            <p class="module-intro-copy">Controla existencias y los productos que los barberos pueden agregar a sus cobros.</p>
           </div>
           <div class="product-page-actions">
             <button class="product-sales-today-btn" id="productSalesTodayBtn" type="button">◷ Productos vendidos hoy</button>
@@ -836,6 +835,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260904-dashboard-reports-v1"></script>
+  <script type="module" src="./app.js?v=20260904-premium-headers-v8"></script>
 </body>
 </html>

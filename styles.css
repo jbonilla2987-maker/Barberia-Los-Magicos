@@ -2476,3 +2476,55 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 @media(max-width:1280px){.dashboard-report-actions{min-width:250px;max-width:none}.dashboard-report-buttons{display:grid;grid-template-columns:1fr 1fr}.dashboard-profit-btn{grid-column:1/-1}}
 @media(max-width:900px){.dashboard-report-actions{width:100%}.dashboard-report-buttons{grid-template-columns:1fr}.dashboard-profit-btn{grid-column:auto}}
 @media print{.report-support-view{display:block!important;}}
+
+
+/* =========================================================
+   V8 · ENCABEZADOS DE MÓDULO MÁS LIMPIOS
+   ========================================================= */
+.module-intro{
+  margin:0 0 22px;
+  padding:0 0 15px;
+  align-items:center;
+  border-bottom:1px solid rgba(255,255,255,.055);
+}
+.module-intro>div:first-child{
+  min-width:0;
+  max-width:760px;
+}
+.module-intro .eyebrow{
+  margin:0 0 6px;
+  font-size:9px;
+  letter-spacing:1.7px;
+  color:var(--gold);
+}
+.module-intro-copy{
+  margin:0!important;
+  max-width:720px;
+  color:#8f8f99!important;
+  font-size:11px!important;
+  line-height:1.55;
+}
+.module-intro .primary-btn,
+.module-intro .product-page-actions{
+  flex:0 0 auto;
+}
+
+@media(max-width:720px){
+  .module-intro{
+    align-items:flex-start!important;
+    flex-direction:column;
+    gap:12px;
+  }
+  .module-intro .primary-btn,
+  .module-intro .product-page-actions{
+    width:100%;
+  }
+  .module-intro .product-page-actions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+  .module-intro .product-page-actions button,
+  .module-intro>.primary-btn{
+    width:100%;
+  }
+}
