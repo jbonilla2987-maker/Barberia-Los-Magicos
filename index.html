@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260904-history-v10-safe">
+  <link rel="stylesheet" href="./styles.css?v=20260904-bulk-products-v11">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -277,6 +277,7 @@
             <p class="module-intro-copy">Controla existencias y los productos que los barberos pueden agregar a sus cobros.</p>
           </div>
           <div class="product-page-actions">
+            <button class="bulk-products-btn" id="bulkProductsBtn" type="button">▦ Carga masiva</button>
             <button class="product-sales-today-btn" id="productSalesTodayBtn" type="button">◷ Productos vendidos hoy</button>
             <button class="primary-btn" id="addProductBtn" type="button">+ Agregar producto</button>
           </div>
@@ -827,6 +828,67 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="bulkProductsModal">
+    <div class="modal bulk-products-modal">
+      <button class="modal-close" data-close="bulkProductsModal" type="button">×</button>
+      <div class="bulk-products-head">
+        <div>
+          <p class="eyebrow">CARGA MASIVA DE INVENTARIO</p>
+          <h2>Hoja de productos</h2>
+          <p class="modal-copy">Completa varias filas y guarda todo de una sola vez. Los productos existentes se actualizan; los nuevos se crean.</p>
+        </div>
+        <div class="bulk-products-summary">
+          <span>FILAS VÁLIDAS</span>
+          <strong id="bulkProductsValidCount">0</strong>
+        </div>
+      </div>
+
+      <div class="bulk-products-toolbar">
+        <button class="ghost-btn" id="bulkAddRowBtn" type="button">+ Agregar fila</button>
+        <button class="ghost-btn" id="bulkPasteToggleBtn" type="button">Pegar desde Excel</button>
+        <button class="ghost-btn" id="bulkClearBtn" type="button">Limpiar tabla</button>
+      </div>
+
+      <div class="bulk-paste-panel hidden" id="bulkPastePanel">
+        <div>
+          <strong>Pegar desde Excel</strong>
+          <small>Copia las columnas Producto, Precio y Cantidad desde Excel y pégalas aquí.</small>
+        </div>
+        <textarea id="bulkPasteText" rows="5" placeholder="Gel	4.50	25
+Crema de Peinar	12.00	20"></textarea>
+        <div class="bulk-paste-actions">
+          <button class="ghost-btn" id="bulkPasteCancelBtn" type="button">Cancelar</button>
+          <button class="primary-btn" id="bulkPasteImportBtn" type="button">Pasar a la tabla</button>
+        </div>
+      </div>
+
+      <div class="bulk-grid-shell">
+        <table class="bulk-products-grid">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Producto</th>
+              <th>Precio USD</th>
+              <th>Cantidad</th>
+              <th>Estado</th>
+              <th>Acción</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="bulkProductsRows"></tbody>
+        </table>
+      </div>
+
+      <div class="bulk-products-footer">
+        <div class="bulk-products-note">
+          <span>◆</span>
+          <p><b>NUEVO</b> crea el producto. <b>ACTUALIZAR</b> reemplaza precio, existencia y estado del producto existente.</p>
+        </div>
+        <button class="primary-btn bulk-save-btn" id="bulkProductsSaveBtn" type="button">Cargar inventario →</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="productModal">
     <div class="modal small">
       <button class="modal-close" data-close="productModal" type="button">×</button>
@@ -849,6 +911,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260904-history-v10-safe"></script>
+  <script type="module" src="./app.js?v=20260904-bulk-products-v11"></script>
 </body>
 </html>

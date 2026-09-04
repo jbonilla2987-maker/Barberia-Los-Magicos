@@ -55,6 +55,7 @@ let currentAdmin = null;
 const ANY_BARBER = "__ANY__";
 let booking = { serviceId: null, barberId: null };
 let barberProductCart = [];
+let bulkProductRows = [];
 let barberServiceViewMode = "cards";
 let dashboardFilterMode = "day";
 let currentChairReceiptContext = null;
@@ -423,6 +424,13 @@ function wireStaticUI() {
   bind("addBarberBtn", "click", () => openModal("barberModal"));
   bind("addServiceBtn", "click", () => openModal("serviceModal"));
   bind("addProductBtn", "click", () => openModal("productModal"));
+  bind("bulkProductsBtn", "click", openBulkProductsModal);
+  bind("bulkAddRowBtn", "click", () => addBulkProductRow());
+  bind("bulkClearBtn", "click", resetBulkProductRows);
+  bind("bulkPasteToggleBtn", "click", () => $("bulkPastePanel")?.classList.remove("hidden"));
+  bind("bulkPasteCancelBtn", "click", () => $("bulkPastePanel")?.classList.add("hidden"));
+  bind("bulkPasteImportBtn", "click", importBulkPasteText);
+  bind("bulkProductsSaveBtn", "click", saveBulkProducts);
   bind("productSalesTodayBtn", "click", openProductSalesTodayModal);
   bind("exportApprovedSalesBtn", "click", exportApprovedSalesExcel);
   bind("printChairPaymentReceiptBtn", "click", printChairPaymentReceipt);
@@ -2233,6 +2241,248 @@ function renderProductSalesToday() {
         <small>Cuando se confirme un cobro con productos aparecerá aquí.</small>
       </div>
     </td></tr>`;
+}
+
+
+function normalizeProductName(value) {
+  return String(value || "")
+    .trim()
+    .toLocaleLowerCase("es")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+function newBulkProductRow(data = {}) {
+  return {
+    key:`bulk-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+    name:String(data.name || ""),
+    price:data.price ?? "",
+    stock:data.stock ?? "",
+    active:data.active !== false
+  };
+}
+
+function openBulkProductsModal() {
+  if (!bulkProductRows.length) {
+    bulkProductRows = Array.from({length:6}, () => newBulkProductRow());
+  }
+  renderBulkProductRows();
+  $("bulkPastePanel")?.classList.add("hidden");
+  if ($("bulkPasteText")) $("bulkPasteText").value = "";
+  openModal("bulkProductsModal");
+}
+
+function resetBulkProductRows() {
+  bulkProductRows = Array.from({length:6}, () => newBulkProductRow());
+  renderBulkProductRows();
+}
+
+function addBulkProductRow(data = {}) {
+  bulkProductRows.push(newBulkProductRow(data));
+  renderBulkProductRows();
+  requestAnimationFrame(() => {
+    const rows = document.querySelectorAll("#bulkProductsRows tr");
+    rows[rows.length-1]?.querySelector('[data-bulk-field="name"]')?.focus();
+  });
+}
+
+function removeBulkProductRow(key) {
+  bulkProductRows = bulkProductRows.filter(row => row.key !== key);
+  if (!bulkProductRows.length) bulkProductRows.push(newBulkProductRow());
+  renderBulkProductRows();
+}
+
+function bulkExistingProduct(row) {
+  const normalized = normalizeProductName(row.name);
+  if (!normalized) return null;
+  return state.products.find(p => normalizeProductName(p.name) === normalized) || null;
+}
+
+function syncBulkProductRowFromInput(input) {
+  const key = input.dataset.bulkKey;
+  const field = input.dataset.bulkField;
+  const row = bulkProductRows.find(r => r.key === key);
+  if (!row || !field) return;
+
+  if (field === "active") row.active = input.value === "true";
+  else row[field] = input.value;
+
+  renderBulkProductRowStatus(key);
+  updateBulkProductsSummary();
+}
+
+function bulkRowValidation(row) {
+  const name = String(row.name || "").trim();
+  const price = Number(row.price);
+  const stockNumber = Number(row.stock);
+  const stock = Math.floor(stockNumber);
+  if (!name && String(row.price||"").trim()==="" && String(row.stock||"").trim()==="") {
+    return { empty:true, valid:false };
+  }
+  if (!name) return { valid:false, message:"Falta producto" };
+  if (!Number.isFinite(price) || price <= 0) return { valid:false, message:"Precio inválido" };
+  if (!Number.isFinite(stockNumber) || stockNumber < 0 || stockNumber !== stock) return { valid:false, message:"Cantidad inválida" };
+  return { valid:true, name, price:+price.toFixed(2), stock };
+}
+
+function renderBulkProductRowStatus(key) {
+  const row = bulkProductRows.find(r => r.key === key);
+  const badge = document.querySelector(`[data-bulk-status="${key}"]`);
+  if (!row || !badge) return;
+  const check = bulkRowValidation(row);
+  badge.className = "bulk-row-status";
+  if (check.empty) {
+    badge.textContent = "VACÍA";
+    badge.classList.add("empty");
+  } else if (!check.valid) {
+    badge.textContent = "REVISAR";
+    badge.classList.add("invalid");
+  } else if (bulkExistingProduct(row)) {
+    badge.textContent = "ACTUALIZAR";
+    badge.classList.add("update");
+  } else {
+    badge.textContent = "NUEVO";
+    badge.classList.add("new");
+  }
+}
+
+function updateBulkProductsSummary() {
+  const valid = bulkProductRows.filter(row => bulkRowValidation(row).valid).length;
+  if ($("bulkProductsValidCount")) $("bulkProductsValidCount").textContent = valid;
+}
+
+function renderBulkProductRows() {
+  const tbody = $("bulkProductsRows");
+  if (!tbody) return;
+
+  tbody.innerHTML = bulkProductRows.map((row,index) => `
+    <tr data-bulk-row="${row.key}">
+      <td class="bulk-row-number">${String(index+1).padStart(2,"0")}</td>
+      <td><input class="bulk-cell bulk-name-cell" data-bulk-key="${row.key}" data-bulk-field="name" value="${escapeHtml(row.name)}" placeholder="Producto"></td>
+      <td><input class="bulk-cell" data-bulk-key="${row.key}" data-bulk-field="price" type="number" min="0.01" step="0.01" value="${escapeHtml(row.price)}" placeholder="0.00"></td>
+      <td><input class="bulk-cell" data-bulk-key="${row.key}" data-bulk-field="stock" type="number" min="0" step="1" value="${escapeHtml(row.stock)}" placeholder="0"></td>
+      <td>
+        <select class="bulk-cell bulk-status-select" data-bulk-key="${row.key}" data-bulk-field="active">
+          <option value="true" ${row.active ? "selected" : ""}>Activo</option>
+          <option value="false" ${!row.active ? "selected" : ""}>Inactivo</option>
+        </select>
+      </td>
+      <td><span class="bulk-row-status" data-bulk-status="${row.key}">VACÍA</span></td>
+      <td><button class="bulk-row-delete" data-bulk-delete="${row.key}" type="button" aria-label="Eliminar fila">×</button></td>
+    </tr>
+  `).join("");
+
+  tbody.querySelectorAll("[data-bulk-field]").forEach(input => {
+    input.addEventListener("input", () => syncBulkProductRowFromInput(input));
+    input.addEventListener("change", () => syncBulkProductRowFromInput(input));
+  });
+  tbody.querySelectorAll("[data-bulk-delete]").forEach(btn =>
+    btn.addEventListener("click", () => removeBulkProductRow(btn.dataset.bulkDelete))
+  );
+
+  bulkProductRows.forEach(row => renderBulkProductRowStatus(row.key));
+  updateBulkProductsSummary();
+}
+
+function parseBulkPastedProducts(text) {
+  return String(text || "")
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => {
+      const cols = line.includes("\t") ? line.split("\t") : line.split(/[;,]/);
+      return {
+        name:String(cols[0] || "").trim(),
+        price:String(cols[1] || "").trim().replace(/^\$/,""),
+        stock:String(cols[2] || "").trim(),
+        active:!String(cols[3] || "").toLowerCase().includes("inactiv")
+      };
+    });
+}
+
+function importBulkPasteText() {
+  const pasted = parseBulkPastedProducts($("bulkPasteText")?.value || "");
+  if (!pasted.length) return toast("Pega al menos una fila con Producto, Precio y Cantidad.");
+
+  const firstLooksLikeHeader = /producto|nombre/i.test(pasted[0].name) && /precio/i.test(String(pasted[0].price));
+  const rows = firstLooksLikeHeader ? pasted.slice(1) : pasted;
+  if (!rows.length) return toast("No se encontraron productos para importar.");
+
+  const existingFilled = bulkProductRows.filter(row => !bulkRowValidation(row).empty);
+  bulkProductRows = [
+    ...existingFilled,
+    ...rows.map(row => newBulkProductRow(row))
+  ];
+  renderBulkProductRows();
+  $("bulkPastePanel")?.classList.add("hidden");
+  if ($("bulkPasteText")) $("bulkPasteText").value = "";
+  toast(`${rows.length} fila${rows.length===1?"":"s"} agregada${rows.length===1?"":"s"} a la tabla.`);
+}
+
+async function saveBulkProducts() {
+  const filled = bulkProductRows.filter(row => !bulkRowValidation(row).empty);
+  if (!filled.length) return toast("Agrega al menos un producto.");
+
+  const validations = filled.map(row => ({ row, check:bulkRowValidation(row) }));
+  const invalid = validations.find(item => !item.check.valid);
+  if (invalid) return toast(`Revisa la fila de ${invalid.row.name || "producto"}: ${invalid.check.message}.`);
+
+  const names = new Set();
+  for (const {row} of validations) {
+    const key = normalizeProductName(row.name);
+    if (names.has(key)) return toast(`El producto “${row.name}” está repetido en la carga.`);
+    names.add(key);
+  }
+
+  const saveBtn = $("bulkProductsSaveBtn");
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Guardando…";
+  }
+
+  let created = 0;
+  let updated = 0;
+  try {
+    const operations = validations.map(({row,check}, index) => {
+      const existing = bulkExistingProduct(row);
+      const data = {
+        name:check.name,
+        price:check.price,
+        stock:check.stock,
+        active:row.active !== false,
+        updatedAt:serverTimestamp()
+      };
+      if (existing) {
+        updated += 1;
+        return { ref:doc(db,"products",existing.id), data, isNew:false };
+      }
+      created += 1;
+      return {
+        ref:doc(collection(db,"products")),
+        data:{...data, order:state.products.length + index + 1, createdAt:serverTimestamp()},
+        isNew:true
+      };
+    });
+
+    for (let start=0; start<operations.length; start+=400) {
+      const batch = writeBatch(db);
+      operations.slice(start,start+400).forEach(op => batch.set(op.ref, op.data, { merge:!op.isNew }));
+      await batch.commit();
+    }
+
+    closeModal("bulkProductsModal");
+    bulkProductRows = [];
+    toast(`Inventario actualizado: ${created} nuevo${created===1?"":"s"} · ${updated} actualizado${updated===1?"":"s"}.`);
+  } catch (err) {
+    console.error(err);
+    toast(firebaseErrorMessage(err, "No se pudo cargar el inventario."));
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Cargar inventario →";
+    }
+  }
 }
 
 function renderProducts() {
