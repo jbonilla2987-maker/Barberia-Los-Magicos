@@ -2618,33 +2618,19 @@ function renderReports() {
 
   $("reportByChair").innerHTML = chairRows.length ? chairRows.map((r,index) => {
     const avg = r.count ? r.gross / r.count : 0;
+    const assigned = state.barbers.filter(b => b.chairId === r.chair.id && b.active !== false);
+    const barberNames = assigned.length ? assigned.map(b => escapeHtml(b.name)).join(", ") : "Sin asignar";
     return `
-    <article class="report-chair-card premium-card">
-      <div class="report-chair-glow"></div>
-      <div class="report-card-top">
-        <span class="report-rank">#${String(index+1).padStart(2,"0")}</span>
-        <span class="report-pill">${r.count} servicio${r.count===1?"":"s"}</span>
-      </div>
-      <div class="report-chair-head">
-        <div class="report-chair-badge">${String(index+1).padStart(2,"0")}</div>
-        <div>
-          <span class="report-card-kicker">PUESTO</span>
-          <h4>${escapeHtml(r.chair.name)}</h4>
-          <div class="report-card-meta">Producción del período seleccionado</div>
-        </div>
-      </div>
-      <div class="report-highlight">
-        <span>Total cobrado</span>
-        <strong class="report-card-total">${money(r.gross)}</strong>
-        <small>Promedio por servicio: ${money(avg)}</small>
-      </div>
-      <div class="report-split report-split-3">
-        <div><span>Pago a barberos</span><b>${money(r.barber)}</b></div>
-        <div><span>Ingreso barbería</span><b>${money(r.shop)}</b></div>
-        <div><span>Servicios</span><b>${r.count}</b></div>
-      </div>
-    </article>
-  `}).join("") : `<div class="empty">No hay puestos registrados.</div>`;
+      <tr>
+        <td><b>${escapeHtml(r.chair.name)}</b></td>
+        <td>${barberNames}</td>
+        <td>${r.count}</td>
+        <td><b>${money(r.gross)}</b></td>
+        <td>${money(r.barber)}</td>
+        <td>${money(r.shop)}</td>
+        <td>${money(avg)}</td>
+      </tr>`;
+  }).join("") : `<tr><td colspan="7" class="empty">No hay puestos registrados.</td></tr>`;
 
   const barberMonthly = state.barbers.map(barber => {
     const sales = monthSales.filter(s => s.barberId === barber.id);

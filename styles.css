@@ -2775,3 +2775,84 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .bulk-save-btn{width:100%}
   .bulk-products-toolbar>*{flex:1 1 150px}
 }
+
+
+/* =========================================================
+   REPORTE V12 · DETALLE POR PUESTO EN TABLA COMPACTA
+   ========================================================= */
+.report-chair-table-wrap{
+  margin-top:10px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  overflow:auto;
+  background:#151518;
+}
+.report-chair-table{
+  width:100%;
+  min-width:760px;
+  border-collapse:collapse;
+}
+.report-chair-table th{
+  position:sticky;
+  top:0;
+  z-index:1;
+  background:#18181c;
+  font-size:8px;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+  color:var(--muted);
+  padding:11px 12px;
+  text-align:left;
+}
+.report-chair-table td{
+  padding:11px 12px;
+  font-size:10px;
+  border-bottom:1px solid #29292f;
+  white-space:nowrap;
+}
+.report-chair-table tr:last-child td{border-bottom:0}
+.report-chair-table td:nth-child(n+3){text-align:right}
+.report-chair-table th:nth-child(n+3){text-align:right}
+
+@media print{
+  .report-chair-table-wrap{
+    margin-top:4mm!important;
+    border:1px solid #d7d7d7!important;
+    border-radius:0!important;
+    overflow:visible!important;
+    background:#fff!important;
+    break-inside:avoid;
+  }
+  .report-chair-table{
+    min-width:0!important;
+    width:100%!important;
+    table-layout:fixed;
+    font-size:8pt!important;
+  }
+  .report-chair-table th{
+    position:static!important;
+    background:#f4f4f4!important;
+    color:#555!important;
+    font-size:6.8pt!important;
+    padding:5px 6px!important;
+  }
+  .report-chair-table td{
+    font-size:7.5pt!important;
+    padding:5px 6px!important;
+    color:#111!important;
+    white-space:normal!important;
+    line-height:1.2;
+  }
+  .report-chair-table th:nth-child(1),.report-chair-table td:nth-child(1){width:12%}
+  .report-chair-table th:nth-child(2),.report-chair-table td:nth-child(2){width:20%}
+  .report-chair-table th:nth-child(3),.report-chair-table td:nth-child(3){width:9%}
+  .report-chair-table th:nth-child(4),.report-chair-table td:nth-child(4){width:15%}
+  .report-chair-table th:nth-child(5),.report-chair-table td:nth-child(5){width:14%}
+  .report-chair-table th:nth-child(6),.report-chair-table td:nth-child(6){width:15%}
+  .report-chair-table th:nth-child(7),.report-chair-table td:nth-child(7){width:15%}
+
+  /* Las tarjetas antiguas ya no forman parte del detalle por puesto. */
+  .report-section-title{margin-top:6mm!important;margin-bottom:2mm!important}
+  .report-section-title h3{font-size:13pt!important;margin:0!important}
+  .report-section-title>p{font-size:7.5pt!important;margin:2px 0 0!important}
+}

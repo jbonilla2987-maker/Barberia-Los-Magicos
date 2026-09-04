@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260904-bulk-products-v11">
+  <link rel="stylesheet" href="./styles.css?v=20260904-report-table-v12">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -312,9 +312,24 @@
 
         <div class="report-section-title">
           <div><p class="eyebrow">PUESTOS</p><h3>Detalle por puesto</h3></div>
-          <p>Cuánto produjo cada puesto durante el mes seleccionado.</p>
+          <p>Resumen compacto de producción por puesto durante el período seleccionado.</p>
         </div>
-        <div id="reportByChair" class="report-chair-grid"></div>
+        <div class="table-wrap report-chair-table-wrap">
+          <table class="premium-report-table report-chair-table">
+            <thead>
+              <tr>
+                <th>Puesto</th>
+                <th>Barbero asignado</th>
+                <th>Servicios</th>
+                <th>Total cobrado</th>
+                <th>Pago barbero</th>
+                <th>Ingreso barbería</th>
+                <th>Promedio</th>
+              </tr>
+            </thead>
+            <tbody id="reportByChair"></tbody>
+          </table>
+        </div>
 
         <div class="report-section-title">
           <div><p class="eyebrow">BARBEROS</p><h3>Resumen mensual por barbero</h3></div>
@@ -911,6 +926,6 @@ Crema de Peinar	12.00	20"></textarea>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260904-bulk-products-v11"></script>
+  <script type="module" src="./app.js?v=20260904-report-table-v12"></script>
 </body>
 </html>
