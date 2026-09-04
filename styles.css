@@ -2528,3 +2528,88 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
     width:100%;
   }
 }
+
+
+/* =========================================================
+   COBROS APROBADOS · HISTORIAL CONTROLADO
+   ========================================================= */
+.sales-history-title{
+  align-items:flex-end;
+  gap:18px;
+}
+.sales-history-title>div:first-child{min-width:0}
+.sales-history-title h3{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  flex-wrap:wrap;
+}
+.sales-history-help{
+  margin:5px 0 0;
+  color:var(--muted);
+  font-size:9px;
+}
+.history-count-badge{
+  display:inline-grid;
+  place-items:center;
+  min-width:28px;
+  height:22px;
+  padding:0 8px;
+  border-radius:999px;
+  background:rgba(215,173,86,.08);
+  border:1px solid rgba(215,173,86,.17);
+  color:var(--gold2);
+  font-size:9px;
+  font-family:inherit;
+}
+.sales-history-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.history-export-btn{
+  min-height:38px;
+  padding:0 14px;
+  white-space:nowrap;
+}
+.sales-history-panel{
+  padding:0!important;
+  overflow:hidden;
+}
+.sales-history-scroll{
+  max-height:min(58vh,560px);
+  overflow:auto;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(215,173,86,.35) #151518;
+}
+.sales-history-scroll::-webkit-scrollbar{width:9px;height:9px}
+.sales-history-scroll::-webkit-scrollbar-track{background:#151518}
+.sales-history-scroll::-webkit-scrollbar-thumb{
+  background:rgba(215,173,86,.32);
+  border-radius:999px;
+  border:2px solid #151518;
+}
+.sales-history-table{
+  min-width:980px;
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+}
+.sales-history-table thead th{
+  position:sticky;
+  top:0;
+  z-index:2;
+  background:#19191d;
+  box-shadow:0 1px 0 #2b2b31;
+}
+.sales-history-table tbody tr:hover td{
+  background:rgba(215,173,86,.025);
+}
+
+@media(max-width:760px){
+  .sales-history-title{align-items:stretch;flex-direction:column}
+  .sales-history-actions{justify-content:flex-start}
+  .sales-history-actions>*{flex:1 1 150px}
+  .sales-history-scroll{max-height:62vh}
+}

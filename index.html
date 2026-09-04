@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260904-premium-headers-v8">
+  <link rel="stylesheet" href="./styles.css?v=20260904-history-v10-safe">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -215,11 +215,24 @@
           <div id="pendingChargeRequests" class="cash-request-grid"></div>
         </article>
 
-        <div class="report-section-title compact-title">
-          <div><p class="eyebrow">HISTORIAL</p><h3>Cobros aprobados</h3></div>
-          <p>Ventas que ya fueron confirmadas por el administrador.</p>
+        <div class="report-section-title compact-title sales-history-title">
+          <div>
+            <p class="eyebrow">HISTORIAL</p>
+            <h3>Cobros aprobados <span class="history-count-badge" id="salesHistoryCount">0</span></h3>
+            <p class="sales-history-help">Ventas confirmadas por el administrador. La tabla mantiene su propio desplazamiento.</p>
+          </div>
+          <div class="sales-history-actions">
+            <button class="ghost-btn history-export-btn" id="exportApprovedSalesBtn" type="button">Exportar Excel</button>
+          </div>
         </div>
-        <article class="panel"><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Barbero</th><th>Puesto</th><th>Servicio</th><th>Método</th><th>Total</th><th>Barbero</th><th>Barbería</th></tr></thead><tbody id="salesTable"></tbody></table></div></article>
+        <article class="panel sales-history-panel">
+          <div class="table-wrap sales-history-scroll">
+            <table class="sales-history-table">
+              <thead><tr><th>Fecha</th><th>Barbero</th><th>Puesto</th><th>Servicio</th><th>Método</th><th>Total</th><th>Barbero</th><th>Barbería</th></tr></thead>
+              <tbody id="salesTable"></tbody>
+            </table>
+          </div>
+        </article>
       </section>
 
       <section class="view" id="view-appointments">
@@ -655,6 +668,7 @@
     </div>
   </div>
 
+
   <div class="modal-backdrop" id="saleModal">
     <div class="modal">
       <button class="modal-close" data-close="saleModal" type="button">×</button>
@@ -835,6 +849,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260904-premium-headers-v8"></script>
+  <script type="module" src="./app.js?v=20260904-history-v10-safe"></script>
 </body>
 </html>

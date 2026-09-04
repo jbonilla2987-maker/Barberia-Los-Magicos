@@ -424,6 +424,7 @@ function wireStaticUI() {
   bind("addServiceBtn", "click", () => openModal("serviceModal"));
   bind("addProductBtn", "click", () => openModal("productModal"));
   bind("productSalesTodayBtn", "click", openProductSalesTodayModal);
+  bind("exportApprovedSalesBtn", "click", exportApprovedSalesExcel);
   bind("printChairPaymentReceiptBtn", "click", printChairPaymentReceipt);
 
   bind("adminLoginForm", "submit", adminLogin);
@@ -1062,9 +1063,92 @@ function printChairPaymentReceipt() {
 
 function renderSales() {
   const rows = [...state.sales].sort((a,b)=>jsDate(b.date)-jsDate(a.date));
+  if ($("salesHistoryCount")) $("salesHistoryCount").textContent = rows.length;
   $("salesTable").innerHTML = rows.length ? rows.map(s => `
     <tr><td>${fmtDateTime(s.date)}</td><td>${escapeHtml(s.barberName)}</td><td>${escapeHtml(s.chairName)}</td><td>${escapeHtml(s.serviceName)}</td><td>${escapeHtml(s.payment)}</td><td><b>${money(s.total)}</b></td><td>${money(s.barberAmount)}</td><td>${money(s.shopAmount)}</td></tr>
   `).join("") : `<tr><td colspan="8" class="empty">No hay cobros registrados.</td></tr>`;
+}
+
+
+
+async function exportApprovedSalesExcel() {
+  if (currentRole !== "admin") return toast("Solo el administrador puede exportar este historial.");
+  if (!state.sales.length) return toast("No hay cobros aprobados para exportar.");
+  if (!window.ExcelJS) return toast("No se pudo cargar el generador de Excel. Revisa tu conexión a Internet.");
+
+  try {
+    const rows = [...state.sales].sort((a,b)=>jsDate(b.date)-jsDate(a.date));
+    const ExcelJS = window.ExcelJS;
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "Barbería Los Mágicos";
+    wb.title = "Cobros aprobados";
+    wb.created = new Date();
+
+    const ws = wb.addWorksheet("Cobros aprobados", {
+      views:[{state:"frozen", ySplit:5}],
+      pageSetup:{orientation:"landscape", fitToPage:true, fitToWidth:1}
+    });
+
+    ws.mergeCells("A1:H2");
+    const brand = ws.getCell("A1");
+    brand.value = "BARBERÍA LOS MÁGICOS";
+    brand.font = {name:"Aptos Display", size:22, bold:true, color:{argb:"FFD7AD56"}};
+    brand.fill = {type:"pattern",pattern:"solid",fgColor:{argb:"FF111114"}};
+    brand.alignment = {vertical:"middle",horizontal:"left"};
+
+    ws.mergeCells("A3:H3");
+    ws.getCell("A3").value = "Historial de cobros aprobados";
+    ws.getCell("A3").font = {name:"Aptos", size:14, bold:true};
+
+    ws.mergeCells("A4:H4");
+    ws.getCell("A4").value = `Exportado el ${new Date().toLocaleString("es-PA")} · ${rows.length} movimientos`;
+    ws.getCell("A4").font = {name:"Aptos", size:9, color:{argb:"FF666666"}};
+
+    const headers = ["Fecha","Barbero","Puesto","Servicio","Método","Total","Pago barbero","Ingreso barbería"];
+    headers.forEach((h,i)=>ws.getCell(5,i+1).value=h);
+    ws.getRow(5).eachCell(cell => {
+      cell.fill = {type:"pattern",pattern:"solid",fgColor:{argb:"FF1D1D21"}};
+      cell.font = {bold:true,color:{argb:"FFFFFFFF"}};
+      cell.alignment = {vertical:"middle",horizontal:"center"};
+    });
+
+    rows.forEach((s,idx)=>{
+      const r = 6 + idx;
+      ws.getCell(r,1).value = jsDate(s.date);
+      ws.getCell(r,1).numFmt = "dd-mmm-yyyy hh:mm";
+      ws.getCell(r,2).value = s.barberName || "";
+      ws.getCell(r,3).value = s.chairName || "";
+      ws.getCell(r,4).value = s.serviceName || "";
+      ws.getCell(r,5).value = s.payment || "";
+      ws.getCell(r,6).value = Number(s.total || 0);
+      ws.getCell(r,7).value = Number(s.barberAmount || 0);
+      ws.getCell(r,8).value = Number(s.shopAmount || 0);
+      [6,7,8].forEach(c => ws.getCell(r,c).numFmt = '$#,##0.00');
+      ws.getRow(r).eachCell(cell => {
+        cell.border = {bottom:{style:"hair",color:{argb:"FFE3E3E3"}}};
+        cell.alignment = {vertical:"middle"};
+      });
+    });
+
+    ws.columns = [
+      {width:23},{width:25},{width:18},{width:28},
+      {width:16},{width:16},{width:18},{width:18}
+    ];
+    ws.autoFilter = {from:"A5",to:"H5"};
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Barberia_Los_Magicos_Cobros_Aprobados_${isoDay()}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast("Historial exportado a Excel.");
+  } catch (err) {
+    console.error(err);
+    toast("No se pudo generar el Excel del historial.");
+  }
 }
 
 
@@ -3385,6 +3469,7 @@ async function exportExcelReport() {
     const total = monthSales.reduce((a,s)=>a+Number(s.total||0),0);
     const barberTotal = monthSales.reduce((a,s)=>a+Number(s.barberAmount||0),0);
     const shopTotal = monthSales.reduce((a,s)=>a+Number(s.shopAmount||0),0);
+    const average = monthSales.length ? +(total / monthSales.length).toFixed(2) : 0;
   
     const chairRows = state.chairs.map(chair => {
       const sales = monthSales.filter(s => s.chairId === chair.id);
