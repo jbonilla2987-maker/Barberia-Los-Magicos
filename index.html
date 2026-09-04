@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260903-receipt-filter-v6">
+  <link rel="stylesheet" href="./styles.css?v=20260904-dashboard-reports-v1">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -109,7 +109,6 @@
         <button class="nav-item" data-view="chairs" type="button"><span>▣</span>Puestos</button>
         <button class="nav-item" data-view="services" type="button"><span>✦</span>Servicios</button>
         <button class="nav-item" data-view="products" type="button"><span>▦</span>Productos</button>
-        <button class="nav-item" data-view="reports" type="button"><span>↗</span>Reportes</button>
       </nav>
       <div class="sidebar-footer">
         <div class="admin-card"><div class="avatar">A</div><div><strong id="adminDisplayName">Administrador</strong><span>Control total</span></div></div>
@@ -126,6 +125,15 @@
       <section class="view active" id="view-dashboard">
         <div class="hero">
           <div class="hero-content"><span class="hero-badge">CONTROL EN TIEMPO REAL</span><h2>Haz crecer la magia <span>de cada corte.</span></h2><p>Ventas, comisiones, citas y rendimiento del equipo en un solo panel.</p></div>
+          <div class="dashboard-report-actions" aria-label="Acciones de reporte">
+            <span class="dashboard-report-kicker">REPORTES DEL PERÍODO</span>
+            <div class="dashboard-report-buttons">
+              <button class="ghost-btn dashboard-report-btn" id="printReportBtn" type="button">Imprimir / PDF</button>
+              <button class="primary-btn dashboard-profit-btn" id="barberProfitFilterBtn" type="button"><span>★</span> Ganancias por barbero</button>
+              <button class="primary-btn dashboard-excel-btn" id="exportExcelBtn" type="button">Exportar Excel</button>
+            </div>
+          </div>
+
           <div class="dashboard-period-filter" id="dashboardPeriodFilter">
             <div class="dashboard-filter-head">
               <div>
@@ -264,21 +272,14 @@
         <div id="productCards" class="cards-grid"></div>
       </section>
 
-      <section class="view" id="view-reports">
+      <section class="view report-support-view" id="view-reports" aria-hidden="true">
         <div class="section-head report-page-head">
           <div>
             <p class="eyebrow">ANÁLISIS FINANCIERO</p>
             <h2>Reporte premium</h2>
             <p>Resumen mensual de cobros, puestos, producción y comisiones.</p>
           </div>
-          <div class="report-actions">
-            <label class="month-filter">Mes
-              <input id="reportMonth" type="month">
-            </label>
-            <button class="ghost-btn" id="printReportBtn" type="button">Imprimir / PDF</button>
-            <button class="primary-btn barber-profit-launch" id="barberProfitFilterBtn" type="button"><span>★</span> Ganancias por barbero</button>
-            <button class="primary-btn" id="exportExcelBtn" type="button">Exportar Excel</button>
-          </div>
+          <div class="report-actions report-actions-support" aria-hidden="true"><input id="reportMonth" type="month" tabindex="-1"></div>
         </div>
 
         <div class="report-cover">
@@ -835,6 +836,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260903-receipt-filter-v6"></script>
+  <script type="module" src="./app.js?v=20260904-dashboard-reports-v1"></script>
 </body>
 </html>

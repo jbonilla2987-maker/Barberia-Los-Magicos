@@ -409,7 +409,12 @@ function wireStaticUI() {
 
   $("reportMonth").value = monthKey(new Date());
   bind("reportMonth", "change", renderReports);
-  bind("printReportBtn", "click", () => window.print());
+  bind("printReportBtn", "click", () => {
+    const period = dashboardPeriod();
+    if ($("reportMonth")) $("reportMonth").value = period.start.slice(0,7);
+    renderReports();
+    window.print();
+  });
 
   ["quickSaleBtn","newSaleBtn"].forEach(id =>
     bind(id, "click", () => openModal("saleModal"))
@@ -439,14 +444,20 @@ function wireStaticUI() {
   bind("clientBookingForm", "submit", createAppointment);
   bind("addChairBtn", "click", createChair);
   bind("barberProfitFilterBtn", "click", () => {
+    const period = dashboardPeriod();
     const modalMonth = $("barberProfitMonth");
-    if (modalMonth) modalMonth.value = $("reportMonth")?.value || monthKey(new Date());
+    if (modalMonth) modalMonth.value = period.start.slice(0,7);
+    if ($("reportMonth")) $("reportMonth").value = period.start.slice(0,7);
     renderBarberProfitFilter();
     openModal("barberProfitModal");
   });
   bind("barberProfitSelect", "change", renderBarberProfitFilter);
   bind("barberProfitMonth", "change", renderBarberProfitFilter);
-  bind("exportExcelBtn", "click", exportExcelReport);
+  bind("exportExcelBtn", "click", () => {
+    const period = dashboardPeriod();
+    if ($("reportMonth")) $("reportMonth").value = period.start.slice(0,7);
+    exportExcelReport();
+  });
 }
 
 async function adminLogin(e) {
@@ -2246,8 +2257,8 @@ async function toggleProductStatus(productId, nextActive) {
 function renderReports() {
   if (currentRole !== "admin") return;
 
-  const selectedMonth = $("reportMonth")?.value || monthKey(new Date());
-  const monthSales = state.sales.filter(s => monthKey(s.date) === selectedMonth);
+  const period = dashboardPeriod();
+  const monthSales = state.sales.filter(s => saleInDashboardPeriod(s, period));
 
   const total = monthSales.reduce((a,s) => a + Number(s.total || 0), 0);
   const barberTotal = monthSales.reduce((a,s) => a + Number(s.barberAmount || 0), 0);
@@ -2256,8 +2267,8 @@ function renderReports() {
   $("reportTotal").textContent = money(total);
   $("reportBarbers").textContent = money(barberTotal);
   $("reportShop").textContent = money(shopTotal);
-  $("reportTotalMeta").textContent = `${monthSales.length} servicio${monthSales.length === 1 ? "" : "s"} en el mes`;
-  $("reportPeriodTitle").textContent = `Reporte · ${monthLabel(selectedMonth)}`;
+  $("reportTotalMeta").textContent = `${monthSales.length} servicio${monthSales.length === 1 ? "" : "s"} en el período`;
+  $("reportPeriodTitle").textContent = `Reporte · ${period.label}`;
   $("reportGeneratedAt").textContent = `Generado el ${new Date().toLocaleString("es-PA", {dateStyle:"long", timeStyle:"short"})}`;
 
   const chairRows = state.chairs.map(chair => {
@@ -2285,7 +2296,7 @@ function renderReports() {
         <div>
           <span class="report-card-kicker">PUESTO</span>
           <h4>${escapeHtml(r.chair.name)}</h4>
-          <div class="report-card-meta">Producción del mes seleccionado</div>
+          <div class="report-card-meta">Producción del período seleccionado</div>
         </div>
       </div>
       <div class="report-highlight">
@@ -2320,7 +2331,7 @@ function renderReports() {
       </div>
       <div class="report-barber-head">
         <div class="report-avatar">${escapeHtml((r.barber.name || "B").charAt(0).toUpperCase())}</div>
-        <div><span class="report-card-kicker">BARBERO</span><h4>${escapeHtml(r.barber.name)}</h4><div class="report-card-meta">Resumen del mes seleccionado</div></div>
+        <div><span class="report-card-kicker">BARBERO</span><h4>${escapeHtml(r.barber.name)}</h4><div class="report-card-meta">Resumen del período seleccionado</div></div>
       </div>
       <div class="report-barber-main">
         <div><span>Venta generada</span><strong>${money(r.gross)}</strong></div>
@@ -2343,7 +2354,7 @@ function renderReports() {
       <td class="money-positive">${money(r.pay)}</td>
       <td>${money(r.shop)}</td>
     </tr>
-  `).join("") : `<tr><td colspan="6" class="empty">No hay movimientos en este mes.</td></tr>`;
+  `).join("") : `<tr><td colspan="6" class="empty">No hay movimientos en este período.</td></tr>`;
 
   const dailyMap = new Map();
   monthSales.forEach(sale => {
@@ -2373,7 +2384,7 @@ function renderReports() {
       <td class="money-positive"><b>${money(r.pay)}</b></td>
       <td>${money(r.shop)}</td>
     </tr>
-  `).join("") : `<tr><td colspan="6" class="empty">No hay movimientos diarios en este mes.</td></tr>`;
+  `).join("") : `<tr><td colspan="6" class="empty">No hay movimientos diarios en este período.</td></tr>`;
 
   renderBarberProfitFilter();
 }
@@ -3241,13 +3252,15 @@ async function exportExcelReport() {
     return toast("No se pudo cargar el generador de Excel. Revisa tu conexión a Internet.");
   }
 
-  const selectedMonth = $("reportMonth")?.value || monthKey(new Date());
+  const period = dashboardPeriod();
+  const selectedMonth = period.start.slice(0,7);
+  const periodLabel = period.label;
   const monthSales = state.sales
-    .filter(s => monthKey(s.date) === selectedMonth)
+    .filter(s => saleInDashboardPeriod(s, period))
     .sort((a,b) => jsDate(a.date) - jsDate(b.date));
 
   if (!monthSales.length) {
-    return toast("No hay cobros en el mes seleccionado para exportar.");
+    return toast("No hay cobros en el período seleccionado para exportar.");
   }
 
   toast("Generando Excel premium...");
@@ -3259,8 +3272,8 @@ async function exportExcelReport() {
     wb.lastModifiedBy = "Barbería Los Mágicos";
     wb.created = new Date();
     wb.modified = new Date();
-    wb.subject = `Reporte mensual ${monthLabel(selectedMonth)}`;
-    wb.title = `Barbería Los Mágicos - ${monthLabel(selectedMonth)}`;
+    wb.subject = `Reporte ${periodLabel}`;
+    wb.title = `Barbería Los Mágicos - ${periodLabel}`;
 
     const COLORS = {
       black: "FF111114",
@@ -3428,7 +3441,7 @@ async function exportExcelReport() {
     });
     setTitle(
       summary,
-      `Reporte mensual · ${monthLabel(selectedMonth)}`,
+      `Reporte mensual · ${periodLabel}`,
       `Generado el ${new Date().toLocaleString("es-PA")} · ${monthSales.length} servicios`,
       8
     );
@@ -3490,7 +3503,7 @@ async function exportExcelReport() {
       properties:{ tabColor:{argb:"FF8A611D"} },
       pageSetup:{ orientation:"landscape", fitToPage:true, fitToWidth:1 }
     });
-    setTitle(chairsWs, `Detalle por puesto · ${monthLabel(selectedMonth)}`, "Producción mensual de cada puesto.", 5);
+    setTitle(chairsWs, `Detalle por puesto · ${periodLabel}`, "Producción de cada puesto en el período seleccionado.", 5);
     const chHeaders = ["Puesto","Servicios","Total cobrado","Pago barberos","Ingreso barbería"];
     chHeaders.forEach((h,i)=>chairsWs.getCell(6,i+1).value=h);
     styleHeader(chairsWs.getRow(6));
@@ -3512,7 +3525,7 @@ async function exportExcelReport() {
     const bm = wb.addWorksheet("Barberos Mensual", {
       properties:{tabColor:{argb:COLORS.gold}}
     });
-    setTitle(bm, `Barberos · Total mensual · ${monthLabel(selectedMonth)}`, "Venta generada, comisión y saldo del mes.", 6);
+    setTitle(bm, `Barberos · Total mensual · ${periodLabel}`, "Venta generada, comisión y saldo del período.", 6);
     ["Barbero","Servicios","Venta generada","Comisión %","Saldo barbero","Ingreso barbería"]
       .forEach((h,i)=>bm.getCell(6,i+1).value=h);
     styleHeader(bm.getRow(6));
@@ -3536,7 +3549,7 @@ async function exportExcelReport() {
     const bd = wb.addWorksheet("Barberos Diario", {
       properties:{tabColor:{argb:"FFB88936"}}
     });
-    setTitle(bd, `Saldo diario por barbero · ${monthLabel(selectedMonth)}`, "Detalle de cada día trabajado en el mes.", 6);
+    setTitle(bd, `Saldo diario por barbero · ${periodLabel}`, "Detalle de cada día trabajado en el período.", 6);
     ["Fecha","Barbero","Servicios","Total cobrado","Saldo barbero","Ingreso barbería"]
       .forEach((h,i)=>bd.getCell(6,i+1).value=h);
     styleHeader(bd.getRow(6));
@@ -3562,7 +3575,7 @@ async function exportExcelReport() {
     const salesWs = wb.addWorksheet("Cobros", {
       properties:{tabColor:{argb:COLORS.dark}}
     });
-    setTitle(salesWs, `Detalle completo de cobros · ${monthLabel(selectedMonth)}`, "Movimientos individuales registrados durante el mes.", 9);
+    setTitle(salesWs, `Detalle completo de cobros · ${periodLabel}`, "Movimientos individuales registrados durante el período.", 9);
     ["Fecha","Barbero","Puesto","Servicio","Productos","Método","Total cobrado","Comisión servicio %","Comisión productos %","Ganancia servicio","Ganancia productos","Saldo barbero","Ingreso barbería"]
       .forEach((h,i)=>salesWs.getCell(6,i+1).value=h);
     styleHeader(salesWs.getRow(6));
@@ -3614,7 +3627,7 @@ async function exportExcelReport() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `Barberia_Los_Magicos_Reporte_${selectedMonth}.xlsx`;
+    a.download = `Barberia_Los_Magicos_Reporte_${period.start}_${period.end}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
 

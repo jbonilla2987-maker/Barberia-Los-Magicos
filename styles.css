@@ -2451,3 +2451,28 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .dashboard-filter-control input{font-size:13px}
   .dashboard-date-label::after{display:none}
 }
+
+
+/* REPORTES INTEGRADOS AL DASHBOARD */
+.report-support-view{display:none!important;}
+.report-actions-support{display:none!important;}
+.dashboard-report-actions{
+  align-self:center;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-width:300px;
+  max-width:420px;
+  padding:14px 16px;
+  border-radius:18px;
+  border:1px solid rgba(215,173,86,.16);
+  background:linear-gradient(135deg,rgba(215,173,86,.055),rgba(255,255,255,.012));
+}
+.dashboard-report-kicker{font-size:8px;line-height:1;font-weight:900;letter-spacing:1.25px;color:var(--gold);}
+.dashboard-report-buttons{display:flex;flex-wrap:wrap;gap:8px;}
+.dashboard-report-btn,.dashboard-profit-btn,.dashboard-excel-btn{min-height:38px;padding:9px 13px!important;font-size:10px!important;white-space:nowrap;}
+.dashboard-profit-btn{background:linear-gradient(135deg,#e8bd63,#c99433)!important;color:#17130a!important;border-color:rgba(244,216,154,.45)!important;box-shadow:0 8px 20px rgba(201,148,51,.16);}
+.dashboard-excel-btn{background:rgba(215,173,86,.10)!important;color:var(--gold2)!important;border:1px solid rgba(215,173,86,.22)!important;}
+@media(max-width:1280px){.dashboard-report-actions{min-width:250px;max-width:none}.dashboard-report-buttons{display:grid;grid-template-columns:1fr 1fr}.dashboard-profit-btn{grid-column:1/-1}}
+@media(max-width:900px){.dashboard-report-actions{width:100%}.dashboard-report-buttons{grid-template-columns:1fr}.dashboard-profit-btn{grid-column:auto}}
+@media print{.report-support-view{display:block!important;}}
