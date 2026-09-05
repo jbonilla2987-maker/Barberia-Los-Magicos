@@ -3070,3 +3070,162 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 @media(max-width:480px){
   .barber-detail-kpis{grid-template-columns:1fr}
 }
+
+
+/* =========================================================
+   V16 · RESPONSIVE TOTAL + GRÁFICA HORIZONTAL
+   ========================================================= */
+html,body{max-width:100%;overflow-x:hidden}
+.app-shell,.main,.view,.hero,.stats-grid,.dashboard-grid,.panel,.barber-performance-section,.barber-performance-panel{min-width:0}
+img,svg,canvas{max-width:100%;height:auto}
+
+/* Dashboard hero: evita desbordes en laptops y pantallas intermedias */
+#view-dashboard .hero{
+  display:grid;
+  grid-template-columns:minmax(300px,1.25fr) minmax(250px,.72fr) minmax(330px,.9fr);
+  align-items:center;
+  gap:18px;
+}
+#view-dashboard .hero-content,
+#view-dashboard .dashboard-report-actions,
+#view-dashboard .dashboard-period-filter{min-width:0;max-width:100%}
+#view-dashboard .hero h2{font-size:clamp(38px,4.2vw,62px);overflow-wrap:anywhere}
+#view-dashboard .dashboard-report-actions{width:100%;min-width:0}
+#view-dashboard .dashboard-report-buttons{min-width:0}
+#view-dashboard .dashboard-report-buttons button{min-width:0;max-width:100%;white-space:normal;text-align:center}
+#view-dashboard .dashboard-period-filter{width:100%!important;min-width:0!important}
+
+/* Cifras siempre dentro de sus tarjetas */
+.stat-card{min-width:0;text-align:center}
+.stat-card .stat-top{justify-content:center;position:relative;padding:0 34px;min-height:30px}
+.stat-card .stat-top i{position:absolute;right:0;top:0}
+.stat-card strong{font-size:clamp(22px,2.25vw,30px);overflow-wrap:anywhere;word-break:normal}
+.stat-card small{display:block;text-align:center}
+
+/* Nueva gráfica horizontal */
+.barber-performance-v15{margin:26px 0 22px;min-width:0}
+.barber-horizontal-panel{padding:16px 18px 18px!important;overflow:hidden;min-width:0}
+.barber-performance-horizontal-chart{display:block;width:100%;min-width:0;overflow:hidden}
+.performance-horizontal-scale{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  margin:2px 0 8px clamp(160px,18vw,220px);
+  color:#6f737d;
+  font-size:7px;
+  text-align:right;
+}
+.performance-horizontal-scale span:first-child{text-align:left}
+.performance-horizontal-rows{display:grid;gap:8px;min-width:0}
+.performance-horizontal-row{
+  display:grid;
+  grid-template-columns:minmax(160px,220px) minmax(0,1fr);
+  gap:14px;
+  align-items:center;
+  padding:12px;
+  border-radius:16px;
+  border:1px solid #292b31;
+  background:linear-gradient(180deg,#17181c,#131417);
+  min-width:0;
+}
+.performance-horizontal-row.top-performer{border-color:rgba(215,173,86,.22);background:linear-gradient(90deg,rgba(215,173,86,.055),#15161a 34%)}
+.performance-horizontal-barber{
+  min-width:0;border:0;background:transparent;color:#fff;text-align:left;cursor:pointer;
+  display:flex;align-items:center;gap:10px;padding:4px 6px;border-radius:12px
+}
+.performance-horizontal-barber:hover{background:rgba(215,173,86,.05)}
+.performance-horizontal-name{min-width:0;display:block}
+.performance-horizontal-name strong,.performance-horizontal-name small{display:block;min-width:0}
+.performance-horizontal-name strong{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.performance-horizontal-name small{font-size:7px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.performance-horizontal-metrics{display:grid;grid-template-columns:1fr 1fr;gap:14px;min-width:0}
+.performance-horizontal-metric{display:grid;gap:5px;min-width:0}
+.performance-horizontal-label{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
+.performance-horizontal-label span{font-size:7px;text-transform:uppercase;letter-spacing:.8px;color:#8b8e97;white-space:nowrap}
+.performance-horizontal-label strong{font-size:10px;color:#f4f4f6;white-space:nowrap}
+.gain-metric .performance-horizontal-label strong{color:var(--gold2)}
+.performance-horizontal-track{
+  position:relative;height:13px;border-radius:999px;overflow:hidden;min-width:0;
+  background:
+    linear-gradient(90deg,transparent 24.6%,rgba(255,255,255,.055) 25%,transparent 25.4%,transparent 49.6%,rgba(255,255,255,.055) 50%,transparent 50.4%,transparent 74.6%,rgba(255,255,255,.055) 75%,transparent 75.4%),
+    #24262d;
+  border:1px solid #30323a
+}
+.performance-horizontal-track i{display:block;height:100%;border-radius:999px;min-width:0;transition:width .35s ease}
+.production-fill{background:linear-gradient(90deg,#ad7b2d,#efd083)}
+.gain-fill{background:linear-gradient(90deg,#343741,#6c707b)}
+
+/* Detalle del barbero: siempre dentro del viewport */
+.barber-performance-detail-modal{width:min(1040px,calc(100vw - 24px))!important;max-height:calc(100vh - 24px);overflow:auto!important}
+.barber-detail-table-wrap{max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch}
+
+/* Pantalla intermedia: hero en dos niveles */
+@media(max-width:1450px){
+  #view-dashboard .hero{grid-template-columns:minmax(0,1fr) minmax(290px,.85fr)}
+  #view-dashboard .hero-content{grid-column:1/-1}
+  #view-dashboard .hero h2{max-width:900px;font-size:clamp(38px,5vw,58px)}
+}
+
+@media(max-width:1100px){
+  #view-dashboard .hero{grid-template-columns:1fr 1fr;padding:26px}
+  .performance-horizontal-row{grid-template-columns:minmax(145px,190px) minmax(0,1fr)}
+  .performance-horizontal-metrics{grid-template-columns:1fr}
+  .performance-horizontal-scale{display:none}
+  .barber-performance-title{align-items:flex-start;flex-direction:column}
+  .barber-performance-title>p{text-align:left}
+}
+
+@media(max-width:820px){
+  #view-dashboard .hero{grid-template-columns:1fr;padding:22px}
+  #view-dashboard .hero-content{grid-column:auto}
+  #view-dashboard .dashboard-report-actions,#view-dashboard .dashboard-period-filter{width:100%!important}
+  #view-dashboard .dashboard-report-buttons{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+  #view-dashboard .dashboard-profit-btn{grid-column:1/-1!important}
+  .barber-horizontal-panel{padding:12px!important}
+  .performance-horizontal-row{grid-template-columns:1fr;gap:10px;padding:11px}
+  .performance-horizontal-barber{width:100%;padding:2px}
+  .performance-horizontal-metrics{grid-template-columns:1fr 1fr;gap:10px}
+  .barber-chart-toolbar{align-items:flex-start;flex-direction:column;gap:8px}
+  .barber-detail-header{flex-direction:column;padding-right:42px}
+  .barber-detail-print-btn{width:100%;min-width:0}
+}
+
+@media(max-width:600px){
+  .main{padding:14px!important}
+  .topbar{margin-bottom:16px;align-items:flex-start}
+  .topbar h1{font-size:25px}
+  #view-dashboard .hero{padding:18px;border-radius:22px;gap:14px}
+  #view-dashboard .hero h2{font-size:clamp(34px,11vw,46px);line-height:1.02}
+  #view-dashboard .hero p{font-size:12px;line-height:1.5}
+  #view-dashboard .dashboard-report-actions,#view-dashboard .dashboard-period-filter{padding:12px;border-radius:16px}
+  #view-dashboard .dashboard-report-buttons{grid-template-columns:1fr!important}
+  #view-dashboard .dashboard-profit-btn{grid-column:auto!important}
+  .dashboard-filter-modes{grid-template-columns:repeat(2,1fr)!important}
+  .stats-grid{gap:10px}
+  .stat-card{padding:15px;border-radius:17px}
+  .stat-card strong{font-size:clamp(22px,8vw,28px)}
+  .barber-performance-section{margin-top:20px}
+  .barber-performance-title h3{font-size:20px}
+  .barber-chart-legend{gap:12px}
+  .barber-chart-toolbar p{font-size:8px;line-height:1.4}
+  .performance-horizontal-metrics{grid-template-columns:1fr}
+  .performance-horizontal-label strong{font-size:11px}
+  .performance-horizontal-track{height:14px}
+  .dashboard-grid{gap:12px}
+  .panel{padding:15px;border-radius:18px}
+  .barber-performance-detail-modal{padding:18px 14px!important;border-radius:20px!important}
+  .barber-detail-kpis{grid-template-columns:1fr 1fr!important;gap:8px}
+  .barber-detail-kpis strong{font-size:17px}
+  .barber-performance-detail-table{min-width:660px!important}
+}
+
+@media(max-width:420px){
+  .main{padding:10px!important}
+  #view-dashboard .hero{padding:15px}
+  #view-dashboard .hero h2{font-size:34px}
+  .stats-grid{grid-template-columns:1fr!important}
+  .performance-horizontal-row{padding:10px}
+  .performance-name-avatar{width:34px;height:34px}
+  .performance-horizontal-name strong{font-size:12px}
+  .barber-detail-kpis{grid-template-columns:1fr!important}
+  .modal-backdrop{padding:8px}
+}

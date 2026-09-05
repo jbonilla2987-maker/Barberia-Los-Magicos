@@ -875,36 +875,35 @@ function renderBarberPerformanceChart(periodSales = [], period = dashboardPeriod
   const niceMax = Math.ceil(maxValue / 20) * 20 || 20;
 
   node.innerHTML = `
-    <div class="performance-y-axis">
-      ${[100,75,50,25,0].map(p=>`<span style="bottom:${p}%">${money(niceMax*(p/100))}</span>`).join("")}
+    <div class="performance-horizontal-scale" aria-hidden="true">
+      <span>0</span><span>25%</span><span>50%</span><span>75%</span><span>${money(niceMax)}</span>
     </div>
-    <div class="performance-plot">
-      <div class="performance-grid-lines"><i></i><i></i><i></i><i></i><i></i></div>
-      <div class="performance-groups">
-        ${rows.map((r,index) => {
-          const grossPct = Math.max(r.gross > 0 ? 4 : 0, (r.gross / niceMax) * 100);
-          const payPct = Math.max(r.pay > 0 ? 4 : 0, (r.pay / niceMax) * 100);
-          const initials = (r.barber.name || "B").split(/\s+/).slice(0,2).map(x=>x.charAt(0)).join("").toUpperCase();
-          return `
-            <article class="performance-group ${index===0 && r.gross>0 ? "top-performer" : ""}">
-              <div class="performance-bars">
-                <div class="performance-bar-column production-column">
-                  <span class="performance-value-label">${money(r.gross)}</span>
-                  <div class="performance-bar production-bar" style="height:${grossPct}%"></div>
-                </div>
-                <div class="performance-bar-column gain-column">
-                  <span class="performance-value-label">${money(r.pay)}</span>
-                  <div class="performance-bar gain-bar" style="height:${payPct}%"></div>
-                </div>
-              </div>
-              <button class="performance-barber-button" type="button" data-performance-barber="${r.barber.id}">
-                <span class="performance-name-avatar">${escapeHtml(initials)}</span>
+    <div class="performance-horizontal-rows">
+      ${rows.map((r,index) => {
+        const grossPct = Math.min(100, Math.max(r.gross > 0 ? 2 : 0, (r.gross / niceMax) * 100));
+        const payPct = Math.min(100, Math.max(r.pay > 0 ? 2 : 0, (r.pay / niceMax) * 100));
+        const initials = (r.barber.name || "B").split(/\s+/).slice(0,2).map(x=>x.charAt(0)).join("").toUpperCase();
+        return `
+          <article class="performance-horizontal-row ${index===0 && r.gross>0 ? "top-performer" : ""}">
+            <button class="performance-horizontal-barber" type="button" data-performance-barber="${r.barber.id}" title="Ver detalle de ${escapeHtml(r.barber.name)}">
+              <span class="performance-name-avatar">${escapeHtml(initials)}</span>
+              <span class="performance-horizontal-name">
                 <strong>${escapeHtml(r.barber.name)}</strong>
                 <small>${r.count} servicio${r.count===1?"":"s"} · Ver detalle</small>
-              </button>
-            </article>`;
-        }).join("")}
-      </div>
+              </span>
+            </button>
+            <div class="performance-horizontal-metrics">
+              <div class="performance-horizontal-metric production-metric">
+                <div class="performance-horizontal-label"><span>Producción</span><strong>${money(r.gross)}</strong></div>
+                <div class="performance-horizontal-track"><i class="production-fill" style="width:${grossPct}%"></i></div>
+              </div>
+              <div class="performance-horizontal-metric gain-metric">
+                <div class="performance-horizontal-label"><span>Ganancia barbero</span><strong>${money(r.pay)}</strong></div>
+                <div class="performance-horizontal-track"><i class="gain-fill" style="width:${payPct}%"></i></div>
+              </div>
+            </div>
+          </article>`;
+      }).join("")}
     </div>`;
 
   document.querySelectorAll("[data-performance-barber]").forEach(btn =>

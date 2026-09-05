@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260905-v15-performance">
+  <link rel="stylesheet" href="./styles.css?v=20260905-v16-responsive">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -181,7 +181,7 @@
             </div>
             <p id="barberPerformanceCaption">Producción y ganancia de cada barbero en el período seleccionado.</p>
           </div>
-          <div class="barber-performance-panel barber-vertical-panel">
+          <div class="barber-performance-panel barber-horizontal-panel">
             <div class="barber-chart-toolbar">
               <div class="barber-chart-legend">
                 <span><i class="legend-production"></i>Producción</span>
@@ -189,7 +189,7 @@
               </div>
               <p>Selecciona el nombre de un barbero para ver su detalle.</p>
             </div>
-            <div id="barberPerformanceChart" class="barber-performance-chart barber-performance-vertical-chart"></div>
+            <div id="barberPerformanceChart" class="barber-performance-chart barber-performance-horizontal-chart"></div>
           </div>
         </section>
 
@@ -975,6 +975,6 @@ Crema de Peinar	12.00	20"></textarea>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260905-v15-performance"></script>
+  <script type="module" src="./app.js?v=20260905-v16-responsive"></script>
 </body>
 </html>
