@@ -2992,3 +2992,81 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .barber-performance-person,.barber-performance-bar-wrap,.barber-performance-value{grid-column:1!important;}
   .barber-performance-value{text-align:left;}
 }
+
+
+/* =========================================================
+   V15 · RENDIMIENTO VERTICAL + DETALLE INTERACTIVO
+   ========================================================= */
+.barber-performance-v15{margin:28px 0 24px}
+.barber-vertical-panel{padding:18px 20px 20px!important;overflow:hidden}
+.barber-chart-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px}
+.barber-chart-toolbar p{margin:0;color:var(--muted);font-size:9px}
+.barber-chart-legend{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.barber-chart-legend span{display:inline-flex;align-items:center;gap:7px;color:#c9c9d0;font-size:9px;font-weight:700}
+.barber-chart-legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.legend-production{background:linear-gradient(180deg,#efd083,#c9963e)}
+.legend-gain{background:linear-gradient(180deg,#666a74,#30323a)}
+.barber-performance-vertical-chart{display:grid;grid-template-columns:72px minmax(0,1fr);min-height:360px;gap:12px;padding-top:10px}
+.performance-y-axis{position:relative;min-height:310px;color:#777b86;font-size:8px}
+.performance-y-axis span{position:absolute;right:0;transform:translateY(50%);white-space:nowrap}
+.performance-plot{position:relative;min-width:0;min-height:310px;border-left:1px solid #373941;border-bottom:1px solid #373941}
+.performance-grid-lines{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
+.performance-grid-lines i{display:block;border-top:1px solid rgba(255,255,255,.065);width:100%}
+.performance-groups{position:absolute;inset:0 10px 0 10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:16px;align-items:end}
+.performance-group{height:100%;display:grid;grid-template-rows:minmax(0,1fr) 70px;align-items:end;min-width:0}
+.performance-bars{height:100%;display:flex;align-items:flex-end;justify-content:center;gap:10px;padding:30px 10px 8px}
+.performance-bar-column{height:100%;width:min(70px,38%);display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-width:34px;position:relative}
+.performance-value-label{font-size:8px;color:#f2f2f5;font-weight:900;margin-bottom:6px;white-space:nowrap}
+.performance-bar{width:100%;min-height:0;border-radius:7px 7px 2px 2px;transition:height .35s ease,filter .2s ease;box-shadow:0 8px 18px rgba(0,0,0,.18)}
+.production-bar{background:linear-gradient(180deg,#efd083,#c59136)}
+.gain-bar{background:linear-gradient(180deg,#626670,#2d3037)}
+.performance-group:hover .performance-bar{filter:brightness(1.08)}
+.performance-barber-button{border:0;background:transparent;color:#fff;cursor:pointer;text-align:center;padding:8px 6px 0;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.performance-barber-button:hover strong{color:var(--gold2);text-decoration:underline;text-underline-offset:4px}
+.performance-name-avatar{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:rgba(215,173,86,.10);border:1px solid rgba(215,173,86,.20);color:var(--gold2);font-size:9px;font-weight:900}
+.performance-barber-button strong{font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.performance-barber-button small{font-size:7px;color:var(--muted);white-space:nowrap}
+.top-performer .performance-name-avatar{background:rgba(215,173,86,.16);box-shadow:0 0 0 1px rgba(215,173,86,.10) inset}
+
+/* ocultar producción por puesto del dashboard (se mantiene el módulo Puestos) */
+.dashboard-chair-section{display:none!important}
+
+.barber-performance-detail-modal{width:min(1040px,94vw)!important;max-width:1040px!important;padding:24px!important}
+.barber-performance-detail-modal .modal-close{z-index:20}
+.barber-detail-header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding-right:48px;padding-bottom:16px;border-bottom:1px solid #2b2c32}
+.barber-detail-heading{display:flex;align-items:center;gap:13px;min-width:0}
+.barber-detail-icon{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;background:rgba(215,173,86,.12);border:1px solid rgba(215,173,86,.22);color:var(--gold2);font-size:20px}
+.barber-detail-heading h2{margin:3px 0 0;font-size:27px;color:var(--gold2)}
+.barber-detail-heading .modal-copy{margin:5px 0 0}
+.barber-detail-print-btn{min-width:170px;min-height:42px}
+.barber-detail-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+.barber-detail-kpis article{padding:13px;border-radius:14px;background:#191a1f;border:1px solid #2c2e35;min-width:0}
+.barber-detail-kpis article.gold-kpi{background:linear-gradient(135deg,rgba(215,173,86,.15),rgba(215,173,86,.045));border-color:rgba(215,173,86,.24)}
+.barber-detail-kpis span,.barber-detail-kpis strong,.barber-detail-kpis small{display:block}
+.barber-detail-kpis span{color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.8px}
+.barber-detail-kpis strong{font-size:20px;margin-top:5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.barber-detail-kpis .gold-kpi strong{color:var(--gold2)}
+.barber-detail-kpis small{font-size:7px;color:#777b86;margin-top:4px}
+.barber-detail-table-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:16px 0 8px}
+.barber-detail-table-head h3{margin:3px 0 0;font-size:16px}
+.barber-detail-table-head>span{font-size:8px;color:var(--muted)}
+.barber-detail-table-wrap{max-height:360px;overflow:auto;border:1px solid #2b2c32;border-radius:14px;background:#131417}
+.barber-performance-detail-table{min-width:760px!important}
+.barber-performance-detail-table thead th{position:sticky;top:0;z-index:2;background:#1c1d22}
+.barber-detail-footer{margin-top:12px;padding-top:10px;border-top:1px solid #2b2c32;color:#777b86;font-size:8px;text-align:center}
+
+@media(max-width:900px){
+  .barber-performance-vertical-chart{grid-template-columns:58px minmax(0,1fr);min-height:330px}
+  .performance-groups{grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+  .barber-detail-kpis{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:680px){
+  .barber-chart-toolbar{align-items:flex-start;flex-direction:column}
+  .barber-performance-vertical-chart{overflow-x:auto;grid-template-columns:52px minmax(620px,1fr)}
+  .barber-detail-header{flex-direction:column;padding-right:42px}
+  .barber-detail-print-btn{width:100%}
+  .barber-detail-kpis{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){
+  .barber-detail-kpis{grid-template-columns:1fr}
+}

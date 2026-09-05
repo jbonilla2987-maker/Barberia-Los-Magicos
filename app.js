@@ -59,6 +59,7 @@ let bulkProductRows = [];
 let barberServiceViewMode = "cards";
 let dashboardFilterMode = "day";
 let currentChairReceiptContext = null;
+let currentPerformanceBarberId = null;
 let unsubscribers = [];
 
 function money(v) {
@@ -435,6 +436,7 @@ function wireStaticUI() {
   bind("printInventoryBtn", "click", printInventoryReport);
   bind("exportApprovedSalesBtn", "click", exportApprovedSalesExcel);
   bind("printChairPaymentReceiptBtn", "click", printChairPaymentReceipt);
+  bind("printBarberPerformanceBtn", "click", printBarberPerformanceReport);
 
   bind("adminLoginForm", "submit", adminLogin);
   bind("barberLoginForm", "submit", barberLogin);
@@ -841,7 +843,6 @@ function renderDashboard() {
   );
 
   renderBarberPerformanceChart(ds, period);
-  renderDashboardChairCards(ds, period);
 }
 
 function renderBarberPerformanceChart(periodSales = [], period = dashboardPeriod()) {
@@ -849,8 +850,8 @@ function renderBarberPerformanceChart(periodSales = [], period = dashboardPeriod
   if (!node) return;
 
   const singleToday = period.start === isoDay() && period.end === isoDay();
-  if ($("barberPerformanceKicker")) $("barberPerformanceKicker").textContent = singleToday ? "RENDIMIENTO · HOY" : "RENDIMIENTO · PERÍODO";
-  if ($("barberPerformanceCaption")) $("barberPerformanceCaption").textContent = `Producción y ganancia de cada barbero · ${period.label}.`;
+  if ($("barberPerformanceKicker")) $("barberPerformanceKicker").textContent = singleToday ? "RENDIMIENTO · HOY" : `RENDIMIENTO · ${period.label.toUpperCase()}`;
+  if ($("barberPerformanceCaption")) $("barberPerformanceCaption").textContent = `Comparación de producción y ganancia del barbero · ${period.label}.`;
 
   const rows = state.barbers
     .filter(b => b.active !== false)
@@ -870,24 +871,108 @@ function renderBarberPerformanceChart(periodSales = [], period = dashboardPeriod
     return;
   }
 
-  const maxGross = Math.max(...rows.map(r=>r.gross), 0);
-  node.innerHTML = rows.map((r,index) => {
-    const pct = maxGross > 0 ? Math.max(4, Math.round((r.gross / maxGross) * 100)) : 0;
-    const initials = (r.barber.name || "B").split(/\s+/).slice(0,2).map(x=>x.charAt(0)).join("").toUpperCase();
-    return `
-      <article class="barber-performance-row ${index===0 && r.gross>0 ? "top-performer" : ""}">
-        <div class="barber-performance-person">
-          <span class="barber-performance-avatar">${escapeHtml(initials)}</span>
-          <div><strong>${escapeHtml(r.barber.name)}</strong><small>${r.count} servicio${r.count===1?"":"s"}</small></div>
-        </div>
-        <div class="barber-performance-bar-wrap">
-          <div class="barber-performance-track"><span style="width:${pct}%"></span></div>
-          <small>${maxGross > 0 ? Math.round((r.gross/maxGross)*100) : 0}% del mayor rendimiento</small>
-        </div>
-        <div class="barber-performance-value"><span>Producción</span><strong>${money(r.gross)}</strong></div>
-        <div class="barber-performance-value barber-performance-pay"><span>Ganancia</span><strong>${money(r.pay)}</strong></div>
-      </article>`;
-  }).join("");
+  const maxValue = Math.max(...rows.flatMap(r => [r.gross, r.pay]), 1);
+  const niceMax = Math.ceil(maxValue / 20) * 20 || 20;
+
+  node.innerHTML = `
+    <div class="performance-y-axis">
+      ${[100,75,50,25,0].map(p=>`<span style="bottom:${p}%">${money(niceMax*(p/100))}</span>`).join("")}
+    </div>
+    <div class="performance-plot">
+      <div class="performance-grid-lines"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="performance-groups">
+        ${rows.map((r,index) => {
+          const grossPct = Math.max(r.gross > 0 ? 4 : 0, (r.gross / niceMax) * 100);
+          const payPct = Math.max(r.pay > 0 ? 4 : 0, (r.pay / niceMax) * 100);
+          const initials = (r.barber.name || "B").split(/\s+/).slice(0,2).map(x=>x.charAt(0)).join("").toUpperCase();
+          return `
+            <article class="performance-group ${index===0 && r.gross>0 ? "top-performer" : ""}">
+              <div class="performance-bars">
+                <div class="performance-bar-column production-column">
+                  <span class="performance-value-label">${money(r.gross)}</span>
+                  <div class="performance-bar production-bar" style="height:${grossPct}%"></div>
+                </div>
+                <div class="performance-bar-column gain-column">
+                  <span class="performance-value-label">${money(r.pay)}</span>
+                  <div class="performance-bar gain-bar" style="height:${payPct}%"></div>
+                </div>
+              </div>
+              <button class="performance-barber-button" type="button" data-performance-barber="${r.barber.id}">
+                <span class="performance-name-avatar">${escapeHtml(initials)}</span>
+                <strong>${escapeHtml(r.barber.name)}</strong>
+                <small>${r.count} servicio${r.count===1?"":"s"} · Ver detalle</small>
+              </button>
+            </article>`;
+        }).join("")}
+      </div>
+    </div>`;
+
+  document.querySelectorAll("[data-performance-barber]").forEach(btn =>
+    btn.addEventListener("click", () => openBarberPerformanceDetail(btn.dataset.performanceBarber))
+  );
+}
+
+function openBarberPerformanceDetail(barberId) {
+  const barber = state.barbers.find(b => b.id === barberId);
+  if (!barber) return toast("No se encontró el barbero.");
+
+  currentPerformanceBarberId = barberId;
+  const period = dashboardPeriod();
+  const rows = state.sales
+    .filter(s => s.barberId === barberId && saleInDashboardPeriod(s, period))
+    .sort((a,b)=>jsDate(b.date)-jsDate(a.date));
+
+  const gross = rows.reduce((sum,s)=>sum+Number(s.total||0),0);
+  const pay = rows.reduce((sum,s)=>sum+Number(s.barberAmount||0),0);
+  const average = rows.length ? gross / rows.length : 0;
+
+  $("performanceDetailName").textContent = barber.name || "Barbero";
+  $("performanceDetailPeriod").textContent = period.label;
+  $("performanceDetailGross").textContent = money(gross);
+  $("performanceDetailPay").textContent = money(pay);
+  $("performanceDetailServices").textContent = rows.length;
+  $("performanceDetailAverage").textContent = money(average);
+  $("performanceDetailCount").textContent = `${rows.length} movimiento${rows.length===1?"":"s"}`;
+
+  $("performanceDetailRows").innerHTML = rows.length ? rows.map(s => `
+    <tr>
+      <td>${fmtDateTime(s.date)}</td>
+      <td><b>${escapeHtml(s.serviceName || "Servicio")}</b></td>
+      <td>${escapeHtml(s.payment || "—")}</td>
+      <td>${money(s.total)}</td>
+      <td class="money-positive"><b>${money(s.barberAmount)}</b></td>
+    </tr>
+  `).join("") : `<tr><td colspan="5" class="empty">No hay movimientos para ${escapeHtml(period.label)}.</td></tr>`;
+
+  openModal("barberPerformanceDetailModal");
+}
+
+function printBarberPerformanceReport() {
+  if (!currentPerformanceBarberId) return toast("Selecciona un barbero primero.");
+  const barber = state.barbers.find(b => b.id === currentPerformanceBarberId);
+  if (!barber) return toast("No se encontró el barbero.");
+  const period = dashboardPeriod();
+  const rows = state.sales
+    .filter(s => s.barberId === barber.id && saleInDashboardPeriod(s, period))
+    .sort((a,b)=>jsDate(a.date)-jsDate(b.date));
+  const gross = rows.reduce((sum,s)=>sum+Number(s.total||0),0);
+  const pay = rows.reduce((sum,s)=>sum+Number(s.barberAmount||0),0);
+  const average = rows.length ? gross / rows.length : 0;
+  const generatedAt = new Date().toLocaleString("es-PA", {dateStyle:"long",timeStyle:"short"});
+  const details = rows.map((s,index)=>`
+    <tr><td>${index+1}</td><td>${receiptSafeText(fmtDateTime(s.date))}</td><td>${receiptSafeText(s.serviceName||"Servicio")}</td><td>${receiptSafeText(s.payment||"—")}</td><td class="num">${receiptSafeText(money(s.total))}</td><td class="num pay">${receiptSafeText(money(s.barberAmount))}</td></tr>`).join("");
+
+  const printWindow = window.open("", "_blank", "width=1100,height=850");
+  if (!printWindow) return toast("Tu navegador bloqueó la ventana de impresión.");
+  printWindow.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Rendimiento - ${receiptSafeText(barber.name)}</title><style>
+  *{box-sizing:border-box}body{margin:0;background:#fff;color:#222;font-family:Arial,Helvetica,sans-serif}.page{max-width:1000px;margin:0 auto;padding:24px}.head{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:14px;border-bottom:2px solid #c9a04d}.brand{display:flex;gap:13px;align-items:center}.logo{width:50px;height:50px;border-radius:12px;background:#e8d39f;display:grid;place-items:center;font-weight:900;font-size:20px;color:#51380b}.head h1{margin:0;font-size:25px}.sub{margin:4px 0 0;color:#75581f;text-transform:uppercase;font-size:10px;letter-spacing:.9px}.doc{text-align:right}.doc h2{margin:0;font-size:19px}.doc p{margin:5px 0 0;color:#666;font-size:10px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin:18px 0;border:1px solid #e3ded3;border-radius:10px;padding:13px}.meta div{display:flex;justify-content:space-between;gap:12px}.meta span{color:#777}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}.kpi{border:1px solid #ddd8ce;border-radius:10px;padding:12px}.kpi.gold{background:#f4e5bf;border-color:#d3ad60}.kpi span{display:block;color:#76674d;font-size:9px;text-transform:uppercase;letter-spacing:.6px}.kpi strong{display:block;margin-top:5px;font-size:19px}.section-title{margin:20px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:#755512}table{width:100%;border-collapse:collapse;font-size:10px}th{background:#232323;color:#fff;text-align:left;padding:8px;font-size:9px;text-transform:uppercase}td{padding:8px;border-bottom:1px solid #e6e1d8}.num{text-align:right;white-space:nowrap}.pay{font-weight:700;color:#7a5814}.footer{margin-top:28px;padding-top:10px;border-top:1px solid #ddd;color:#777;text-align:center;font-size:9px}.print-note{text-align:center;color:#666;font-size:10px;margin-bottom:10px}@media print{.print-note{display:none}.page{padding:0}@page{size:A4;margin:10mm}}
+  </style></head><body><div class="print-note">En la ventana de impresión selecciona <b>Guardar como PDF</b>.</div><main class="page">
+  <header class="head"><div class="brand"><div class="logo">LM</div><div><h1>Barbería Los Mágicos</h1><p class="sub">Reporte individual de rendimiento</p></div></div><div class="doc"><h2>${receiptSafeText(barber.name)}</h2><p>${receiptSafeText(period.label)}</p><p>Generado: ${receiptSafeText(generatedAt)}</p></div></header>
+  <section class="meta"><div><span>Barbero</span><strong>${receiptSafeText(barber.name)}</strong></div><div><span>Puesto</span><strong>${receiptSafeText(barber.chairName||"Sin puesto")}</strong></div><div><span>Período</span><strong>${receiptSafeText(period.label)}</strong></div><div><span>Estado</span><strong>${barber.active===false?"Inactivo":"Activo"}</strong></div></section>
+  <section class="kpis"><div class="kpi"><span>Producción total</span><strong>${receiptSafeText(money(gross))}</strong></div><div class="kpi gold"><span>Ganancia barbero</span><strong>${receiptSafeText(money(pay))}</strong></div><div class="kpi"><span>Servicios</span><strong>${rows.length}</strong></div><div class="kpi"><span>Promedio</span><strong>${receiptSafeText(money(average))}</strong></div></section>
+  <h3 class="section-title">Detalle de movimientos</h3><table><thead><tr><th>#</th><th>Fecha / hora</th><th>Servicio</th><th>Método</th><th class="num">Total</th><th class="num">Pago barbero</th></tr></thead><tbody>${details || `<tr><td colspan="6">Sin movimientos en el período seleccionado.</td></tr>`}</tbody></table>
+  <footer class="footer">Barbería Los Mágicos · Reporte generado por el sistema de gestión</footer></main><script>window.addEventListener('load',()=>setTimeout(()=>window.print(),250));</script></body></html>`);
+  printWindow.document.close();
 }
 
 function renderDashboardChairCards(periodSales = [], period = dashboardPeriod()) {

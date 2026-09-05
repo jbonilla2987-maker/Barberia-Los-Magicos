@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260904-report-table-v12">
+  <link rel="stylesheet" href="./styles.css?v=20260905-v15-performance">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -173,28 +173,24 @@
           <article class="stat-card clickable-stat" id="todayAppointmentsCard" role="button" tabindex="0"><div class="stat-top"><span id="statAppointmentsLabel">Citas de hoy</span><i>◷</i></div><strong id="statAppointments">0</strong><small id="statAppointmentsMeta">0 pendientes · Ver detalle</small></article>
         </div>
 
-        <section class="barber-performance-section">
+        <section class="barber-performance-section barber-performance-v15">
           <div class="report-section-title barber-performance-title">
             <div>
               <p class="eyebrow" id="barberPerformanceKicker">RENDIMIENTO · HOY</p>
               <h3>Rendimiento de los barberos</h3>
             </div>
-            <p id="barberPerformanceCaption">Comparación por producción generada en el período seleccionado.</p>
+            <p id="barberPerformanceCaption">Producción y ganancia de cada barbero en el período seleccionado.</p>
           </div>
-          <div class="barber-performance-panel">
-            <div class="barber-performance-legend">
-              <span>BARBERO</span><span>RENDIMIENTO</span><span>PRODUCCIÓN</span><span>GANANCIA</span>
+          <div class="barber-performance-panel barber-vertical-panel">
+            <div class="barber-chart-toolbar">
+              <div class="barber-chart-legend">
+                <span><i class="legend-production"></i>Producción</span>
+                <span><i class="legend-gain"></i>Ganancia barbero</span>
+              </div>
+              <p>Selecciona el nombre de un barbero para ver su detalle.</p>
             </div>
-            <div id="barberPerformanceChart" class="barber-performance-chart"></div>
+            <div id="barberPerformanceChart" class="barber-performance-chart barber-performance-vertical-chart"></div>
           </div>
-        </section>
-
-        <section class="dashboard-chair-section">
-          <div class="report-section-title dashboard-chair-title">
-            <div><p class="eyebrow" id="dashboardChairKicker">PUESTOS · HOY</p><h3 id="dashboardChairHeading">Producción diaria por puesto</h3></div>
-            <p id="dashboardChairCaption">Barbero asignado, total generado y distribución del período.</p>
-          </div>
-          <div id="dashboardChairCards" class="dashboard-chair-grid"></div>
         </section>
 
         <div class="dashboard-grid">
@@ -666,6 +662,42 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="barberPerformanceDetailModal">
+    <div class="modal dashboard-submodal barber-performance-detail-modal">
+      <button class="modal-close" data-close="barberPerformanceDetailModal" type="button">×</button>
+      <div class="barber-detail-header">
+        <div class="barber-detail-heading">
+          <span class="barber-detail-icon">✂</span>
+          <div>
+            <p class="eyebrow">DETALLE DEL BARBERO</p>
+            <h2 id="performanceDetailName">Barbero</h2>
+            <p class="modal-copy" id="performanceDetailPeriod">Período seleccionado</p>
+          </div>
+        </div>
+        <button class="primary-btn barber-detail-print-btn" id="printBarberPerformanceBtn" type="button">Imprimir reporte</button>
+      </div>
+
+      <div class="barber-detail-kpis">
+        <article><span>Producción total</span><strong id="performanceDetailGross">USD 0.00</strong><small>Total generado</small></article>
+        <article class="gold-kpi"><span>Ganancia barbero</span><strong id="performanceDetailPay">USD 0.00</strong><small>Pago correspondiente</small></article>
+        <article><span>Servicios</span><strong id="performanceDetailServices">0</strong><small>Movimientos del período</small></article>
+        <article><span>Promedio por servicio</span><strong id="performanceDetailAverage">USD 0.00</strong><small>Producción promedio</small></article>
+      </div>
+
+      <div class="barber-detail-table-head">
+        <div><p class="eyebrow">MOVIMIENTOS</p><h3>Detalle del período</h3></div>
+        <span id="performanceDetailCount">0 movimientos</span>
+      </div>
+      <div class="barber-detail-table-wrap">
+        <table class="premium-report-table barber-performance-detail-table">
+          <thead><tr><th>Fecha / hora</th><th>Servicio</th><th>Método</th><th>Total cobrado</th><th>Pago barbero</th></tr></thead>
+          <tbody id="performanceDetailRows"></tbody>
+        </table>
+      </div>
+      <div class="barber-detail-footer">Reporte individual de rendimiento · Barbería Los Mágicos</div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="barberProfitModal">
     <div class="modal dashboard-submodal barber-profit-modal">
       <button class="modal-close" data-close="barberProfitModal" type="button">×</button>
@@ -943,6 +975,6 @@ Crema de Peinar	12.00	20"></textarea>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260904-report-table-v12"></script>
+  <script type="module" src="./app.js?v=20260905-v15-performance"></script>
 </body>
 </html>
