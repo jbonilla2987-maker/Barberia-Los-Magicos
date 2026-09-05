@@ -3256,11 +3256,12 @@ img,svg,canvas{max-width:100%;height:auto}
   --dashboard-card-border:rgba(255,255,255,.075);
 }
 
-#view-dashboard{
+#view-dashboard.active{
   display:flex;
   flex-direction:column;
   gap:18px;
 }
+#view-dashboard:not(.active){display:none!important;}
 
 .topbar{
   margin-bottom:18px;
