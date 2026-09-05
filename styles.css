@@ -3229,3 +3229,303 @@ img,svg,canvas{max-width:100%;height:auto}
   .barber-detail-kpis{grid-template-columns:1fr!important}
   .modal-backdrop{padding:8px}
 }
+
+
+/* =========================================================
+   V17 · DASHBOARD MÁS LIMPIO Y BOTÓN NUEVO COBRO EN SIDEBAR
+   ========================================================= */
+.sidebar-quick-sale-btn{width:100%;justify-content:center;padding:12px 14px;border-radius:14px;font-size:15px;font-weight:800;box-shadow:0 10px 26px rgba(201,151,63,.18)}
+.top-actions{justify-content:flex-end;width:100%}
+.hero-side-stack{display:flex;flex-direction:column;gap:16px;min-width:0;align-self:stretch}
+#view-dashboard .hero{grid-template-columns:minmax(340px,1.18fr) minmax(320px,.92fr)!important;align-items:stretch!important}
+#view-dashboard .hero-content{display:flex;flex-direction:column;justify-content:center}
+#view-dashboard .dashboard-period-filter,#view-dashboard .dashboard-report-actions{width:100%!important;max-width:none!important;min-width:0!important}
+#view-dashboard .dashboard-report-actions{align-self:stretch;margin-top:0!important}
+#view-dashboard .dashboard-report-buttons{display:grid!important;grid-template-columns:1fr 1fr;gap:10px}
+#view-dashboard .dashboard-profit-btn{grid-column:1 / -1!important}
+#view-dashboard .dashboard-grid{display:none!important}
+@media(max-width:1450px){#view-dashboard .hero{grid-template-columns:minmax(0,1fr) minmax(320px,.95fr)!important}#view-dashboard .hero-content{grid-column:auto!important}}
+@media(max-width:820px){.hero-side-stack{width:100%}#view-dashboard .hero{grid-template-columns:1fr!important}.sidebar-quick-sale-btn{font-size:14px}}
+@media(max-width:600px){.topbar{margin-bottom:14px}.top-actions{width:auto}#view-dashboard .dashboard-report-buttons{grid-template-columns:1fr!important}.sidebar-quick-sale-btn{padding:11px 12px}}
+
+/* =========================================================
+   V18 · DASHBOARD PREMIUM / ESPACIADO / ARMONÍA VISUAL
+   ========================================================= */
+:root{
+  --dashboard-card-bg:linear-gradient(180deg,#15161a 0%,#121317 100%);
+  --dashboard-card-border:rgba(255,255,255,.075);
+}
+
+#view-dashboard{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.topbar{
+  margin-bottom:18px;
+}
+
+#view-dashboard .hero{
+  grid-template-columns:minmax(420px,1.1fr) minmax(360px,.95fr)!important;
+  gap:24px;
+  padding:34px;
+  border-radius:28px;
+  border:1px solid rgba(215,173,86,.18);
+  background:
+    radial-gradient(circle at 82% 18%, rgba(215,173,86,.08), transparent 22%),
+    linear-gradient(90deg, rgba(215,173,86,.16) 0%, rgba(255,255,255,.02) 48%, rgba(255,255,255,.01) 100%),
+    linear-gradient(180deg,#131417 0%,#101114 100%);
+  box-shadow:0 22px 60px rgba(0,0,0,.22);
+}
+
+#view-dashboard .hero-content{
+  gap:16px;
+  align-items:flex-start;
+}
+
+#view-dashboard .hero-badge{
+  padding:10px 16px;
+  border-radius:999px;
+  font-size:11px;
+  letter-spacing:1.6px;
+  font-weight:900;
+  border:1px solid rgba(215,173,86,.30);
+  background:rgba(215,173,86,.05);
+}
+
+#view-dashboard .hero h2{
+  max-width:8.5ch;
+  margin:0;
+  line-height:.98;
+  letter-spacing:-1.8px;
+  font-size:clamp(52px,5.2vw,76px)!important;
+}
+
+#view-dashboard .hero p{
+  max-width:580px;
+  margin:0;
+  font-size:21px;
+  line-height:1.45;
+  color:#cfd2db;
+}
+
+.hero-side-stack{
+  gap:14px;
+  justify-content:center;
+}
+
+#view-dashboard .dashboard-period-filter,
+#view-dashboard .dashboard-report-actions{
+  padding:18px 20px!important;
+  border-radius:22px!important;
+  background:var(--dashboard-card-bg)!important;
+  border:1px solid var(--dashboard-card-border)!important;
+  box-shadow:0 14px 36px rgba(0,0,0,.18);
+}
+
+#view-dashboard .dashboard-filter-head strong,
+#view-dashboard .dashboard-report-kicker{
+  font-size:12px;
+}
+
+#view-dashboard .dashboard-filter-kicker,
+#view-dashboard .dashboard-report-kicker{
+  font-size:10px;
+  letter-spacing:1.4px;
+}
+
+#view-dashboard .dashboard-filter-modes{
+  gap:8px;
+  padding:5px;
+  border-radius:16px;
+}
+
+#view-dashboard .dashboard-filter-modes button,
+#view-dashboard .dashboard-filter-today,
+#view-dashboard .dashboard-report-buttons button{
+  min-height:46px;
+  border-radius:14px;
+  font-weight:800;
+}
+
+#view-dashboard .dashboard-report-buttons{
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+#view-dashboard .dashboard-profit-btn{
+  order:-1;
+}
+
+#view-dashboard .dashboard-excel-btn{
+  background:rgba(215,173,86,.10)!important;
+  color:var(--gold2)!important;
+  border:1px solid rgba(215,173,86,.24)!important;
+}
+
+#view-dashboard .stats-grid{
+  gap:18px;
+  margin:0;
+}
+
+#view-dashboard>.stats-grid .stat-card{
+  min-height:148px;
+  padding:22px 20px;
+  border-radius:24px;
+  background:var(--dashboard-card-bg);
+  border:1px solid var(--dashboard-card-border);
+  box-shadow:0 12px 28px rgba(0,0,0,.15);
+}
+
+#view-dashboard>.stats-grid .gold-card{
+  background:linear-gradient(135deg,#d5ab57,#9f6f28 98%);
+  box-shadow:0 14px 34px rgba(201,151,63,.18);
+}
+
+#view-dashboard>.stats-grid .stat-card strong{
+  font-size:clamp(30px,3vw,42px);
+  letter-spacing:-1.4px;
+}
+
+#view-dashboard>.stats-grid .stat-card small{
+  font-size:11px;
+}
+
+.barber-performance-v15{
+  margin:2px 0 0;
+}
+
+.barber-performance-title{
+  margin-bottom:12px;
+}
+
+.barber-performance-title h3{
+  font-size:34px;
+  line-height:1.05;
+}
+
+.barber-performance-title>p{
+  font-size:14px;
+}
+
+.barber-horizontal-panel{
+  padding:20px!important;
+  border-radius:26px!important;
+  background:var(--dashboard-card-bg)!important;
+  border:1px solid var(--dashboard-card-border)!important;
+  box-shadow:0 14px 34px rgba(0,0,0,.14);
+}
+
+.performance-horizontal-row{
+  padding:14px;
+  border-radius:18px;
+}
+
+.performance-horizontal-track{
+  height:14px;
+}
+
+.performance-horizontal-label strong{
+  font-size:11px;
+}
+
+.sidebar-footer{
+  gap:12px;
+}
+
+.sidebar-quick-sale-btn{
+  min-height:48px;
+  font-size:16px;
+  font-weight:900;
+  border-radius:16px;
+}
+
+@media(max-width:1500px){
+  #view-dashboard .hero{
+    grid-template-columns:minmax(0,1fr) minmax(340px,.92fr)!important;
+    gap:20px;
+    padding:30px;
+  }
+  #view-dashboard .hero h2{
+    font-size:clamp(48px,5vw,68px)!important;
+  }
+  #view-dashboard .hero p{
+    font-size:19px;
+  }
+}
+
+@media(max-width:1180px){
+  #view-dashboard .hero{
+    grid-template-columns:1fr!important;
+  }
+  #view-dashboard .hero h2{
+    max-width:10ch;
+  }
+  .hero-side-stack{
+    width:100%;
+  }
+}
+
+@media(max-width:820px){
+  .topbar{
+    margin-bottom:14px;
+  }
+  #view-dashboard .hero{
+    padding:22px;
+    border-radius:24px;
+  }
+  #view-dashboard .hero h2{
+    max-width:100%;
+    font-size:clamp(38px,11vw,54px)!important;
+  }
+  #view-dashboard .hero p{
+    font-size:15px;
+    max-width:none;
+  }
+  #view-dashboard .dashboard-period-filter,
+  #view-dashboard .dashboard-report-actions{
+    padding:16px!important;
+    border-radius:18px!important;
+  }
+  #view-dashboard .stats-grid{
+    gap:12px;
+  }
+  #view-dashboard>.stats-grid .stat-card{
+    min-height:132px;
+    padding:18px 16px;
+    border-radius:20px;
+  }
+  .barber-performance-title h3{
+    font-size:26px;
+  }
+}
+
+@media(max-width:600px){
+  #view-dashboard{
+    gap:14px;
+  }
+  #view-dashboard .hero{
+    padding:18px;
+    gap:14px;
+  }
+  #view-dashboard .hero-badge{
+    padding:8px 12px;
+    font-size:10px;
+  }
+  #view-dashboard .dashboard-report-buttons,
+  #view-dashboard .dashboard-filter-modes{
+    gap:8px;
+  }
+  #view-dashboard>.stats-grid .stat-card strong{
+    font-size:clamp(28px,9vw,34px);
+  }
+  .barber-horizontal-panel{
+    padding:14px!important;
+    border-radius:20px!important;
+  }
+  .sidebar-quick-sale-btn{
+    min-height:44px;
+    font-size:15px;
+  }
+}

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260905-v16-responsive">
+  <link rel="stylesheet" href="./styles.css?v=20260905-v18-premium">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -112,6 +112,7 @@
       </nav>
       <div class="sidebar-footer">
         <div class="admin-card"><div class="avatar">A</div><div><strong id="adminDisplayName">Administrador</strong><span>Control total</span></div></div>
+        <button class="primary-btn sidebar-quick-sale-btn" id="quickSaleBtn" type="button">+ Nuevo cobro</button>
         <button class="logout-btn" data-logout type="button">Cerrar sesión</button>
       </div>
     </aside>
@@ -119,49 +120,51 @@
     <main class="main">
       <header class="topbar">
         <div class="topbar-left"><button class="menu-btn" id="adminMenuBtn" type="button">☰</button><div><p class="eyebrow">BARBERÍA LOS MÁGICOS</p><h1 id="adminPageTitle">Dashboard</h1></div></div>
-        <div class="top-actions"><div id="todayLabel" class="date-pill"></div><button class="primary-btn" id="quickSaleBtn" type="button">+ Nuevo cobro</button></div>
+        <div class="top-actions"><div id="todayLabel" class="date-pill"></div></div>
       </header>
 
       <section class="view active" id="view-dashboard">
         <div class="hero">
           <div class="hero-content"><span class="hero-badge">CONTROL EN TIEMPO REAL</span><h2>Haz crecer la magia <span>de cada corte.</span></h2><p>Ventas, comisiones, citas y rendimiento del equipo en un solo panel.</p></div>
-          <div class="dashboard-report-actions" aria-label="Acciones de reporte">
-            <span class="dashboard-report-kicker">REPORTES DEL PERÍODO</span>
-            <div class="dashboard-report-buttons">
-              <button class="ghost-btn dashboard-report-btn" id="printReportBtn" type="button">Imprimir / PDF</button>
-              <button class="primary-btn dashboard-profit-btn" id="barberProfitFilterBtn" type="button"><span>★</span> Ganancias por barbero</button>
-              <button class="primary-btn dashboard-excel-btn" id="exportExcelBtn" type="button">Exportar Excel</button>
-            </div>
-          </div>
-
-          <div class="dashboard-period-filter" id="dashboardPeriodFilter">
-            <div class="dashboard-filter-head">
-              <div>
-                <span class="dashboard-filter-kicker">FILTRAR DASHBOARD</span>
-                <strong id="dashboardPeriodLabel">Hoy</strong>
+          <div class="hero-side-stack">
+            <div class="dashboard-period-filter" id="dashboardPeriodFilter">
+              <div class="dashboard-filter-head">
+                <div>
+                  <span class="dashboard-filter-kicker">FILTRAR DASHBOARD</span>
+                  <strong id="dashboardPeriodLabel">Hoy</strong>
+                </div>
+                <button class="dashboard-filter-today" id="dashboardFilterTodayBtn" type="button">Hoy</button>
               </div>
-              <button class="dashboard-filter-today" id="dashboardFilterTodayBtn" type="button">Hoy</button>
+
+              <div class="dashboard-filter-modes" role="group" aria-label="Tipo de período">
+                <button class="active" data-dashboard-filter-mode="day" type="button">Día</button>
+                <button data-dashboard-filter-mode="week" type="button">Semana</button>
+                <button data-dashboard-filter-mode="month" type="button">Mes</button>
+                <button data-dashboard-filter-mode="range" type="button">Rango</button>
+              </div>
+
+              <div class="dashboard-filter-control active" data-dashboard-filter-control="day">
+                <label>Fecha<input id="dashboardFilterDay" type="date"></label>
+              </div>
+              <div class="dashboard-filter-control" data-dashboard-filter-control="week">
+                <label>Semana<input id="dashboardFilterWeek" type="week"></label>
+              </div>
+              <div class="dashboard-filter-control" data-dashboard-filter-control="month">
+                <label>Mes<input id="dashboardFilterMonth" type="month"></label>
+              </div>
+              <div class="dashboard-filter-control dashboard-range-control" data-dashboard-filter-control="range">
+                <label class="dashboard-date-label">Desde<input id="dashboardFilterStart" type="date" aria-label="Fecha desde"></label>
+                <label class="dashboard-date-label">Hasta<input id="dashboardFilterEnd" type="date" aria-label="Fecha hasta"></label>
+              </div>
             </div>
 
-            <div class="dashboard-filter-modes" role="group" aria-label="Tipo de período">
-              <button class="active" data-dashboard-filter-mode="day" type="button">Día</button>
-              <button data-dashboard-filter-mode="week" type="button">Semana</button>
-              <button data-dashboard-filter-mode="range" type="button">Rango</button>
-              <button data-dashboard-filter-mode="month" type="button">Mes</button>
-            </div>
-
-            <div class="dashboard-filter-control active" data-dashboard-filter-control="day">
-              <label>Fecha<input id="dashboardFilterDay" type="date"></label>
-            </div>
-            <div class="dashboard-filter-control" data-dashboard-filter-control="week">
-              <label>Semana<input id="dashboardFilterWeek" type="week"></label>
-            </div>
-            <div class="dashboard-filter-control dashboard-range-control" data-dashboard-filter-control="range">
-              <label class="dashboard-date-label">Desde<input id="dashboardFilterStart" type="date" aria-label="Fecha desde"></label>
-              <label class="dashboard-date-label">Hasta<input id="dashboardFilterEnd" type="date" aria-label="Fecha hasta"></label>
-            </div>
-            <div class="dashboard-filter-control" data-dashboard-filter-control="month">
-              <label>Mes<input id="dashboardFilterMonth" type="month"></label>
+            <div class="dashboard-report-actions" aria-label="Acciones de reporte">
+              <span class="dashboard-report-kicker">REPORTES DEL PERÍODO</span>
+              <div class="dashboard-report-buttons">
+                <button class="ghost-btn dashboard-report-btn" id="printReportBtn" type="button">Imprimir / PDF</button>
+                <button class="primary-btn dashboard-profit-btn" id="barberProfitFilterBtn" type="button"><span>★</span> Ganancias por barbero</button>
+                <button class="primary-btn dashboard-excel-btn" id="exportExcelBtn" type="button">Exportar Excel</button>
+              </div>
             </div>
           </div>
         </div>
@@ -192,23 +195,7 @@
             <div id="barberPerformanceChart" class="barber-performance-chart barber-performance-horizontal-chart"></div>
           </div>
         </section>
-
-        <div class="dashboard-grid">
-          <article class="panel">
-            <div class="panel-head">
-              <div><p class="eyebrow">ACTIVIDAD</p><h3>Últimos 5 cobros</h3></div>
-              <button class="ghost-btn" data-go="sales" type="button">Ver todos</button>
-            </div>
-            <div id="recentSales" class="list"></div>
-          </article>
-          <article class="panel dashboard-today-appts">
-            <div class="panel-head">
-              <div><p class="eyebrow" id="dashboardAgendaKicker">AGENDA DE HOY</p><h3 id="dashboardAgendaHeading">Citas del día</h3></div>
-              <button class="ghost-btn" id="openTodayAppointmentsBtn" type="button">Ver citas del período</button>
-            </div>
-            <div id="upcomingAppointments" class="list"></div>
-          </article>
-        </div>
+        <!-- Sección de actividad y citas removida del dashboard -->
 
       </section>
 
@@ -975,6 +962,6 @@ Crema de Peinar	12.00	20"></textarea>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260905-v16-responsive"></script>
+  <script type="module" src="./app.js?v=20260905-v18-premium"></script>
 </body>
 </html>

@@ -814,7 +814,8 @@ function renderDashboard() {
     .sort((a,b)=>jsDate(b.date)-jsDate(a.date))
     .slice(0,5);
 
-  $("recentSales").innerHTML = recent.length ? recent.map(s => `
+  const recentSalesNode = $("recentSales");
+  if (recentSalesNode) recentSalesNode.innerHTML = recent.length ? recent.map(s =>     `
     <div class="list-row">
       <div>
         <div class="item-title">${escapeHtml(s.serviceName)}</div>
@@ -828,7 +829,8 @@ function renderDashboard() {
     .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time))
     .slice(0,4);
 
-  $("upcomingAppointments").innerHTML = periodRows.length ? periodRows.map(a => `
+  const upcomingAppointmentsNode = $("upcomingAppointments");
+  if (upcomingAppointmentsNode) upcomingAppointmentsNode.innerHTML = periodRows.length ? periodRows.map(a =>     `
     <button class="list-row dashboard-appt-row" type="button" data-open-dashboard-appts>
       <div>
         <div class="item-title">${fmtDateOnly(a.date)} · ${a.time} · ${escapeHtml(a.clientName)}</div>
