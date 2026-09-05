@@ -716,6 +716,10 @@ function switchAdminView(name) {
     barbers:"Usuarios / Barberos", chairs:"Puestos", services:"Servicios", products:"Productos", reports:"Reportes"
   };
   $("adminPageTitle").textContent = titles[name] || "Dashboard";
+  const dashboardTopMessage = $("dashboardTopMessage");
+  if (dashboardTopMessage) dashboardTopMessage.classList.toggle("hidden", name !== "dashboard");
+  const dashboardTopbar = document.querySelector(".dashboard-topbar");
+  if (dashboardTopbar) dashboardTopbar.classList.toggle("dashboard-mode", name === "dashboard");
   $("adminSidebar").classList.remove("open");
 }
 

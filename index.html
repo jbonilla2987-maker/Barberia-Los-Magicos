@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260905-v18-premium-navfix">
+  <link rel="stylesheet" href="./styles.css?v=20260905-v20-dashboard-compacto-r2-navfix">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -118,15 +118,20 @@
     </aside>
 
     <main class="main">
-      <header class="topbar">
+      <header class="topbar dashboard-topbar">
         <div class="topbar-left"><button class="menu-btn" id="adminMenuBtn" type="button">☰</button><div><p class="eyebrow">BARBERÍA LOS MÁGICOS</p><h1 id="adminPageTitle">Dashboard</h1></div></div>
+        <div class="dashboard-top-message" id="dashboardTopMessage">
+          <div class="dashboard-top-copy">
+            <span>CONTROL EN TIEMPO REAL</span>
+            <strong>Haz crecer la magia <em>de cada corte.</em></strong>
+            <small>Ventas, comisiones, citas y rendimiento del equipo en un solo panel.</small>
+          </div>
+        </div>
         <div class="top-actions"><div id="todayLabel" class="date-pill"></div></div>
       </header>
 
       <section class="view active" id="view-dashboard">
-        <div class="hero">
-          <div class="hero-content"><span class="hero-badge">CONTROL EN TIEMPO REAL</span><h2>Haz crecer la magia <span>de cada corte.</span></h2><p>Ventas, comisiones, citas y rendimiento del equipo en un solo panel.</p></div>
-          <div class="hero-side-stack">
+        <div class="dashboard-control-grid">
             <div class="dashboard-period-filter" id="dashboardPeriodFilter">
               <div class="dashboard-filter-head">
                 <div>
@@ -166,7 +171,6 @@
                 <button class="primary-btn dashboard-excel-btn" id="exportExcelBtn" type="button">Exportar Excel</button>
               </div>
             </div>
-          </div>
         </div>
 
         <div class="stats-grid">
@@ -962,6 +966,6 @@ Crema de Peinar	12.00	20"></textarea>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260905-v18-premium-navfix"></script>
+  <script type="module" src="./app.js?v=20260905-v20-dashboard-compacto-r2-navfix"></script>
 </body>
 </html>
