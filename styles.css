@@ -2866,3 +2866,129 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 #todayAppointmentsModal .submodal-heading,#barberTodayAppointmentsModal .submodal-heading{padding-right:56px;}
 #todayAppointmentsModal .modal-close,#barberTodayAppointmentsModal .modal-close{z-index:30;}
 @media(max-width:780px){#todayAppointmentsModal .submodal-count,#barberTodayAppointmentsModal .submodal-count{margin-right:0;}#todayAppointmentsModal .submodal-heading,#barberTodayAppointmentsModal .submodal-heading{padding-right:42px;}}
+
+
+/* =========================================================
+   V14 · DASHBOARD · RENDIMIENTO DE BARBEROS + KPIs CENTRADOS
+   ========================================================= */
+#view-dashboard>.stats-grid .stat-card{
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:132px;
+}
+#view-dashboard>.stats-grid .stat-top{
+  width:100%;
+  justify-content:center;
+  position:relative;
+  min-height:30px;
+}
+#view-dashboard>.stats-grid .stat-top>span{
+  width:100%;
+  text-align:center;
+  font-size:11px;
+  font-weight:700;
+}
+#view-dashboard>.stats-grid .stat-top i{
+  position:absolute;
+  right:0;
+  top:0;
+}
+#view-dashboard>.stats-grid .stat-card strong{
+  width:100%;
+  text-align:center;
+  font-size:30px;
+  margin:11px 0 5px;
+}
+#view-dashboard>.stats-grid .stat-card small{
+  width:100%;
+  text-align:center;
+  line-height:1.35;
+}
+
+.barber-performance-section{margin:26px 0 22px;}
+.barber-performance-title{margin-bottom:10px;}
+.barber-performance-panel{
+  border:1px solid var(--line);
+  border-radius:22px;
+  background:linear-gradient(180deg,#151518,#111214);
+  padding:14px 16px 10px;
+  overflow:hidden;
+}
+.barber-performance-legend{
+  display:grid;
+  grid-template-columns:minmax(180px,1.15fr) minmax(260px,2.2fr) 150px 150px;
+  gap:14px;
+  align-items:center;
+  padding:0 10px 9px;
+  color:var(--muted);
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+.barber-performance-chart{display:grid;}
+.barber-performance-row{
+  display:grid;
+  grid-template-columns:minmax(180px,1.15fr) minmax(260px,2.2fr) 150px 150px;
+  gap:14px;
+  align-items:center;
+  padding:12px 10px;
+  border-top:1px solid #27272c;
+  min-width:0;
+}
+.barber-performance-row.top-performer{
+  background:linear-gradient(90deg,rgba(215,173,86,.075),transparent 62%);
+}
+.barber-performance-person{display:flex;align-items:center;gap:10px;min-width:0;}
+.barber-performance-avatar{
+  width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+  flex:0 0 38px;border:1px solid rgba(215,173,86,.18);
+  background:rgba(215,173,86,.09);color:var(--gold2);font-size:10px;font-weight:900;
+}
+.barber-performance-person strong,.barber-performance-person small{display:block;}
+.barber-performance-person strong{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.barber-performance-person small{font-size:8px;color:var(--muted);margin-top:3px;}
+.barber-performance-bar-wrap{min-width:0;}
+.barber-performance-track{
+  height:12px;border-radius:999px;background:#242429;border:1px solid #2e2e34;overflow:hidden;
+}
+.barber-performance-track span{
+  display:block;height:100%;border-radius:inherit;
+  background:linear-gradient(90deg,#9d7029,#e4bd6a);
+  box-shadow:0 0 18px rgba(215,173,86,.16);
+}
+.barber-performance-bar-wrap small{display:block;margin-top:5px;color:var(--muted);font-size:7px;}
+.barber-performance-value{text-align:center;min-width:0;}
+.barber-performance-value span,.barber-performance-value strong{display:block;}
+.barber-performance-value span{font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;}
+.barber-performance-value strong{font-size:13px;margin-top:4px;white-space:nowrap;color:#fff;}
+.barber-performance-pay strong{color:var(--gold2);}
+.barber-performance-empty{padding:28px 10px;text-align:center;color:var(--muted);font-size:11px;}
+
+@media(max-width:1050px){
+  .barber-performance-legend{display:none;}
+  .barber-performance-row{
+    grid-template-columns:minmax(170px,1fr) minmax(220px,1.6fr) 120px 120px;
+  }
+}
+@media(max-width:820px){
+  .barber-performance-row{
+    grid-template-columns:1fr 1fr;
+    gap:10px 12px;
+  }
+  .barber-performance-person{grid-column:1/2;}
+  .barber-performance-bar-wrap{grid-column:1/-1;grid-row:2;}
+  .barber-performance-value{padding:8px;border-radius:10px;background:#1b1b20;border:1px solid #29292f;}
+  .barber-performance-value:nth-of-type(1){grid-column:1;}
+  .barber-performance-value:nth-of-type(2){grid-column:2;}
+}
+@media(max-width:520px){
+  #view-dashboard>.stats-grid .stat-card strong{font-size:27px;}
+  .barber-performance-panel{padding:10px;}
+  .barber-performance-row{grid-template-columns:1fr;}
+  .barber-performance-person,.barber-performance-bar-wrap,.barber-performance-value{grid-column:1!important;}
+  .barber-performance-value{text-align:left;}
+}

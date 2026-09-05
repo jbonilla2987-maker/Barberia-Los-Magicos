@@ -840,7 +840,54 @@ function renderDashboard() {
     btn.addEventListener("click", openDashboardAppointmentsModal)
   );
 
+  renderBarberPerformanceChart(ds, period);
   renderDashboardChairCards(ds, period);
+}
+
+function renderBarberPerformanceChart(periodSales = [], period = dashboardPeriod()) {
+  const node = $("barberPerformanceChart");
+  if (!node) return;
+
+  const singleToday = period.start === isoDay() && period.end === isoDay();
+  if ($("barberPerformanceKicker")) $("barberPerformanceKicker").textContent = singleToday ? "RENDIMIENTO · HOY" : "RENDIMIENTO · PERÍODO";
+  if ($("barberPerformanceCaption")) $("barberPerformanceCaption").textContent = `Producción y ganancia de cada barbero · ${period.label}.`;
+
+  const rows = state.barbers
+    .filter(b => b.active !== false)
+    .map(barber => {
+      const sales = periodSales.filter(s => s.barberId === barber.id);
+      return {
+        barber,
+        count:sales.length,
+        gross:sales.reduce((sum,s)=>sum+Number(s.total||0),0),
+        pay:sales.reduce((sum,s)=>sum+Number(s.barberAmount||0),0)
+      };
+    })
+    .sort((a,b)=>b.gross-a.gross || a.barber.name.localeCompare(b.barber.name));
+
+  if (!rows.length) {
+    node.innerHTML = `<div class="barber-performance-empty">No hay barberos activos para mostrar.</div>`;
+    return;
+  }
+
+  const maxGross = Math.max(...rows.map(r=>r.gross), 0);
+  node.innerHTML = rows.map((r,index) => {
+    const pct = maxGross > 0 ? Math.max(4, Math.round((r.gross / maxGross) * 100)) : 0;
+    const initials = (r.barber.name || "B").split(/\s+/).slice(0,2).map(x=>x.charAt(0)).join("").toUpperCase();
+    return `
+      <article class="barber-performance-row ${index===0 && r.gross>0 ? "top-performer" : ""}">
+        <div class="barber-performance-person">
+          <span class="barber-performance-avatar">${escapeHtml(initials)}</span>
+          <div><strong>${escapeHtml(r.barber.name)}</strong><small>${r.count} servicio${r.count===1?"":"s"}</small></div>
+        </div>
+        <div class="barber-performance-bar-wrap">
+          <div class="barber-performance-track"><span style="width:${pct}%"></span></div>
+          <small>${maxGross > 0 ? Math.round((r.gross/maxGross)*100) : 0}% del mayor rendimiento</small>
+        </div>
+        <div class="barber-performance-value"><span>Producción</span><strong>${money(r.gross)}</strong></div>
+        <div class="barber-performance-value barber-performance-pay"><span>Ganancia</span><strong>${money(r.pay)}</strong></div>
+      </article>`;
+  }).join("");
 }
 
 function renderDashboardChairCards(periodSales = [], period = dashboardPeriod()) {
