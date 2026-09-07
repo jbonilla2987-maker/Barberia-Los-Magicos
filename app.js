@@ -57,6 +57,8 @@ let booking = { serviceId: null, barberId: null };
 let barberProductCart = [];
 let bulkProductRows = [];
 let productSearchQuery = "";
+let productCurrentPage = 1;
+const PRODUCTS_PER_PAGE = 10;
 let barberServiceViewMode = "cards";
 let dashboardFilterMode = "day";
 let currentChairReceiptContext = null;
@@ -430,6 +432,7 @@ function wireStaticUI() {
   bind("addProductBtn", "click", openNewProductModal);
   bind("productSearchInput", "input", e => {
     productSearchQuery = String(e.currentTarget.value || "");
+    productCurrentPage = 1;
     renderProducts();
   });
   bind("productSearchInput", "keydown", e => {
@@ -440,6 +443,7 @@ function wireStaticUI() {
     const product = findProductByBarcode(code);
     if (!product) return toast("Ese código de barras no está registrado.");
     productSearchQuery = code;
+    productCurrentPage = 1;
     e.currentTarget.value = code;
     renderProducts();
     requestAnimationFrame(() => {
@@ -3137,6 +3141,7 @@ async function saveBulkProducts() {
 function renderProducts() {
   if (currentRole !== "admin") return;
   const tbody = $("productCards");
+  const pagination = $("productPagination");
   if (!tbody) return;
 
   const allProducts = [...state.products].sort((a,b) => String(a.name||"").localeCompare(String(b.name||""), "es", {sensitivity:"base"}));
@@ -3154,7 +3159,12 @@ function renderProducts() {
   if ($("productUnitCount")) $("productUnitCount").textContent = totalUnits;
   if ($("productNoBarcodeCount")) $("productNoBarcodeCount").textContent = noBarcode;
 
-  tbody.innerHTML = filtered.length ? filtered.map(p => {
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PRODUCTS_PER_PAGE));
+  productCurrentPage = Math.min(Math.max(1, productCurrentPage), totalPages);
+  const startIndex = (productCurrentPage - 1) * PRODUCTS_PER_PAGE;
+  const pageProducts = filtered.slice(startIndex, startIndex + PRODUCTS_PER_PAGE);
+
+  tbody.innerHTML = pageProducts.length ? pageProducts.map(p => {
     const active = p.active !== false;
     const stock = Math.max(0, Number(p.stock || 0));
     const barcode = normalizeBarcode(p.barcode);
@@ -3173,6 +3183,57 @@ function renderProducts() {
       </td>
     </tr>`;
   }).join("") : `<tr><td colspan="6"><div class="empty">${queryValue ? "No hay productos que coincidan con la búsqueda o código." : "Todavía no has agregado productos al inventario."}</div></td></tr>`;
+
+  if (pagination) {
+    if (!filtered.length) {
+      pagination.innerHTML = "";
+      pagination.classList.add("hidden");
+    } else {
+      pagination.classList.remove("hidden");
+      const firstShown = startIndex + 1;
+      const lastShown = Math.min(startIndex + pageProducts.length, filtered.length);
+
+      const pageItems = [];
+      if (totalPages <= 7) {
+        for (let page = 1; page <= totalPages; page++) pageItems.push(page);
+      } else {
+        pageItems.push(1);
+        const rangeStart = Math.max(2, productCurrentPage - 1);
+        const rangeEnd = Math.min(totalPages - 1, productCurrentPage + 1);
+        if (rangeStart > 2) pageItems.push("ellipsis-start");
+        for (let page = rangeStart; page <= rangeEnd; page++) pageItems.push(page);
+        if (rangeEnd < totalPages - 1) pageItems.push("ellipsis-end");
+        pageItems.push(totalPages);
+      }
+
+      pagination.innerHTML = `
+        <div class="product-pagination-info">
+          <strong>Mostrando ${firstShown}-${lastShown}</strong>
+          <span>de ${filtered.length} producto${filtered.length === 1 ? "" : "s"}${queryValue ? " encontrados" : ""}</span>
+        </div>
+        <div class="product-pagination-controls">
+          <button class="product-page-nav" data-product-page="prev" type="button" ${productCurrentPage === 1 ? "disabled" : ""}>‹ Anterior</button>
+          <div class="product-page-numbers">
+            ${pageItems.map(item => typeof item === "number"
+              ? `<button class="product-page-number ${item === productCurrentPage ? "active" : ""}" data-product-page="${item}" type="button">${item}</button>`
+              : `<span class="product-page-ellipsis">…</span>`
+            ).join("")}
+          </div>
+          <button class="product-page-nav" data-product-page="next" type="button" ${productCurrentPage === totalPages ? "disabled" : ""}>Siguiente ›</button>
+        </div>`;
+
+      pagination.querySelectorAll("[data-product-page]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const target = btn.dataset.productPage;
+          if (target === "prev") productCurrentPage = Math.max(1, productCurrentPage - 1);
+          else if (target === "next") productCurrentPage = Math.min(totalPages, productCurrentPage + 1);
+          else productCurrentPage = Math.min(totalPages, Math.max(1, Number(target) || 1));
+          renderProducts();
+          document.querySelector(".product-detail-list-shell")?.scrollIntoView({ behavior:"smooth", block:"start" });
+        });
+      });
+    }
+  }
 
   document.querySelectorAll("[data-edit-product]").forEach(btn =>
     btn.addEventListener("click", () => openEditProductModal(btn.dataset.editProduct))
