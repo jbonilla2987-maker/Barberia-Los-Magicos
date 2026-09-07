@@ -5197,3 +5197,59 @@ td{font-size:12.5px}
     min-width:92px;
   }
 }
+
+/* =========================================================
+   V44 · PUESTOS UN POCO MÁS GRANDES + MEJOR LEGIBILIDAD
+   ========================================================= */
+@media (min-width:1101px){
+  .chair-ops-grid{
+    grid-template-columns:repeat(auto-fit,minmax(300px,365px))!important;
+    max-width:1540px!important;
+    gap:18px!important;
+  }
+  .chair-ops-card{
+    max-width:365px!important;
+    padding:17px!important;
+    border-radius:20px!important;
+  }
+  .chair-ops-card-top h3{
+    font-size:23px!important;
+  }
+  .chair-ops-barber{
+    padding:12px!important;
+    margin-top:12px!important;
+  }
+  .chair-ops-avatar{
+    width:38px!important;
+    height:38px!important;
+    flex-basis:38px!important;
+    font-size:13px!important;
+  }
+  .chair-ops-barber strong{
+    font-size:12px!important;
+  }
+  .chair-ops-kpis>div,
+  .chair-ops-detail-line>div{
+    padding:11px 12px!important;
+  }
+  .chair-ops-kpis strong{
+    font-size:17px!important;
+  }
+  .chair-ops-card-actions button{
+    min-height:37px!important;
+    padding:8px 9px!important;
+    font-size:9.5px!important;
+  }
+}
+
+@media (min-width:761px) and (max-width:1100px){
+  .chair-ops-grid{
+    grid-template-columns:repeat(2,minmax(0,340px))!important;
+    gap:16px!important;
+    justify-content:center!important;
+  }
+  .chair-ops-card{
+    max-width:340px!important;
+    padding:16px!important;
+  }
+}

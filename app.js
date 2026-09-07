@@ -60,6 +60,7 @@ let productSearchQuery = "";
 let productCurrentPage = 1;
 const PRODUCTS_PER_PAGE = 10;
 let barberServiceViewMode = "cards";
+let barberChargeForceReset = true;
 let dashboardFilterMode = "day";
 let currentChairReceiptContext = null;
 let currentPerformanceBarberId = null;
@@ -3405,6 +3406,8 @@ function renderBarberProfitFilter() {
 
 
 function resetBarberChargeForm() {
+  barberChargeForceReset = true;
+
   const form = $("barberChargeForm");
   if (form) form.reset();
 
@@ -3412,11 +3415,21 @@ function resetBarberChargeForm() {
   const productSelect = $("barberChargeProduct");
   const priceInput = $("barberChargePrice");
   const quantityInput = $("barberChargeProductQty");
+  const paymentSelect = $("barberChargePayment");
+  const noteInput = $("barberChargeNote");
 
-  if (serviceSelect) serviceSelect.value = "";
-  if (productSelect) productSelect.value = "";
+  if (serviceSelect) {
+    serviceSelect.value = "";
+    if (serviceSelect.options.length) serviceSelect.selectedIndex = 0;
+  }
+  if (productSelect) {
+    productSelect.value = "";
+    if (productSelect.options.length) productSelect.selectedIndex = 0;
+  }
   if (priceInput) priceInput.value = "";
   if (quantityInput) quantityInput.value = "1";
+  if (paymentSelect) paymentSelect.value = "Efectivo";
+  if (noteInput) noteInput.value = "";
 
   barberProductCart = [];
 }
@@ -3427,14 +3440,14 @@ function renderBarberChargeOptions() {
   const serviceSelect = $("barberChargeService");
   const chairInput = $("barberChargeChair");
   const productSelect = $("barberChargeProduct");
-  const selectedService = serviceSelect.value;
-  const selectedProduct = productSelect?.value || "";
+  const selectedService = barberChargeForceReset ? "" : serviceSelect.value;
+  const selectedProduct = barberChargeForceReset ? "" : (productSelect?.value || "");
 
   serviceSelect.innerHTML = state.services.length
-    ? `<option value="">Seleccionar servicio</option>` + state.services.map(s =>
+    ? `<option value="" selected>Seleccionar servicio</option>` + state.services.map(s =>
         `<option value="${s.id}">${escapeHtml(s.name)} · ${money(s.price)}</option>`
       ).join("")
-    : `<option value="">No hay servicios activos</option>`;
+    : `<option value="" selected>No hay servicios activos</option>`;
 
   if (productSelect) {
     const availableProducts = state.products.filter(p => Number(p.stock || 0) > 0);
@@ -3447,10 +3460,21 @@ function renderBarberChargeOptions() {
 
   if (selectedService && state.services.some(s => s.id === selectedService)) {
     serviceSelect.value = selectedService;
+  } else {
+    serviceSelect.value = "";
+    serviceSelect.selectedIndex = 0;
   }
-  if (selectedProduct && state.products.some(p => p.id === selectedProduct)) {
-    productSelect.value = selectedProduct;
+  if (productSelect) {
+    if (selectedProduct && state.products.some(p => p.id === selectedProduct)) {
+      productSelect.value = selectedProduct;
+    } else {
+      productSelect.value = "";
+      if (productSelect.options.length) productSelect.selectedIndex = 0;
+    }
   }
+
+  // Mantén el reinicio pendiente hasta que el catálogo de servicios haya cargado.
+  if (barberChargeForceReset && state.services.length) barberChargeForceReset = false;
 
   const fixedChair = state.chairs.find(c =>
     c.id === currentBarber?.chairId && c.active !== false

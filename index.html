@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260907-v43-barbero-servicio-reset">
+  <link rel="stylesheet" href="./styles.css?v=20260907-v44-servicio-reset-puestos-grandes">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -453,7 +453,7 @@
         </div>
 
         <div class="barber-charge-layout">
-          <form id="barberChargeForm" class="barber-charge-form premium-charge-form">
+          <form id="barberChargeForm" class="barber-charge-form premium-charge-form" autocomplete="off">
             <div class="charge-form-section-title">
               <span>01</span>
               <div><strong>Trabajo realizado</strong><small>Servicio del catálogo + puesto fijo asignado</small></div>
@@ -461,7 +461,7 @@
 
             <label class="charge-field charge-field-wide">
               <span class="charge-label">Servicio</span>
-              <select id="barberChargeService" required></select>
+              <select id="barberChargeService" required autocomplete="off"><option value="" selected>Seleccionar servicio</option></select>
               <small>Servicios creados y activos por el administrador.</small>
             </label>
 
@@ -1090,6 +1090,6 @@
     </div>
   </div>
 
-  <script type="module" src="./app.js?v=20260907-v42-citas-corregidas"></script>
+  <script type="module" src="./app.js?v=20260907-v44-servicio-reset-puestos-grandes"></script>
 </body>
 </html>
