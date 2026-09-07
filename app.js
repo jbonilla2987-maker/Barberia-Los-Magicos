@@ -65,9 +65,53 @@ let currentChairReceiptContext = null;
 let currentPerformanceBarberId = null;
 let currentChairOpsId = null;
 let unsubscribers = [];
+let adminRenderFrame = 0;
+let barberRenderFrame = 0;
+let excelJsLoadPromise = null;
+
+function scheduleAdminRender() {
+  if (adminRenderFrame) return;
+  adminRenderFrame = requestAnimationFrame(() => {
+    adminRenderFrame = 0;
+    renderAdminAll();
+  });
+}
+
+function scheduleBarberRender() {
+  if (barberRenderFrame) return;
+  barberRenderFrame = requestAnimationFrame(() => {
+    barberRenderFrame = 0;
+    renderBarberPortal();
+  });
+}
+
+function ensureExcelJS() {
+  if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+  if (excelJsLoadPromise) return excelJsLoadPromise;
+
+  excelJsLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js";
+    script.async = true;
+    script.onload = () => window.ExcelJS ? resolve(window.ExcelJS) : reject(new Error("ExcelJS no disponible"));
+    script.onerror = () => reject(new Error("No se pudo cargar ExcelJS"));
+    document.head.appendChild(script);
+  }).catch(error => {
+    excelJsLoadPromise = null;
+    throw error;
+  });
+
+  return excelJsLoadPromise;
+}
+
+const moneyFormatter = new Intl.NumberFormat("es-PA", { style:"currency", currency:"USD" });
+const dateTimeFormatter = new Intl.DateTimeFormat("es-PA", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" });
+const dateOnlyFormatter = new Intl.DateTimeFormat("es-PA", { weekday:"short", day:"2-digit", month:"short" });
+const monthLabelFormatter = new Intl.DateTimeFormat("es-PA", { month:"long", year:"numeric" });
+const shortDayFormatter = new Intl.DateTimeFormat("es-PA", { day:"2-digit", month:"short", year:"numeric" });
 
 function money(v) {
-  return new Intl.NumberFormat("es-PA", { style:"currency", currency:"USD" }).format(Number(v || 0));
+  return moneyFormatter.format(Number(v || 0));
 }
 
 function isoDay(d = new Date()) {
@@ -81,16 +125,16 @@ function jsDate(v) {
 }
 
 function todayIso(v) {
-  return jsDate(v).toISOString().slice(0,10) === isoDay();
+  return dayKey(v) === isoDay();
 }
 
 function fmtDateTime(v) {
-  return jsDate(v).toLocaleString("es-PA", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" });
+  return dateTimeFormatter.format(jsDate(v));
 }
 
 function fmtDateOnly(day) {
   const [y,m,d] = String(day).split("-").map(Number);
-  return new Date(y,m-1,d).toLocaleDateString("es-PA", { weekday:"short", day:"2-digit", month:"short" });
+  return dateOnlyFormatter.format(new Date(y,m-1,d));
 }
 
 function escapeHtml(v) {
@@ -119,19 +163,15 @@ function dayKey(value) {
 function monthLabel(key) {
   if (!key) return "";
   const [year, month] = key.split("-").map(Number);
-  return new Date(year, month-1, 1).toLocaleDateString("es-PA", { month:"long", year:"numeric" });
+  return monthLabelFormatter.format(new Date(year, month-1, 1));
 }
 
 function shortDayLabel(key) {
   const [year, month, day] = key.split("-").map(Number);
-  return new Date(year, month-1, day).toLocaleDateString("es-PA", { day:"2-digit", month:"short", year:"numeric" });
+  return shortDayFormatter.format(new Date(year, month-1, day));
 }
 
 
-function parseIsoDayLocal(key) {
-  const [y,m,d] = String(key || "").split("-").map(Number);
-  return new Date(y || 1970, (m || 1)-1, d || 1);
-}
 
 function isoWeekValue(date = new Date()) {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -274,6 +314,10 @@ function cleanupListeners() {
     try { unsub(); } catch {}
   }
   unsubscribers = [];
+  if (adminRenderFrame) cancelAnimationFrame(adminRenderFrame);
+  if (barberRenderFrame) cancelAnimationFrame(barberRenderFrame);
+  adminRenderFrame = 0;
+  barberRenderFrame = 0;
 }
 
 function usernameToEmail(username) {
@@ -390,7 +434,6 @@ function wireStaticUI() {
     btn.addEventListener("click", () => setBarberServiceView(btn.dataset.serviceView))
   );
 
-  bind("openTodayAppointmentsBtn", "click", openDashboardAppointmentsModal);
   bind("appointmentsTodayBtn", "click", openTodayAppointmentsModal);
   bind("todayAppointmentsCard", "click", openDashboardAppointmentsModal);
   bind("todayAppointmentsCard", "keydown", e => {
@@ -628,37 +671,37 @@ function subscribeAdmin() {
 
   unsubscribers.push(onSnapshot(collection(db, "chairs"), snap => {
     state.chairs = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>(a.order||999)-(b.order||999));
-    renderAdminAll();
+    scheduleAdminRender();
   }));
 
   unsubscribers.push(onSnapshot(query(collection(db, "users"), where("role","==","barber")), snap => {
     state.barbers = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>(a.name||"").localeCompare(b.name||""));
-    renderAdminAll();
+    scheduleAdminRender();
   }));
 
   unsubscribers.push(onSnapshot(collection(db, "services"), snap => {
     state.services = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>(a.order||999)-(b.order||999));
-    renderAdminAll();
+    scheduleAdminRender();
   }));
 
   unsubscribers.push(onSnapshot(collection(db, "products"), snap => {
     state.products = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>(a.order||999)-(b.order||999));
-    renderAdminAll();
+    scheduleAdminRender();
   }));
 
   unsubscribers.push(onSnapshot(collection(db, "sales"), snap => {
     state.sales = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    renderAdminAll();
+    scheduleAdminRender();
   }));
 
   unsubscribers.push(onSnapshot(collection(db, "chargeRequests"), snap => {
     state.chargeRequests = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    renderAdminAll();
+    scheduleAdminRender();
   }));
 
   unsubscribers.push(onSnapshot(collection(db, "appointments"), snap => {
     state.appointments = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    renderAdminAll();
+    scheduleAdminRender();
   }));
 }
 
@@ -667,39 +710,39 @@ function subscribeBarber(uid) {
 
   unsubscribers.push(onSnapshot(collection(db, "chairs"), snap => {
     state.chairs = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => x.active !== false).sort((a,b)=>(a.order||999)-(b.order||999));
-    renderBarberPortal();
+    scheduleBarberRender();
   }));
 
   unsubscribers.push(onSnapshot(collection(db, "services"), snap => {
     state.services = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => x.active !== false).sort((a,b)=>(a.order||999)-(b.order||999));
-    renderBarberPortal();
+    scheduleBarberRender();
   }));
 
   unsubscribers.push(onSnapshot(collection(db, "products"), snap => {
     state.products = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => x.active !== false).sort((a,b)=>(a.order||999)-(b.order||999));
-    renderBarberPortal();
+    scheduleBarberRender();
   }));
 
   unsubscribers.push(onSnapshot(query(collection(db, "chargeRequests"), where("barberId","==",uid)), snap => {
     state.chargeRequests = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    renderBarberPortal();
+    scheduleBarberRender();
   }));
 
   unsubscribers.push(onSnapshot(doc(db, "users", uid), snap => {
     if (!snap.exists()) return;
     currentBarber = { id:snap.id, ...snap.data() };
     if (currentBarber.active === false) return logout();
-    renderBarberPortal();
+    scheduleBarberRender();
   }));
 
   unsubscribers.push(onSnapshot(query(collection(db, "sales"), where("barberId","==",uid)), snap => {
     state.sales = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    renderBarberPortal();
+    scheduleBarberRender();
   }));
 
   unsubscribers.push(onSnapshot(query(collection(db, "appointments"), where("barberId","==",uid)), snap => {
     state.appointments = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    renderBarberPortal();
+    scheduleBarberRender();
   }));
 }
 
@@ -822,7 +865,6 @@ function renderDashboard() {
 
   const singleToday = period.start === isoDay() && period.end === isoDay();
   const periodWord = singleToday ? "hoy" : "período";
-  const periodTitle = singleToday ? "HOY" : period.label.toUpperCase();
 
   if ($("dashboardPeriodLabel")) $("dashboardPeriodLabel").textContent = period.label;
   if ($("statSalesLabel")) $("statSalesLabel").textContent = singleToday ? "Ventas de hoy" : "Ventas del período";
@@ -840,47 +882,6 @@ function renderDashboard() {
   $("statAppointmentsMeta").textContent = `${da.filter(a=>a.status==="pending").length} pendientes · Ver detalle`;
 
   renderDashboardChairStatus();
-
-  if ($("dashboardChairKicker")) $("dashboardChairKicker").textContent = `PUESTOS · ${periodTitle}`;
-  if ($("dashboardChairHeading")) $("dashboardChairHeading").textContent = singleToday ? "Producción diaria por puesto" : "Producción por puesto";
-  if ($("dashboardChairCaption")) $("dashboardChairCaption").textContent = `Barbero asignado, total generado y distribución · ${period.label}.`;
-  if ($("dashboardAgendaKicker")) $("dashboardAgendaKicker").textContent = singleToday ? "AGENDA DE HOY" : "AGENDA DEL PERÍODO";
-  if ($("dashboardAgendaHeading")) $("dashboardAgendaHeading").textContent = singleToday ? "Citas del día" : "Citas del período";
-  if ($("openTodayAppointmentsBtn")) $("openTodayAppointmentsBtn").textContent = singleToday ? "Ver citas de hoy" : "Ver citas del período";
-
-  const recent = [...ds]
-    .sort((a,b)=>jsDate(b.date)-jsDate(a.date))
-    .slice(0,5);
-
-  const recentSalesNode = $("recentSales");
-  if (recentSalesNode) recentSalesNode.innerHTML = recent.length ? recent.map(s =>     `
-    <div class="list-row">
-      <div>
-        <div class="item-title">${escapeHtml(s.serviceName)}</div>
-        <div class="item-meta">${escapeHtml(s.barberName)} · ${fmtDateTime(s.date)}</div>
-      </div>
-      <div class="amount">${money(s.total)}</div>
-    </div>
-  `).join("") : `<div class="empty">No hay cobros en ${escapeHtml(period.label)}.</div>`;
-
-  const periodRows = [...da]
-    .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time))
-    .slice(0,4);
-
-  const upcomingAppointmentsNode = $("upcomingAppointments");
-  if (upcomingAppointmentsNode) upcomingAppointmentsNode.innerHTML = periodRows.length ? periodRows.map(a =>     `
-    <button class="list-row dashboard-appt-row" type="button" data-open-dashboard-appts>
-      <div>
-        <div class="item-title">${fmtDateOnly(a.date)} · ${a.time} · ${escapeHtml(a.clientName)}</div>
-        <div class="item-meta">${escapeHtml(a.serviceName)} · ${escapeHtml(a.barberName || "Por asignar")}</div>
-      </div>
-      <span class="status ${a.status}">${statusLabel(a.status)}</span>
-    </button>
-  `).join("") : `<div class="empty">No hay citas en ${escapeHtml(period.label)}.</div>`;
-
-  document.querySelectorAll("[data-open-dashboard-appts]").forEach(btn =>
-    btn.addEventListener("click", openDashboardAppointmentsModal)
-  );
 
   renderBarberPerformanceChart(ds, period);
 }
@@ -1063,52 +1064,6 @@ function printBarberPerformanceReport() {
   printWindow.document.close();
 }
 
-function renderDashboardChairCards(periodSales = [], period = dashboardPeriod()) {
-  const node = $("dashboardChairCards");
-  if (!node) return;
-  const singleToday = period.start === isoDay() && period.end === isoDay();
-
-  node.innerHTML = state.chairs.map((chair,index) => {
-    const sales = periodSales.filter(s => s.chairId === chair.id);
-    const total = sales.reduce((a,s)=>a+Number(s.total||0),0);
-    const barberPay = sales.reduce((a,s)=>a+Number(s.barberAmount||0),0);
-    const shopPay = sales.reduce((a,s)=>a+Number(s.shopAmount||0),0);
-    const assigned = state.barbers.filter(b => b.chairId === chair.id && b.active !== false);
-
-    return `
-      <article class="dashboard-chair-card">
-        <div class="dashboard-chair-top">
-          <div>
-            <span class="card-kicker">PUESTO ${String(index+1).padStart(2,"0")}</span>
-            <h4>${escapeHtml(chair.name)}</h4>
-          </div>
-          <div class="dashboard-chair-total"><span>${singleToday ? "GENERADO HOY" : "GENERADO PERÍODO"}</span><strong>${money(total)}</strong></div>
-        </div>
-
-        <div class="dashboard-chair-barber ${assigned.length ? "" : "empty-barber"}">
-          <span class="dashboard-chair-avatar">${assigned.length ? escapeHtml((assigned[0].name||"B").charAt(0).toUpperCase()) : "—"}</span>
-          <div>
-            <small>BARBERO ASIGNADO</small>
-            <strong>${assigned.length ? assigned.map(b=>escapeHtml(b.name)).join(", ") : "Sin barbero asignado"}</strong>
-          </div>
-        </div>
-
-        <div class="dashboard-chair-money">
-          <div><span>Barbero</span><strong>${money(barberPay)}</strong></div>
-          <div><span>Barbería</span><strong>${money(shopPay)}</strong></div>
-          <div><span>Servicios</span><strong>${sales.length}</strong></div>
-        </div>
-
-        <button class="chair-detail-btn" type="button" data-chair-day-detail="${chair.id}">
-          Ver detalle ${singleToday ? "del día" : "del período"} →
-        </button>
-      </article>`;
-  }).join("");
-
-  document.querySelectorAll("[data-chair-day-detail]").forEach(btn =>
-    btn.addEventListener("click", () => openChairDayDetail(btn.dataset.chairDayDetail))
-  );
-}
 
 function openChairDayDetail(chairId) {
   const chair = state.chairs.find(c => c.id === chairId);
@@ -1303,11 +1258,11 @@ function renderSales() {
 async function exportApprovedSalesExcel() {
   if (currentRole !== "admin") return toast("Solo el administrador puede exportar este historial.");
   if (!state.sales.length) return toast("No hay cobros aprobados para exportar.");
-  if (!window.ExcelJS) return toast("No se pudo cargar el generador de Excel. Revisa tu conexión a Internet.");
 
   try {
+    toast("Preparando Excel...");
+    const ExcelJS = await ensureExcelJS();
     const rows = [...state.sales].sort((a,b)=>jsDate(b.date)-jsDate(a.date));
-    const ExcelJS = window.ExcelJS;
     const wb = new ExcelJS.Workbook();
     wb.creator = "Barbería Los Mágicos";
     wb.title = "Cobros aprobados";
@@ -1738,63 +1693,6 @@ function openTodayAppointmentsModal() {
   openModal("todayAppointmentsModal");
 }
 
-function renderTodayAppointmentsModal() {
-  const node = $("todayAppointmentsModalList");
-  if (!node || currentRole !== "admin") return;
-
-  const today = state.appointments
-    .filter(a => a.date === isoDay() && !["completed","cancelled"].includes(a.status))
-    .sort((a,b)=>(a.time||"").localeCompare(b.time||""));
-
-  $("todayAppointmentsModalCount").textContent = today.length;
-  $("todayAppointmentsDateLabel").textContent = new Date().toLocaleDateString("es-PA", {
-    weekday:"long", day:"2-digit", month:"long", year:"numeric"
-  });
-
-  node.innerHTML = today.length ? today.map(a => `
-    <article class="today-appt-card ${appointmentNeedsBarber(a) ? "needs-barber" : ""}">
-      <div class="today-appt-time">
-        <span>HORA</span><strong>${escapeHtml(a.time || "")}</strong>
-      </div>
-      <div class="today-appt-main">
-        <div class="today-appt-client">
-          <span class="status ${a.status}">${statusLabel(a.status)}</span>
-          <h4>${escapeHtml(a.clientName || "Cliente")}</h4>
-          <small>${escapeHtml(a.clientPhone || "")} · ${escapeHtml(a.serviceName || "")}</small>
-        </div>
-
-        ${appointmentNeedsBarber(a) ? `
-          <div class="today-assign-box">
-            <div><span>BARBERO</span><strong>Por asignar</strong></div>
-            <select data-assign-select="${a.id}">${assignmentOptionsForAppointment(a)}</select>
-            <button class="primary-btn tiny-assignment-btn" type="button" data-assign-appt="${a.id}">Asignar</button>
-          </div>
-        ` : `
-          <div class="today-assigned-barber">
-            <span>BARBERO</span>
-            <strong>${escapeHtml(a.barberName || "Barbero")}</strong>
-          </div>
-        `}
-      </div>
-      <div class="today-appt-actions">
-        ${a.status==="pending" ? `<button class="tiny-btn" data-today-appt="${a.id}" data-status="confirmed" type="button">Confirmar</button>` : ""}
-        ${a.status==="confirmed" ? `<button class="tiny-btn" data-today-appt="${a.id}" data-status="completed" type="button">Completar</button>` : ""}
-        ${!["completed","cancelled"].includes(a.status) ? `<button class="tiny-btn danger" data-today-appt="${a.id}" data-status="cancelled" type="button">Cancelar</button>` : ""}
-      </div>
-    </article>
-  `).join("") : `<div class="cash-empty"><span>◷</span><strong>Agenda libre</strong><p>No hay citas registradas para hoy.</p></div>`;
-
-  document.querySelectorAll("[data-assign-appt]").forEach(btn =>
-    btn.addEventListener("click", () => {
-      const select = document.querySelector(`[data-assign-select="${btn.dataset.assignAppt}"]`);
-      assignBarberToAppointment(btn.dataset.assignAppt, select?.value || "");
-    })
-  );
-
-  document.querySelectorAll("[data-today-appt]").forEach(btn =>
-    btn.addEventListener("click", () => changeAppointment(btn.dataset.todayAppt, btn.dataset.status))
-  );
-}
 
 async function assignBarberToAppointment(appointmentId, barberId) {
   if (!barberId) return toast("Selecciona un barbero.");
@@ -4345,44 +4243,9 @@ function renderClientAppointments() {
   `).join("") : `<div class="empty">Aún no has creado citas desde este dispositivo.</div>`;
 }
 
-function exportCsv() {
-  const selectedMonth = $("reportMonth")?.value || monthKey(new Date());
-  const rows = state.sales
-    .filter(s => monthKey(s.date) === selectedMonth)
-    .sort((a,b)=>jsDate(a.date)-jsDate(b.date));
-
-  const header = ["Fecha","Barbero","Puesto","Servicio","Metodo","Total cobrado","Comision %","Saldo barbero","Ingreso barberia"];
-  const data = rows.map(s => [
-    jsDate(s.date).toLocaleString("es-PA"),
-    s.barberName,
-    s.chairName,
-    s.serviceName,
-    s.payment,
-    Number(s.total || 0).toFixed(2),
-    Number(s.commission || 0).toFixed(2),
-    Number(s.barberAmount || 0).toFixed(2),
-    Number(s.shopAmount || 0).toFixed(2)
-  ]);
-
-  const csv = [header,...data]
-    .map(r => r.map(v => `"${String(v ?? "").replaceAll('"','""')}"`).join(","))
-    .join("\\n");
-
-  const blob = new Blob(["\\ufeff"+csv], { type:"text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `Los_Magicos_Reporte_${selectedMonth}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 
 async function exportExcelReport() {
-  if (!window.ExcelJS) {
-    return toast("No se pudo cargar el generador de Excel. Revisa tu conexión a Internet.");
-  }
-
   const period = dashboardPeriod();
   const selectedMonth = period.start.slice(0,7);
   const periodLabel = period.label;
@@ -4397,7 +4260,7 @@ async function exportExcelReport() {
   toast("Generando Excel premium...");
 
   try {
-    const ExcelJS = window.ExcelJS;
+    const ExcelJS = await ensureExcelJS();
     const wb = new ExcelJS.Workbook();
     wb.creator = "Barbería Los Mágicos";
     wb.lastModifiedBy = "Barbería Los Mágicos";
