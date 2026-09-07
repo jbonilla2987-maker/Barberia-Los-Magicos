@@ -5312,3 +5312,99 @@ td{font-size:12.5px}
     flex:1 1 120px;
   }
 }
+
+/* =========================================================
+   V40 · PRODUCTOS MÁS COMPACTOS EN TABLA
+   ========================================================= */
+.product-detail-list-shell{
+  max-height:calc(100vh - 255px);
+}
+.product-detail-table{
+  min-width:820px;
+}
+.product-detail-table thead th{
+  padding:11px 12px;
+}
+.product-detail-table tbody td{
+  padding:10px 12px;
+  font-size:10px;
+}
+.product-list-name,
+.product-list-price{
+  font-size:12px;
+}
+.product-list-stock{
+  min-width:34px;
+  height:26px;
+  padding:0 7px;
+  border-radius:8px;
+  font-size:11px;
+}
+.product-barcode{
+  min-height:24px;
+  padding:5px 8px;
+  font-size:9px;
+}
+.product-status{
+  padding:4px 8px;
+  font-size:8px;
+}
+.product-detail-table td[data-label="Acciones"]{
+  width:210px;
+}
+.product-list-actions{
+  display:grid;
+  grid-template-columns:repeat(3,max-content);
+  gap:6px;
+  min-width:0;
+  align-items:center;
+  justify-content:start;
+}
+.product-list-actions button{
+  min-height:28px;
+  padding:6px 10px;
+  border-radius:8px;
+  font-size:9px;
+  line-height:1;
+}
+.product-list-actions .product-toggle-btn{
+  width:auto!important;
+  min-width:102px;
+  margin-top:0!important;
+}
+.product-list-actions .stock-adjust-btn,
+.product-list-actions .product-edit-btn,
+.product-list-actions .product-toggle-btn{
+  align-self:center;
+}
+@media (max-width: 1080px){
+  .product-detail-table{
+    min-width:760px;
+  }
+  .product-detail-table td[data-label="Acciones"]{
+    width:190px;
+  }
+  .product-list-actions{
+    grid-template-columns:repeat(2,max-content);
+  }
+  .product-list-actions .product-toggle-btn{
+    grid-column:1 / -1;
+  }
+}
+@media (max-width: 720px){
+  .product-detail-table{
+    min-width:700px;
+  }
+  .product-detail-table tbody td,
+  .product-detail-table thead th{
+    padding:9px 10px;
+  }
+  .product-list-actions button{
+    min-height:26px;
+    padding:6px 8px;
+    font-size:8px;
+  }
+  .product-list-actions .product-toggle-btn{
+    min-width:92px;
+  }
+}
