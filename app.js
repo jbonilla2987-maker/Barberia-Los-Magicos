@@ -828,8 +828,7 @@ function renderDashboardChairStatus() {
 
   document.querySelectorAll("[data-dashboard-chair-open]").forEach(btn =>
     btn.addEventListener("click", () => {
-      switchAdminView("chairs");
-      setTimeout(() => openChairOperations(btn.dataset.dashboardChairOpen), 60);
+      openChairOperations(btn.dataset.dashboardChairOpen);
     })
   );
 }
