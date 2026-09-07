@@ -4395,36 +4395,238 @@ img,svg,canvas{max-width:100%;height:auto}
 
 
 /* =========================================================
-   V29 · ESTADO DE PUESTOS EN DASHBOARD + ANIMACIÓN SWITCH
+   V29/V31 · ESTADO DE PUESTOS EN DASHBOARD + ANIMACIÓN SWITCH
    ========================================================= */
 @keyframes barberStatePulse{0%{transform:scale(1)}35%{transform:scale(.96)}70%{transform:scale(1.035)}100%{transform:scale(1)}}
 .barber-availability-pill.state-changing,.barber-availability-btn.state-changing{animation:barberStatePulse .5s ease}
 .barber-availability-pill,.barber-availability-btn.premium{will-change:transform,filter}
 
-.dashboard-live-chairs-section{margin:2px auto 2px;width:100%;}
-.dashboard-live-chairs-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:12px}
+.dashboard-live-chairs-section{margin:4px auto 8px;width:100%}
+.dashboard-live-chairs-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:14px}
 .dashboard-live-chairs-head h3{margin:4px 0 0;font-size:24px}
 .dashboard-live-chairs-head>span{font-size:11px;color:var(--muted);text-align:right}
-.dashboard-live-chairs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
-.dashboard-chair-status-card{appearance:none;text-align:left;min-width:0;padding:14px 15px;border-radius:18px;background:linear-gradient(180deg,#15161a,#111216);border:1px solid rgba(255,255,255,.07);color:#fff;cursor:pointer;transition:.18s ease;box-shadow:0 8px 20px rgba(0,0,0,.12)}
-.dashboard-chair-status-card:hover{transform:translateY(-2px);border-color:rgba(215,173,86,.2)}
-.dashboard-chair-status-card.available{box-shadow:inset 0 0 0 1px rgba(83,205,125,.05),0 8px 20px rgba(0,0,0,.12)}
-.dashboard-chair-status-card.occupied{box-shadow:inset 0 0 0 1px rgba(255,93,100,.05),0 8px 20px rgba(0,0,0,.12)}
-.dashboard-chair-status-card.offline{opacity:.75}
-.dashboard-chair-status-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
-.dashboard-chair-number{font-size:9px;font-weight:900;letter-spacing:1px;color:var(--gold)}
-.dashboard-chair-state{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:999px;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.5px}
-.dashboard-chair-state i{width:7px;height:7px;border-radius:50%;display:block;background:currentColor;box-shadow:0 0 8px currentColor}
-.dashboard-chair-state.available{color:#87e7ae;background:rgba(73,196,115,.08);border:1px solid rgba(73,196,115,.16)}
-.dashboard-chair-state.occupied{color:#ff858b;background:rgba(255,86,97,.08);border:1px solid rgba(255,86,97,.16)}
-.dashboard-chair-state.offline{color:#a8abb3;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
-.dashboard-chair-status-card>strong{display:block;font-size:16px;margin-bottom:11px}
-.dashboard-chair-barber{display:flex;align-items:center;gap:9px}
-.dashboard-chair-barber>span{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:rgba(215,173,86,.08);border:1px solid rgba(215,173,86,.13);color:var(--gold2);font-weight:900}
-.dashboard-chair-barber div{min-width:0}
-.dashboard-chair-barber small,.dashboard-chair-barber b{display:block}
-.dashboard-chair-barber small{font-size:7px;letter-spacing:.7px;color:var(--muted)}
-.dashboard-chair-barber b{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dashboard-live-chairs-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:stretch}
+
+.dashboard-chair-status-badge{position:relative;appearance:none;min-width:0;padding:16px 14px;border-radius:28px;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;cursor:pointer;transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, filter .18s ease;background:linear-gradient(180deg,#2b2b2f 0%,#121216 52%,#07080a 100%);border:2px solid rgba(214,170,74,.9);box-shadow:inset 0 2px 0 rgba(255,255,255,.14),inset 0 -10px 16px rgba(0,0,0,.34),0 10px 24px rgba(0,0,0,.22);color:#f7df9a;overflow:hidden}
+.dashboard-chair-status-badge::before{content:"";position:absolute;inset:4px;border-radius:22px;border:1px solid rgba(255,255,255,.10);pointer-events:none}
+.dashboard-chair-status-badge:hover{transform:translateY(-2px);filter:brightness(1.03)}
+.dashboard-chair-status-badge.available{background:linear-gradient(180deg,#39b85c 0%,#15843a 55%,#0c5c28 100%);border-color:#8ff0ab;box-shadow:inset 0 2px 0 rgba(255,255,255,.18),inset 0 -12px 16px rgba(0,0,0,.28),0 12px 24px rgba(20,112,50,.28);color:#fff}
+.dashboard-chair-status-badge.occupied{background:linear-gradient(180deg,#e45151 0%,#bb1d23 56%,#830d12 100%);border-color:#ff9f9f;box-shadow:inset 0 2px 0 rgba(255,255,255,.16),inset 0 -12px 16px rgba(0,0,0,.32),0 12px 24px rgba(139,16,20,.28);color:#fff}
+.dashboard-chair-status-badge.offline{background:linear-gradient(180deg,#848892 0%,#4c515c 56%,#2f3440 100%);border-color:#cfd2d9;box-shadow:inset 0 2px 0 rgba(255,255,255,.16),inset 0 -12px 16px rgba(0,0,0,.34),0 12px 24px rgba(39,43,52,.26);color:#fff}
+.dashboard-chair-badge-name{display:block;font-size:clamp(21px,1.5vw,30px);line-height:1.05;font-weight:900;letter-spacing:.02em;text-shadow:0 2px 5px rgba(0,0,0,.22)}
+.dashboard-chair-badge-meta{display:block;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;opacity:.95}
+.dashboard-chair-status-badge small{display:block;font-size:12px;font-weight:600;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .dashboard-chair-status-empty{padding:16px;border-radius:16px;border:1px dashed rgba(255,255,255,.08);color:var(--muted);text-align:center}
-@media(max-width:760px){.dashboard-live-chairs-head{align-items:flex-start;flex-direction:column;gap:4px}.dashboard-live-chairs-head>span{text-align:left}.dashboard-live-chairs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:480px){.dashboard-live-chairs-grid{grid-template-columns:1fr}.dashboard-chair-status-card{padding:13px}}
+
+@media(max-width:1180px){.dashboard-live-chairs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.dashboard-live-chairs-head{align-items:flex-start;flex-direction:column;gap:4px}.dashboard-live-chairs-head>span{text-align:left}.dashboard-live-chairs-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.dashboard-chair-status-badge{padding:14px 12px;border-radius:24px}.dashboard-chair-badge-name{font-size:clamp(18px,5vw,24px)}.dashboard-chair-status-badge small{font-size:11px}}
+@media(max-width:520px){.dashboard-live-chairs-grid{grid-template-columns:1fr}.dashboard-chair-status-badge{padding:14px 12px}.dashboard-chair-badge-name{font-size:22px}}
+
+/* =========================================================
+   V30 · RESPONSIVE GENERAL — ADMIN + BARBERO + CLIENTE
+   Corrige desbordes en móvil/tablet sin cambiar la lógica.
+   ========================================================= */
+html,body{width:100%;max-width:100%;overflow-x:hidden}
+body{min-width:0}
+.app-shell,.main,.view,.panel,.section-head,.module-intro,.cards-grid,.appointment-grid,
+.dashboard-topbar,.dashboard-top-message,.dashboard-control-grid,.dashboard-period-filter,
+.dashboard-report-actions,.dashboard-live-chairs-section,.dashboard-live-chairs-grid,
+.product-inventory-layout,.product-inventory-table-shell,.product-inventory-toolbar,
+.chair-ops-grid,.chair-ops-card,.barber-main,.barber-welcome,.barber-cash-module,
+.barber-charge-layout,.premium-charge-form,.barber-charge-preview,.booking-main,.booking-layout,
+.booking-card,.lookup-card,.luxury-card,.modal,.modal-backdrop{min-width:0;max-width:100%}
+
+/* Controles nativos de fecha pueden imponer ancho mínimo en Chrome móvil. */
+input,select,textarea,button{max-width:100%}
+input[type="date"],input[type="week"],input[type="month"],input[type="time"]{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  min-inline-size:0!important;
+  inline-size:100%!important;
+  box-sizing:border-box!important;
+}
+.dashboard-filter-control,.dashboard-filter-control label,
+.dashboard-date-label,.dashboard-control-grid>*{min-width:0!important;max-width:100%!important}
+.dashboard-filter-control label{display:block;width:100%}
+.dashboard-filter-control input{display:block;width:100%!important;max-width:100%!important;min-width:0!important}
+
+/* Tablas: nunca ensanchan el body; el scroll queda dentro de su panel. */
+.table-wrap,.product-inventory-table-shell,.barber-service-table-wrap,.barber-profit-table-wrap,
+.completed-appts-table-wrap,.chair-ops-table-wrap,.bulk-grid-shell,.barber-detail-table-wrap,
+.product-sales-day-list-wrap,.report-chair-table-wrap{
+  width:100%;max-width:100%;overflow-x:auto!important;-webkit-overflow-scrolling:touch;
+}
+
+/* =========================================================
+   MÓVIL / TABLET
+   ========================================================= */
+@media(max-width:820px){
+  .main{margin-left:0!important;width:100%!important;max-width:100%!important;padding:16px!important}
+  .sidebar{width:min(286px,88vw)!important;max-width:88vw;overflow-y:auto}
+  .topbar,.section-head,.module-intro{max-width:100%}
+  .topbar{gap:10px;flex-wrap:wrap}
+  .topbar-left{min-width:0;max-width:100%}
+  .topbar-left>div{min-width:0}
+  .topbar h1{overflow-wrap:anywhere}
+
+  /* Dashboard */
+  #view-dashboard.active{width:100%;max-width:100%;overflow:visible}
+  .dashboard-topbar{width:100%;max-width:100%;grid-template-columns:1fr!important}
+  .dashboard-top-message{width:100%;max-width:100%;min-width:0}
+  .dashboard-top-copy{min-width:0}
+  .dashboard-top-copy>strong,.dashboard-top-copy>small{overflow-wrap:anywhere}
+  .dashboard-control-grid{width:100%!important;max-width:100%!important;grid-template-columns:1fr!important;margin-inline:0!important}
+  #view-dashboard .dashboard-control-grid .dashboard-period-filter,
+  #view-dashboard .dashboard-control-grid .dashboard-report-actions{
+    width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;
+  }
+  .dashboard-filter-head{min-width:0}
+  .dashboard-filter-head>div{min-width:0}
+  .dashboard-filter-modes{width:100%;max-width:100%;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .dashboard-filter-modes button{min-width:0!important;width:100%;padding-inline:5px!important}
+  .dashboard-range-control.active{grid-template-columns:1fr!important}
+  .dashboard-report-buttons{width:100%;grid-template-columns:1fr!important}
+  .dashboard-report-buttons button{width:100%;min-width:0!important}
+  .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;width:100%}
+
+  /* Módulos admin */
+  .section-head,.module-intro{flex-direction:column!important;align-items:stretch!important;gap:12px}
+  .section-head>button,.module-intro>button,.module-intro .primary-btn{width:100%;min-width:0}
+  .filter-row{justify-content:stretch}
+  .filter-row select{width:100%!important;min-width:0!important}
+  .cards-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;width:100%}
+  .appointment-grid{grid-template-columns:1fr!important}
+  .appointment-top{min-width:0}
+  .appt-actions{width:100%}
+
+  /* Productos */
+  #view-products .module-intro{align-items:stretch!important}
+  .product-page-actions,.product-inventory-toolbar{width:100%;max-width:100%;flex-wrap:wrap!important}
+  .product-page-actions>*{flex:1 1 150px;min-width:0}
+  .product-inventory-summary{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .product-search-shell{width:100%;max-width:100%}
+  .product-search-shell input{min-width:0!important}
+  .product-list-actions{min-width:0!important}
+
+  /* Puestos */
+  .chair-ops-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .chair-ops-grid{grid-template-columns:repeat(2,minmax(0,360px))!important;justify-content:center}
+  .chair-ops-card{width:100%;max-width:360px;margin-inline:auto}
+
+  /* Portal barbero */
+  .barber-header{flex-wrap:wrap;gap:10px}
+  .barber-main,.booking-main{width:calc(100% - 24px)!important;max-width:100%;padding-top:20px}
+  .barber-welcome{width:100%;max-width:100%;padding:20px;align-items:flex-start;flex-direction:column}
+  .barber-welcome>div:first-child{min-width:0;width:100%}
+  .barber-welcome h1{font-size:clamp(32px,9vw,42px);overflow-wrap:anywhere}
+  .barber-hero-actions{width:100%;justify-content:flex-start}
+  .barber-availability-box{width:100%!important;min-width:0!important;align-items:flex-start}
+  .barber-availability-inline{width:100%;justify-content:flex-start}
+  .barber-availability-pill,.barber-availability-btn.premium,.barber-today-btn{width:100%!important;min-width:0!important}
+  .barber-charge-layout{grid-template-columns:1fr!important}
+  .barber-charge-preview{min-width:0!important;max-width:100%!important;width:100%!important}
+  .premium-charge-form{min-width:0!important;width:100%}
+
+  /* Cliente */
+  .booking-layout{grid-template-columns:1fr!important;width:100%}
+  .booking-card,.lookup-card,.luxury-card{width:100%;max-width:100%}
+
+  /* Modales */
+  .modal-backdrop{padding:10px!important;align-items:flex-start!important;overflow-y:auto}
+  .modal,.modal.small,.dashboard-submodal,.barber-profit-modal,.product-sales-day-modal,
+  .bulk-products-modal,.chair-operations-modal,.barber-performance-detail-modal{
+    width:100%!important;max-width:100%!important;max-height:calc(100dvh - 20px)!important;
+    overflow-y:auto!important;margin:auto 0!important;
+  }
+}
+
+@media(max-width:600px){
+  .main{padding:12px!important}
+  .topbar{margin-bottom:14px!important}
+  .menu-btn{flex:0 0 auto}
+  .eyebrow{font-size:8px;letter-spacing:1.4px}
+
+  /* Dashboard: arreglo específico del campo que se salía en la captura. */
+  .dashboard-control-grid{gap:10px!important}
+  #view-dashboard .dashboard-control-grid .dashboard-period-filter,
+  #view-dashboard .dashboard-control-grid .dashboard-report-actions{padding:12px!important;border-radius:16px!important;overflow:hidden}
+  #view-dashboard .dashboard-control-grid .dashboard-filter-control{width:100%!important;max-width:100%!important;overflow:hidden}
+  #view-dashboard .dashboard-control-grid .dashboard-filter-control input{
+    width:100%!important;max-width:100%!important;min-width:0!important;min-inline-size:0!important;
+    margin-inline:0!important;padding-left:10px!important;padding-right:10px!important;font-size:12px!important;
+  }
+  .dashboard-filter-head{gap:8px}
+  .dashboard-filter-today{flex:0 0 auto}
+  .stats-grid{grid-template-columns:1fr!important}
+  .stat-card{width:100%;max-width:100%}
+  .performance-horizontal-row{width:100%;max-width:100%}
+  .performance-horizontal-metrics{grid-template-columns:1fr!important}
+  .dashboard-live-chairs-grid{grid-template-columns:1fr!important}
+
+  /* Todas las pestañas admin */
+  .cards-grid{grid-template-columns:1fr!important}
+  .person-card,.chair-card,.service-card,.appointment-card{width:100%;max-width:100%}
+  .section-head h2{font-size:24px}
+  .card-numbers{grid-template-columns:1fr 1fr}
+  .appt-actions .tiny-btn{flex:1 1 120px;min-width:0}
+
+  /* Usuarios / Barberos */
+  .barber-admin-card{width:100%;max-width:100%}
+  .barber-admin-numbers{grid-template-columns:1fr 1fr!important}
+
+  /* Puestos */
+  .chair-ops-summary{grid-template-columns:1fr 1fr!important}
+  .chair-ops-grid{grid-template-columns:1fr!important}
+  .chair-ops-card{max-width:380px!important}
+  .chair-ops-card-actions{grid-template-columns:1fr!important}
+  .chair-ops-card-actions button{width:100%}
+
+  /* Productos */
+  .product-page-actions{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+  .product-page-actions .primary-btn{grid-column:1/-1}
+  .product-inventory-summary{grid-template-columns:1fr!important}
+  .product-list-actions{display:grid!important;grid-template-columns:1fr!important;width:100%!important}
+  .product-list-actions button{width:100%;min-width:0}
+
+  /* Barbero */
+  .barber-main,.booking-main{width:calc(100% - 20px)!important}
+  .barber-welcome{padding:16px;border-radius:20px}
+  .barber-availability-box{padding:12px!important;border-radius:18px!important}
+  .barber-availability-pill,.barber-availability-btn.premium{min-height:52px!important;font-size:13px!important;padding-inline:14px!important}
+  .barber-availability-pill::before,.barber-availability-btn.premium::before{width:30px!important;height:30px!important;font-size:16px!important}
+  .barber-cash-premium{padding:14px!important}
+  .premium-charge-form{padding:12px!important}
+  .charge-product-add-grid{grid-template-columns:1fr!important}
+  .preview-money-grid{grid-template-columns:1fr!important}
+  .barber-money-grid{grid-template-columns:1fr!important}
+
+  /* Cliente */
+  .client-header{gap:10px;flex-wrap:wrap}
+  .client-header .brand{min-width:0}
+  .booking-intro{margin-top:10px}
+  .booking-intro h1{font-size:clamp(34px,11vw,48px)}
+  .choice-grid{grid-template-columns:1fr!important}
+
+  /* Modales compactos */
+  .modal{padding:18px 14px!important;border-radius:20px!important}
+  .modal h2{font-size:24px}
+  .modal-close{right:10px;top:10px}
+  .submodal-heading,.product-sales-day-head,.bulk-products-head,.chair-ops-modal-head{padding-right:42px!important}
+}
+
+@media(max-width:390px){
+  .main{padding:9px!important}
+  .dashboard-top-message{padding:10px!important}
+  .dashboard-top-copy>strong{font-size:20px!important}
+  .dashboard-top-copy>small{font-size:8px!important}
+  #view-dashboard .dashboard-control-grid .dashboard-period-filter,
+  #view-dashboard .dashboard-control-grid .dashboard-report-actions{padding:10px!important}
+  .dashboard-filter-modes button{font-size:8px!important;padding:6px 3px!important}
+  .dashboard-filter-control label{font-size:8px!important}
+  #view-dashboard .dashboard-control-grid .dashboard-filter-control input{font-size:11px!important;padding:8px!important}
+  .product-page-actions{grid-template-columns:1fr!important}
+  .product-page-actions .primary-btn{grid-column:auto}
+  .chair-ops-summary{grid-template-columns:1fr!important}
+  .barber-main,.booking-main{width:calc(100% - 14px)!important}
+}

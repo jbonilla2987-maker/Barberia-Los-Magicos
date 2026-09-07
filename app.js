@@ -893,19 +893,13 @@ function renderDashboardChairStatus() {
   node.innerHTML = state.chairs.map((chair,index) => {
     const status = chairOperationalStatus(chair);
     const assigned = chairAssignedBarbers(chair.id, true)[0] || null;
-    const initial = assigned ? (assigned.name || "B").charAt(0).toUpperCase() : "—";
     const statusLabelText = status.key === "occupied" ? "Ocupado" : status.key === "available" ? "Disponible" : "Fuera de servicio";
+    const chairIndex = String(index + 1).padStart(2, "0");
     return `
-      <button class="dashboard-chair-status-card ${status.key}" type="button" data-dashboard-chair-open="${chair.id}" title="Abrir ${escapeHtml(chair.name)}">
-        <div class="dashboard-chair-status-top">
-          <span class="dashboard-chair-number">${String(index+1).padStart(2,"0")}</span>
-          <span class="dashboard-chair-state ${status.key}"><i></i>${statusLabelText}</span>
-        </div>
-        <strong>${escapeHtml(chair.name)}</strong>
-        <div class="dashboard-chair-barber">
-          <span>${escapeHtml(initial)}</span>
-          <div><small>BARBERO</small><b>${assigned ? escapeHtml(assigned.name) : "Sin asignar"}</b></div>
-        </div>
+      <button class="dashboard-chair-status-badge ${status.key}" type="button" data-dashboard-chair-open="${chair.id}" title="Abrir ${escapeHtml(chair.name)}">
+        <span class="dashboard-chair-badge-name">${escapeHtml((chair.name || `Puesto ${index+1}`).toUpperCase())}</span>
+        <span class="dashboard-chair-badge-meta">${chairIndex} · ${statusLabelText}</span>
+        <small>${assigned ? escapeHtml(assigned.name) : "Sin barbero asignado"}</small>
       </button>`;
   }).join("");
 
