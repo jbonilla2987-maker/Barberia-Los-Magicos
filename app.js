@@ -917,7 +917,7 @@ function renderBarberPerformanceChart(periodSales = [], period = dashboardPeriod
 
   const singleToday = period.start === isoDay() && period.end === isoDay();
   if ($("barberPerformanceKicker")) $("barberPerformanceKicker").textContent = singleToday ? "RENDIMIENTO · HOY" : `RENDIMIENTO · ${period.label.toUpperCase()}`;
-  if ($("barberPerformanceCaption")) $("barberPerformanceCaption").textContent = `Comparación de producción y ganancia del barbero · ${period.label}.`;
+  if ($("barberPerformanceCaption")) $("barberPerformanceCaption").textContent = `Producción y ganancia del barbero · ${period.label}.`;
 
   const rows = state.barbers
     .filter(b => b.active !== false)
@@ -925,12 +925,12 @@ function renderBarberPerformanceChart(periodSales = [], period = dashboardPeriod
       const sales = periodSales.filter(s => s.barberId === barber.id);
       return {
         barber,
-        count:sales.length,
-        gross:sales.reduce((sum,s)=>sum+Number(s.total||0),0),
-        pay:sales.reduce((sum,s)=>sum+Number(s.barberAmount||0),0)
+        count: sales.length,
+        gross: sales.reduce((sum, s) => sum + Number(s.total || 0), 0),
+        pay: sales.reduce((sum, s) => sum + Number(s.barberAmount || 0), 0)
       };
     })
-    .sort((a,b)=>b.gross-a.gross || a.barber.name.localeCompare(b.barber.name));
+    .sort((a, b) => b.gross - a.gross || b.pay - a.pay || a.barber.name.localeCompare(b.barber.name));
 
   if (!rows.length) {
     node.innerHTML = `<div class="barber-performance-empty">No hay barberos activos para mostrar.</div>`;
@@ -938,35 +938,51 @@ function renderBarberPerformanceChart(periodSales = [], period = dashboardPeriod
   }
 
   const maxValue = Math.max(...rows.flatMap(r => [r.gross, r.pay]), 1);
-  const niceMax = Math.ceil(maxValue / 20) * 20 || 20;
+  const topGross = Math.max(...rows.map(r => r.gross), 1);
 
   node.innerHTML = `
-    <div class="performance-horizontal-scale" aria-hidden="true">
-      <span>0</span><span>25%</span><span>50%</span><span>75%</span><span>${money(niceMax)}</span>
-    </div>
-    <div class="performance-horizontal-rows">
-      ${rows.map((r,index) => {
-        const grossPct = Math.min(100, Math.max(r.gross > 0 ? 2 : 0, (r.gross / niceMax) * 100));
-        const payPct = Math.min(100, Math.max(r.pay > 0 ? 2 : 0, (r.pay / niceMax) * 100));
-        const initials = (r.barber.name || "B").split(/\s+/).slice(0,2).map(x=>x.charAt(0)).join("").toUpperCase();
+    <div class="performance-compact-list">
+      ${rows.map((r, index) => {
+        const grossPct = Math.min(100, Math.max(r.gross > 0 ? 4 : 0, (r.gross / maxValue) * 100));
+        const payPct = Math.min(100, Math.max(r.pay > 0 ? 4 : 0, (r.pay / maxValue) * 100));
+        const performancePct = Math.round((r.gross / topGross) * 100) || 0;
+        const initials = (r.barber.name || "B")
+          .split(/\s+/)
+          .slice(0, 2)
+          .map(x => x.charAt(0))
+          .join("")
+          .toUpperCase();
         return `
-          <article class="performance-horizontal-row ${index===0 && r.gross>0 ? "top-performer" : ""}">
-            <button class="performance-horizontal-barber" type="button" data-performance-barber="${r.barber.id}" title="Ver detalle de ${escapeHtml(r.barber.name)}">
+          <article class="performance-compact-row ${index === 0 && r.gross > 0 ? "top-performer" : ""}">
+            <button class="performance-compact-person" type="button" data-performance-barber="${r.barber.id}" title="Ver detalle de ${escapeHtml(r.barber.name)}">
               <span class="performance-name-avatar">${escapeHtml(initials)}</span>
-              <span class="performance-horizontal-name">
+              <span class="performance-compact-identity">
                 <strong>${escapeHtml(r.barber.name)}</strong>
-                <small>${r.count} servicio${r.count===1?"":"s"} · Ver detalle</small>
+                <small>${r.count} servicio${r.count === 1 ? "" : "s"} · Ver detalle</small>
               </span>
             </button>
-            <div class="performance-horizontal-metrics">
-              <div class="performance-horizontal-metric production-metric">
-                <div class="performance-horizontal-label"><span>Producción</span><strong>${money(r.gross)}</strong></div>
-                <div class="performance-horizontal-track"><i class="production-fill" style="width:${grossPct}%"></i></div>
+
+            <div class="performance-compact-metrics">
+              <div class="performance-compact-metric production">
+                <div class="performance-compact-head">
+                  <span>Producción</span>
+                  <strong>${money(r.gross)}</strong>
+                </div>
+                <div class="performance-compact-track"><i class="production-fill" style="width:${grossPct}%"></i></div>
               </div>
-              <div class="performance-horizontal-metric gain-metric">
-                <div class="performance-horizontal-label"><span>Ganancia barbero</span><strong>${money(r.pay)}</strong></div>
-                <div class="performance-horizontal-track"><i class="gain-fill" style="width:${payPct}%"></i></div>
+
+              <div class="performance-compact-metric pay">
+                <div class="performance-compact-head">
+                  <span>Ganancia barbero</span>
+                  <strong>${money(r.pay)}</strong>
+                </div>
+                <div class="performance-compact-track"><i class="gain-fill" style="width:${payPct}%"></i></div>
               </div>
+            </div>
+
+            <div class="performance-compact-rank" aria-hidden="true">
+              <span>#${index + 1}</span>
+              <small>${performancePct}%</small>
             </div>
           </article>`;
       }).join("")}
