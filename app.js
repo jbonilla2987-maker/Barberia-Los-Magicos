@@ -3803,7 +3803,7 @@ function renderBarberAvailabilityState() {
 
   const status = chairOperationalStatus(chair);
   badge.className = `barber-availability-pill ${status.key}`;
-  badge.textContent = status.label;
+  badge.textContent = status.key === "occupied" ? "Ocupado" : status.key === "available" ? "Disponible" : status.label;
 
   if (status.source === "appointment") {
     btn.textContent = "Ocupado por cita";
@@ -3821,10 +3821,11 @@ function renderBarberAvailabilityState() {
 
   btn.disabled = false;
   if (chair.operationalStatus === "occupied") {
-    btn.textContent = "Cambiar a disponible";
+    btn.textContent = "Marcar disponible";
     btn.classList.add("available-state");
   } else {
-    btn.textContent = "Cambiar a ocupado";
+    btn.textContent = "Marcar ocupado";
+    btn.classList.add("occupied-state");
   }
 }
 
