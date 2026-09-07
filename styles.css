@@ -5072,3 +5072,119 @@ td{font-size:12.5px}
   .performance-compact-identity strong{font-size:14px}
   .performance-compact-head strong{font-size:14px}
 }
+
+/* =========================================================
+   V38 · RENDIMIENTO EN TARJETAS PREMIUM
+   ========================================================= */
+.performance-premium-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:14px;
+}
+
+.performance-premium-card{
+  appearance:none;
+  border:1px solid rgba(255,255,255,.075);
+  background:
+    radial-gradient(circle at 100% 0%,rgba(215,173,86,.07),transparent 32%),
+    linear-gradient(180deg,#17181c,#111216);
+  color:#fff;
+  border-radius:22px;
+  padding:16px;
+  text-align:left;
+  display:grid;
+  gap:14px;
+  min-width:0;
+  box-shadow:0 12px 28px rgba(0,0,0,.18);
+  transition:.2s ease;
+}
+
+.performance-premium-card:hover{
+  transform:translateY(-2px);
+  border-color:rgba(215,173,86,.28);
+  box-shadow:0 16px 32px rgba(0,0,0,.24);
+}
+
+.performance-premium-card.top-performer{
+  border-color:rgba(215,173,86,.34);
+  background:
+    radial-gradient(circle at 100% 0%,rgba(241,210,140,.12),transparent 36%),
+    linear-gradient(180deg,#19191d,#111216);
+}
+
+.performance-premium-card-head{
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+}
+
+.performance-premium-avatar{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border-radius:13px;
+  color:var(--gold2);
+  font-weight:800;
+  font-size:12px;
+  border:1px solid rgba(215,173,86,.2);
+  background:linear-gradient(145deg,rgba(215,173,86,.16),rgba(215,173,86,.05));
+}
+
+.performance-premium-person{min-width:0}
+.performance-premium-person strong,
+.performance-premium-person small{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.performance-premium-person strong{font-size:15px;font-weight:700}
+.performance-premium-person small{font-size:11px;color:#979ba5;margin-top:3px}
+.performance-premium-rank{font-size:11px;font-weight:800;color:#d9bd7c;padding:6px 8px;border-radius:999px;background:rgba(215,173,86,.08);border:1px solid rgba(215,173,86,.15)}
+
+.performance-premium-values{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.performance-premium-values>div{
+  min-width:0;
+  padding:12px;
+  border-radius:15px;
+  background:#1b1c21;
+  border:1px solid #292b32;
+}
+.performance-premium-values span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.9px;color:#888d97;margin-bottom:5px}
+.performance-premium-values strong{display:block;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:clip;letter-spacing:-.03em}
+.performance-premium-values .premium-gain-value strong{color:var(--gold2)}
+
+.performance-premium-bars{display:grid;gap:9px}
+.performance-premium-bar-row{display:grid;grid-template-columns:62px minmax(0,1fr);align-items:center;gap:9px}
+.performance-premium-bar-row>span{font-size:9px;color:#858a94;text-transform:uppercase;letter-spacing:.7px}
+.performance-premium-track{height:10px;border-radius:999px;overflow:hidden;background:#26282f;border:1px solid #30323a}
+.performance-premium-track i{display:block;height:100%;border-radius:999px;transition:width .35s ease}
+
+.performance-premium-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,.06);
+  color:#d9bd7c;
+  font-size:11px;
+  font-weight:700;
+}
+.performance-premium-footer b{font-size:16px}
+
+@media(max-width:1300px){
+  .performance-premium-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+@media(max-width:720px){
+  .performance-premium-grid{grid-template-columns:1fr}
+  .performance-premium-card{padding:14px;border-radius:18px}
+}
+
+@media(max-width:420px){
+  .performance-premium-values{grid-template-columns:1fr}
+  .performance-premium-card-head{grid-template-columns:38px minmax(0,1fr) auto}
+  .performance-premium-avatar{width:38px;height:38px}
+}
