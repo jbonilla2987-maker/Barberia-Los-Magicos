@@ -1242,29 +1242,21 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 
 /* AJUSTES BARBERO · UI MÁS LIMPIA */
 
-.barber-hero-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}
-.barber-availability-box{display:flex;flex-direction:column;align-items:flex-end;gap:7px;padding:10px 12px;border-radius:16px;border:1px solid rgba(215,173,86,.16);background:rgba(215,173,86,.04);min-width:210px}
-.barber-availability-label{font-size:9px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:var(--muted)}
-.barber-availability-inline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-.barber-availability-pill{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.6px;border:1px solid transparent;min-width:104px}
-.barber-availability-pill.available{background:rgba(114,215,167,.1);border-color:rgba(114,215,167,.22);color:#8de5b8}
-.barber-availability-pill.occupied{background:rgba(255,190,92,.1);border-color:rgba(255,190,92,.24);color:#ffcf72}
+.barber-hero-actions{display:flex;align-items:center;justify-content:flex-end;gap:14px;flex-wrap:wrap}
+.barber-availability-box{display:flex;flex-direction:column;align-items:flex-end;gap:8px;padding:14px 16px;border-radius:18px;min-width:260px}
+.barber-availability-box.premium{border:1px solid rgba(215,173,86,.18);background:linear-gradient(135deg, rgba(215,173,86,.09), rgba(16,18,30,.9));box-shadow:0 10px 28px rgba(0,0,0,.18)}
+.barber-availability-label{font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:#d4b06a}
+.barber-availability-inline{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end}
+.barber-availability-pill{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:999px;font-size:11px;font-weight:900;letter-spacing:.5px;border:1px solid transparent;min-width:118px;position:relative}
+.barber-availability-pill::before{content:"";width:8px;height:8px;border-radius:999px;margin-right:8px;background:currentColor;box-shadow:0 0 10px currentColor;display:inline-block}
+.barber-availability-pill.available{background:rgba(114,215,167,.1);border-color:rgba(114,215,167,.24);color:#8de5b8}
+.barber-availability-pill.occupied{background:rgba(255,190,92,.11);border-color:rgba(255,190,92,.28);color:#ffcf72}
 .barber-availability-pill.offline{background:rgba(255,124,124,.09);border-color:rgba(255,124,124,.2);color:#ff9e9e}
-.barber-availability-btn{min-width:150px}
-
-.barber-today-btn{min-width:190px}
-.premium-flow-spacer{width:1px;height:1px;opacity:0;pointer-events:none}
-.barber-money-grid{grid-template-columns:repeat(3,1fr);gap:12px}
-.barber-money-grid .stat-card{padding:16px 18px;border-radius:18px}
-.barber-money-grid .stat-card strong{font-size:22px;margin:8px 0 2px}
-.barber-money-grid .stat-card>span,.barber-money-grid .stat-top{font-size:10px}
-.barber-money-grid .stat-card small{font-size:9px}
-.barber-appts-modal .today-appt-list{max-height:60vh}
-.barber-today-card .today-appt-main{grid-template-columns:minmax(0,1fr) 180px}
-
-@media(max-width:900px){
-  .barber-money-grid{grid-template-columns:repeat(2,1fr)}
-}
+.barber-availability-btn{border:none;cursor:pointer;transition:.2s ease;font-weight:900}
+.barber-availability-btn.premium{display:inline-flex;align-items:center;justify-content:center;min-width:178px;padding:11px 16px;border-radius:14px;background:linear-gradient(135deg, #1d2231, #111521);color:#f8f5ed;border:1px solid rgba(215,173,86,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.03), 0 8px 24px rgba(0,0,0,.22)}
+.barber-availability-btn.premium:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 10px 28px rgba(0,0,0,.28)}
+.barber-availability-btn.premium.available-state{background:linear-gradient(135deg, #ffca64, #d8a844);color:#151515;border-color:rgba(255,206,110,.24)}
+.barber-availability-btn.premium.offline-state{background:linear-gradient(135deg, #2a2330, #1b1720);color:#c3c3c3;border-color:rgba(255,255,255,.08)}
 @media(max-width:600px){
   .barber-hero-actions{width:100%;justify-content:flex-start}
   .barber-availability-box{width:100%;align-items:flex-start}

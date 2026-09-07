@@ -2531,7 +2531,11 @@ async function toggleChairOccupied(chairId) {
     toast(occupied ? `${chair.name} marcado como ocupado.` : `${chair.name} marcado como disponible.`);
   } catch (err) {
     console.error(err);
-    toast(firebaseErrorMessage(err, "No se pudo cambiar el estado del puesto."));
+    if (err?.code === "permission-denied") {
+      toast("No tienes permiso todavía. Debes actualizar las reglas de Firestore para permitir que el barbero cambie el estado de su puesto.");
+    } else {
+      toast(firebaseErrorMessage(err, "No se pudo cambiar el estado del puesto."));
+    }
   }
 }
 
@@ -3785,12 +3789,15 @@ function renderBarberAvailabilityState() {
   const btn = $("toggleBarberAvailabilityBtn");
   if (!badge || !btn) return;
 
+  btn.className = "barber-availability-btn premium";
+
   const chair = state.chairs.find(c => c.id === currentBarber?.chairId);
   if (!chair) {
     badge.className = "barber-availability-pill offline";
     badge.textContent = "Sin puesto";
     btn.textContent = "Sin puesto asignado";
     btn.disabled = true;
+    btn.classList.add("offline-state");
     return;
   }
 
@@ -3801,17 +3808,24 @@ function renderBarberAvailabilityState() {
   if (status.source === "appointment") {
     btn.textContent = "Ocupado por cita";
     btn.disabled = true;
+    btn.classList.add("offline-state");
     return;
   }
 
   if (chair.active === false || status.key === "offline") {
     btn.textContent = "Puesto fuera de servicio";
     btn.disabled = true;
+    btn.classList.add("offline-state");
     return;
   }
 
   btn.disabled = false;
-  btn.textContent = chair.operationalStatus === "occupied" ? "Marcar disponible" : "Marcar ocupado";
+  if (chair.operationalStatus === "occupied") {
+    btn.textContent = "Cambiar a disponible";
+    btn.classList.add("available-state");
+  } else {
+    btn.textContent = "Cambiar a ocupado";
+  }
 }
 
 async function toggleCurrentBarberChairOccupied() {
