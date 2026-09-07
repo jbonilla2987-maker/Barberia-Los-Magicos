@@ -835,6 +835,8 @@ function renderDashboard() {
   $("statAppointments").textContent = da.length;
   $("statAppointmentsMeta").textContent = `${da.filter(a=>a.status==="pending").length} pendientes · Ver detalle`;
 
+  renderDashboardChairStatus();
+
   if ($("dashboardChairKicker")) $("dashboardChairKicker").textContent = `PUESTOS · ${periodTitle}`;
   if ($("dashboardChairHeading")) $("dashboardChairHeading").textContent = singleToday ? "Producción diaria por puesto" : "Producción por puesto";
   if ($("dashboardChairCaption")) $("dashboardChairCaption").textContent = `Barbero asignado, total generado y distribución · ${period.label}.`;
@@ -877,6 +879,42 @@ function renderDashboard() {
   );
 
   renderBarberPerformanceChart(ds, period);
+}
+
+function renderDashboardChairStatus() {
+  const node = $("dashboardChairStatus");
+  if (!node) return;
+
+  if (!state.chairs.length) {
+    node.innerHTML = `<div class="dashboard-chair-status-empty">No hay puestos configurados.</div>`;
+    return;
+  }
+
+  node.innerHTML = state.chairs.map((chair,index) => {
+    const status = chairOperationalStatus(chair);
+    const assigned = chairAssignedBarbers(chair.id, true)[0] || null;
+    const initial = assigned ? (assigned.name || "B").charAt(0).toUpperCase() : "—";
+    const statusLabelText = status.key === "occupied" ? "Ocupado" : status.key === "available" ? "Disponible" : "Fuera de servicio";
+    return `
+      <button class="dashboard-chair-status-card ${status.key}" type="button" data-dashboard-chair-open="${chair.id}" title="Abrir ${escapeHtml(chair.name)}">
+        <div class="dashboard-chair-status-top">
+          <span class="dashboard-chair-number">${String(index+1).padStart(2,"0")}</span>
+          <span class="dashboard-chair-state ${status.key}"><i></i>${statusLabelText}</span>
+        </div>
+        <strong>${escapeHtml(chair.name)}</strong>
+        <div class="dashboard-chair-barber">
+          <span>${escapeHtml(initial)}</span>
+          <div><small>BARBERO</small><b>${assigned ? escapeHtml(assigned.name) : "Sin asignar"}</b></div>
+        </div>
+      </button>`;
+  }).join("");
+
+  document.querySelectorAll("[data-dashboard-chair-open]").forEach(btn =>
+    btn.addEventListener("click", () => {
+      switchAdminView("chairs");
+      setTimeout(() => openChairOperations(btn.dataset.dashboardChairOpen), 60);
+    })
+  );
 }
 
 function renderBarberPerformanceChart(periodSales = [], period = dashboardPeriod()) {
@@ -3831,7 +3869,18 @@ function renderBarberAvailabilityState() {
 
 async function toggleCurrentBarberChairOccupied() {
   if (currentRole !== "barber" || !currentBarber?.chairId) return toast("No tienes un puesto asignado.");
-  await toggleChairOccupied(currentBarber.chairId);
+  const btn = $("toggleBarberAvailabilityBtn");
+  const badge = $("barberAvailabilityBadge");
+  btn?.classList.add("state-changing");
+  badge?.classList.add("state-changing");
+  try {
+    await toggleChairOccupied(currentBarber.chairId);
+  } finally {
+    setTimeout(() => {
+      btn?.classList.remove("state-changing");
+      badge?.classList.remove("state-changing");
+    }, 520);
+  }
 }
 
 function renderBarberPortal() {

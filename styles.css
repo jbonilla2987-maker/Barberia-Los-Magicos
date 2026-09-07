@@ -4392,3 +4392,39 @@ img,svg,canvas{max-width:100%;height:auto}
     grid-template-columns:1fr!important;
   }
 }
+
+
+/* =========================================================
+   V29 · ESTADO DE PUESTOS EN DASHBOARD + ANIMACIÓN SWITCH
+   ========================================================= */
+@keyframes barberStatePulse{0%{transform:scale(1)}35%{transform:scale(.96)}70%{transform:scale(1.035)}100%{transform:scale(1)}}
+.barber-availability-pill.state-changing,.barber-availability-btn.state-changing{animation:barberStatePulse .5s ease}
+.barber-availability-pill,.barber-availability-btn.premium{will-change:transform,filter}
+
+.dashboard-live-chairs-section{margin:2px auto 2px;width:100%;}
+.dashboard-live-chairs-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:12px}
+.dashboard-live-chairs-head h3{margin:4px 0 0;font-size:24px}
+.dashboard-live-chairs-head>span{font-size:11px;color:var(--muted);text-align:right}
+.dashboard-live-chairs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.dashboard-chair-status-card{appearance:none;text-align:left;min-width:0;padding:14px 15px;border-radius:18px;background:linear-gradient(180deg,#15161a,#111216);border:1px solid rgba(255,255,255,.07);color:#fff;cursor:pointer;transition:.18s ease;box-shadow:0 8px 20px rgba(0,0,0,.12)}
+.dashboard-chair-status-card:hover{transform:translateY(-2px);border-color:rgba(215,173,86,.2)}
+.dashboard-chair-status-card.available{box-shadow:inset 0 0 0 1px rgba(83,205,125,.05),0 8px 20px rgba(0,0,0,.12)}
+.dashboard-chair-status-card.occupied{box-shadow:inset 0 0 0 1px rgba(255,93,100,.05),0 8px 20px rgba(0,0,0,.12)}
+.dashboard-chair-status-card.offline{opacity:.75}
+.dashboard-chair-status-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.dashboard-chair-number{font-size:9px;font-weight:900;letter-spacing:1px;color:var(--gold)}
+.dashboard-chair-state{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:999px;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.5px}
+.dashboard-chair-state i{width:7px;height:7px;border-radius:50%;display:block;background:currentColor;box-shadow:0 0 8px currentColor}
+.dashboard-chair-state.available{color:#87e7ae;background:rgba(73,196,115,.08);border:1px solid rgba(73,196,115,.16)}
+.dashboard-chair-state.occupied{color:#ff858b;background:rgba(255,86,97,.08);border:1px solid rgba(255,86,97,.16)}
+.dashboard-chair-state.offline{color:#a8abb3;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.dashboard-chair-status-card>strong{display:block;font-size:16px;margin-bottom:11px}
+.dashboard-chair-barber{display:flex;align-items:center;gap:9px}
+.dashboard-chair-barber>span{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:rgba(215,173,86,.08);border:1px solid rgba(215,173,86,.13);color:var(--gold2);font-weight:900}
+.dashboard-chair-barber div{min-width:0}
+.dashboard-chair-barber small,.dashboard-chair-barber b{display:block}
+.dashboard-chair-barber small{font-size:7px;letter-spacing:.7px;color:var(--muted)}
+.dashboard-chair-barber b{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dashboard-chair-status-empty{padding:16px;border-radius:16px;border:1px dashed rgba(255,255,255,.08);color:var(--muted);text-align:center}
+@media(max-width:760px){.dashboard-live-chairs-head{align-items:flex-start;flex-direction:column;gap:4px}.dashboard-live-chairs-head>span{text-align:left}.dashboard-live-chairs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.dashboard-live-chairs-grid{grid-template-columns:1fr}.dashboard-chair-status-card{padding:13px}}

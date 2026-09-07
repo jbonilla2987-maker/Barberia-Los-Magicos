@@ -180,6 +180,14 @@
           <article class="stat-card clickable-stat" id="todayAppointmentsCard" role="button" tabindex="0"><div class="stat-top"><span id="statAppointmentsLabel">Citas de hoy</span><i>◷</i></div><strong id="statAppointments">0</strong><small id="statAppointmentsMeta">0 pendientes · Ver detalle</small></article>
         </div>
 
+        <section class="dashboard-live-chairs-section">
+          <div class="dashboard-live-chairs-head">
+            <div><p class="eyebrow">ESTADO EN TIEMPO REAL</p><h3>Disponibilidad de los puestos</h3></div>
+            <span>Actualización automática desde Firebase</span>
+          </div>
+          <div id="dashboardChairStatus" class="dashboard-live-chairs-grid"></div>
+        </section>
+
         <section class="barber-performance-section barber-performance-v15">
           <div class="report-section-title barber-performance-title">
             <div>
@@ -1081,6 +1089,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260907-v28-availability-switch"></script>
+  <script type="module" src="./app.js?v=20260907-v29-live-status"></script>
 </body>
 </html>
