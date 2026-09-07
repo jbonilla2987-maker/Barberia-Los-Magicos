@@ -604,6 +604,7 @@ async function barberLogin(e) {
 
     currentRole = "barber";
     currentBarber = profile;
+    resetBarberChargeForm();
     closeModal("barberLoginModal");
     hide("accessScreen");
     show("barberApp");
@@ -3403,6 +3404,23 @@ function renderBarberProfitFilter() {
 }
 
 
+function resetBarberChargeForm() {
+  const form = $("barberChargeForm");
+  if (form) form.reset();
+
+  const serviceSelect = $("barberChargeService");
+  const productSelect = $("barberChargeProduct");
+  const priceInput = $("barberChargePrice");
+  const quantityInput = $("barberChargeProductQty");
+
+  if (serviceSelect) serviceSelect.value = "";
+  if (productSelect) productSelect.value = "";
+  if (priceInput) priceInput.value = "";
+  if (quantityInput) quantityInput.value = "1";
+
+  barberProductCart = [];
+}
+
 function renderBarberChargeOptions() {
   if (currentRole !== "barber") return;
 
@@ -3413,7 +3431,7 @@ function renderBarberChargeOptions() {
   const selectedProduct = productSelect?.value || "";
 
   serviceSelect.innerHTML = state.services.length
-    ? `<option value="">Selecciona un servicio...</option>` + state.services.map(s =>
+    ? `<option value="">Seleccionar servicio</option>` + state.services.map(s =>
         `<option value="${s.id}">${escapeHtml(s.name)} · ${money(s.price)}</option>`
       ).join("")
     : `<option value="">No hay servicios activos</option>`;
@@ -3458,15 +3476,12 @@ function renderBarberChargeOptions() {
     chairDisplay?.classList.add("chair-missing");
   }
 
-  // Si no hay servicio seleccionado, usar automáticamente el primero del catálogo
-  if (!serviceSelect.value && state.services.length) {
-    serviceSelect.value = state.services[0].id;
-  }
-
   const chosenService = state.services.find(s => s.id === serviceSelect.value);
   const priceInput = $("barberChargePrice");
   if (priceInput) {
-    if (chosenService && (!priceInput.value || Number(priceInput.value) <= 0 || !selectedService)) {
+    if (!chosenService) {
+      priceInput.value = "";
+    } else if (!priceInput.value || Number(priceInput.value) <= 0 || !selectedService) {
       priceInput.value = Number(chosenService.price || 0).toFixed(2);
     }
   }
@@ -3654,8 +3669,7 @@ async function submitBarberChargeRequest(e) {
       createdBy:auth.currentUser.uid
     });
 
-    e.target.reset();
-    barberProductCart = [];
+    resetBarberChargeForm();
     renderBarberChargeOptions();
     renderBarberProductCart();
     renderBarberChargePreview();
@@ -4662,6 +4676,7 @@ async function restoreSession(user) {
     } else if (profile.role === "barber" && profile.active !== false) {
       currentRole = "barber";
       currentBarber = profile;
+      resetBarberChargeForm();
       hide("accessScreen");
       show("barberApp");
       subscribeBarber(profile.id);
