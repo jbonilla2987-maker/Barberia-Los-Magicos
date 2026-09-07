@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260905-v20-dashboard-compacto-r2-navfix">
+  <link rel="stylesheet" href="./styles.css?v=20260907-v21-productos-barcode-lista">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -277,7 +277,7 @@
         <div class="section-head module-intro">
           <div>
             <p class="eyebrow">INVENTARIO Y VENTA ADICIONAL</p>
-            <p class="module-intro-copy">Controla existencias y los productos que los barberos pueden agregar a sus cobros.</p>
+            <p class="module-intro-copy">Controla existencias con código de barras único para evitar productos duplicados.</p>
           </div>
           <div class="product-page-actions">
             <button class="bulk-products-btn" id="bulkProductsBtn" type="button">▦ Carga masiva</button>
@@ -286,7 +286,35 @@
             <button class="primary-btn" id="addProductBtn" type="button">+ Agregar producto</button>
           </div>
         </div>
-        <div id="productCards" class="cards-grid"></div>
+
+        <div class="product-inventory-toolbar">
+          <label class="product-scan-search">
+            <span class="product-scan-icon">▦</span>
+            <input id="productSearchInput" autocomplete="off" placeholder="Buscar producto o escanear código de barras">
+            <small>Compatible con lectores USB/Bluetooth que escriben el código como teclado.</small>
+          </label>
+          <div class="product-inventory-summary">
+            <div><span>Productos</span><strong id="productListCount">0</strong></div>
+            <div><span>Unidades</span><strong id="productUnitCount">0</strong></div>
+            <div><span>Sin código</span><strong id="productNoBarcodeCount">0</strong></div>
+          </div>
+        </div>
+
+        <div class="product-detail-list-shell">
+          <table class="product-detail-table">
+            <thead>
+              <tr>
+                <th>Código de barras</th>
+                <th>Producto</th>
+                <th>Precio</th>
+                <th>Existencia</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="productCards"></tbody>
+          </table>
+        </div>
       </section>
 
       <section class="view report-support-view" id="view-reports" aria-hidden="true">
@@ -907,10 +935,10 @@
       <div class="bulk-paste-panel hidden" id="bulkPastePanel">
         <div>
           <strong>Pegar desde Excel</strong>
-          <small>Copia las columnas Producto, Precio y Cantidad desde Excel y pégalas aquí.</small>
+          <small>Copia las columnas Código, Producto, Precio, Cantidad y Estado desde Excel y pégalas aquí.</small>
         </div>
-        <textarea id="bulkPasteText" rows="5" placeholder="Gel	4.50	25
-Crema de Peinar	12.00	20"></textarea>
+        <textarea id="bulkPasteText" rows="5" placeholder="7501234567890	Gel	4.50	25	Activo
+7501234567891	Crema de Peinar	12.00	20	Activo"></textarea>
         <div class="bulk-paste-actions">
           <button class="ghost-btn" id="bulkPasteCancelBtn" type="button">Cancelar</button>
           <button class="primary-btn" id="bulkPasteImportBtn" type="button">Pasar a la tabla</button>
@@ -922,6 +950,7 @@ Crema de Peinar	12.00	20"></textarea>
           <thead>
             <tr>
               <th>#</th>
+              <th>Código</th>
               <th>Producto</th>
               <th>Precio USD</th>
               <th>Cantidad</th>
@@ -937,7 +966,7 @@ Crema de Peinar	12.00	20"></textarea>
       <div class="bulk-products-footer">
         <div class="bulk-products-note">
           <span>◆</span>
-          <p><b>NUEVO</b> crea el producto. <b>ACTUALIZAR</b> reemplaza precio, existencia y estado del producto existente.</p>
+          <p><b>NUEVO</b> crea el producto. <b>ACTUALIZAR</b> reemplaza precio, existencia y estado. El código de barras debe ser único.</p>
         </div>
         <button class="primary-btn bulk-save-btn" id="bulkProductsSaveBtn" type="button">Cargar inventario →</button>
       </div>
@@ -947,25 +976,30 @@ Crema de Peinar	12.00	20"></textarea>
   <div class="modal-backdrop" id="productModal">
     <div class="modal small">
       <button class="modal-close" data-close="productModal" type="button">×</button>
-      <p class="eyebrow">NUEVO PRODUCTO</p>
-      <h2>Agregar producto</h2>
-      <p class="modal-copy">Estará disponible para que los barberos lo agreguen a sus cobros.</p>
+      <p class="eyebrow" id="productModalEyebrow">NUEVO PRODUCTO</p>
+      <h2 id="productModalTitle">Agregar producto</h2>
+      <p class="modal-copy">Escanea o escribe un código de barras único. El sistema bloqueará códigos repetidos.</p>
       <form id="productForm" class="form-stack">
+        <input id="productEditId" type="hidden">
+        <label>Código de barras
+          <input id="productBarcode" required autocomplete="off" placeholder="Escanea o escribe el código">
+          <small class="field-help">Se guarda como texto para conservar ceros iniciales.</small>
+        </label>
         <label>Producto
           <input id="productName" required placeholder="Ej. Cera para cabello">
         </label>
         <label>Precio de venta
           <input id="productPrice" type="number" min="0.01" step="0.01" required placeholder="0.00">
         </label>
-        <label>Cantidad inicial
+        <label>Cantidad
           <input id="productStock" type="number" min="0" step="1" required value="0">
         </label>
-        <button class="primary-btn" type="submit">Guardar producto</button>
+        <button class="primary-btn" id="productSaveBtn" type="submit">Guardar producto</button>
       </form>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260905-v20-dashboard-compacto-r2-navfix"></script>
+  <script type="module" src="./app.js?v=20260907-v21-productos-barcode-lista"></script>
 </body>
 </html>

@@ -56,6 +56,7 @@ const ANY_BARBER = "__ANY__";
 let booking = { serviceId: null, barberId: null };
 let barberProductCart = [];
 let bulkProductRows = [];
+let productSearchQuery = "";
 let barberServiceViewMode = "cards";
 let dashboardFilterMode = "day";
 let currentChairReceiptContext = null;
@@ -424,7 +425,28 @@ function wireStaticUI() {
 
   bind("addBarberBtn", "click", () => openModal("barberModal"));
   bind("addServiceBtn", "click", () => openModal("serviceModal"));
-  bind("addProductBtn", "click", () => openModal("productModal"));
+  bind("addProductBtn", "click", openNewProductModal);
+  bind("productSearchInput", "input", e => {
+    productSearchQuery = String(e.currentTarget.value || "");
+    renderProducts();
+  });
+  bind("productSearchInput", "keydown", e => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const code = normalizeBarcode(e.currentTarget.value);
+    if (!code) return;
+    const product = findProductByBarcode(code);
+    if (!product) return toast("Ese código de barras no está registrado.");
+    productSearchQuery = code;
+    e.currentTarget.value = code;
+    renderProducts();
+    requestAnimationFrame(() => {
+      const row = document.querySelector(`[data-product-row="${product.id}"]`);
+      row?.scrollIntoView({ behavior:"smooth", block:"center" });
+      row?.classList.add("scan-highlight");
+      setTimeout(() => row?.classList.remove("scan-highlight"), 1400);
+    });
+  });
   bind("bulkProductsBtn", "click", openBulkProductsModal);
   bind("bulkAddRowBtn", "click", () => addBulkProductRow());
   bind("bulkClearBtn", "click", resetBulkProductRows);
@@ -2399,6 +2421,7 @@ function printInventoryReport() {
     return `
       <tr>
         <td>${index + 1}</td>
+        <td>${receiptSafeText(normalizeBarcode(p.barcode) || "Sin código")}</td>
         <td>${receiptSafeText(p.name || "Producto")}</td>
         <td class="num">${receiptSafeText(money(price))}</td>
         <td class="num">${stock}</td>
@@ -2459,7 +2482,7 @@ function printInventoryReport() {
 
   <h3 class="section-title">Detalle de inventario</h3>
   <table>
-    <thead><tr><th>#</th><th>Producto</th><th>Precio</th><th>Existencia</th><th>Estado</th><th>Valor en stock</th></tr></thead>
+    <thead><tr><th>#</th><th>Código</th><th>Producto</th><th>Precio</th><th>Existencia</th><th>Estado</th><th>Valor en stock</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
 
@@ -2480,9 +2503,56 @@ function normalizeProductName(value) {
     .replace(/\s+/g, " ");
 }
 
+function normalizeBarcode(value) {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, "")
+    .toUpperCase();
+}
+
+function findProductByBarcode(value, excludeId = "") {
+  const barcode = normalizeBarcode(value);
+  if (!barcode) return null;
+  return state.products.find(p => p.id !== excludeId && normalizeBarcode(p.barcode) === barcode) || null;
+}
+
+function findProductByName(value, excludeId = "") {
+  const name = normalizeProductName(value);
+  if (!name) return null;
+  return state.products.find(p => p.id !== excludeId && normalizeProductName(p.name) === name) || null;
+}
+
+function openNewProductModal() {
+  const form = $("productForm");
+  form?.reset();
+  if ($("productEditId")) $("productEditId").value = "";
+  if ($("productStock")) $("productStock").value = "0";
+  if ($("productModalEyebrow")) $("productModalEyebrow").textContent = "NUEVO PRODUCTO";
+  if ($("productModalTitle")) $("productModalTitle").textContent = "Agregar producto";
+  if ($("productSaveBtn")) $("productSaveBtn").textContent = "Guardar producto";
+  openModal("productModal");
+  requestAnimationFrame(() => $("productBarcode")?.focus());
+}
+
+function openEditProductModal(productId) {
+  const product = state.products.find(p => p.id === productId);
+  if (!product) return;
+  if ($("productEditId")) $("productEditId").value = product.id;
+  if ($("productBarcode")) $("productBarcode").value = product.barcode || "";
+  if ($("productName")) $("productName").value = product.name || "";
+  if ($("productPrice")) $("productPrice").value = Number(product.price || 0).toFixed(2);
+  if ($("productStock")) $("productStock").value = Math.max(0, Number(product.stock || 0));
+  if ($("productModalEyebrow")) $("productModalEyebrow").textContent = "EDITAR PRODUCTO";
+  if ($("productModalTitle")) $("productModalTitle").textContent = product.name || "Producto";
+  if ($("productSaveBtn")) $("productSaveBtn").textContent = "Guardar cambios";
+  openModal("productModal");
+  requestAnimationFrame(() => $("productBarcode")?.focus());
+}
+
 function newBulkProductRow(data = {}) {
   return {
     key:`bulk-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+    barcode:String(data.barcode || ""),
     name:String(data.name || ""),
     price:data.price ?? "",
     stock:data.stock ?? "",
@@ -2510,7 +2580,7 @@ function addBulkProductRow(data = {}) {
   renderBulkProductRows();
   requestAnimationFrame(() => {
     const rows = document.querySelectorAll("#bulkProductsRows tr");
-    rows[rows.length-1]?.querySelector('[data-bulk-field="name"]')?.focus();
+    rows[rows.length-1]?.querySelector('[data-bulk-field="barcode"]')?.focus();
   });
 }
 
@@ -2521,9 +2591,12 @@ function removeBulkProductRow(key) {
 }
 
 function bulkExistingProduct(row) {
-  const normalized = normalizeProductName(row.name);
-  if (!normalized) return null;
-  return state.products.find(p => normalizeProductName(p.name) === normalized) || null;
+  const barcode = normalizeBarcode(row.barcode);
+  if (barcode) {
+    const byBarcode = findProductByBarcode(barcode);
+    if (byBarcode) return byBarcode;
+  }
+  return findProductByName(row.name) || null;
 }
 
 function syncBulkProductRowFromInput(input) {
@@ -2539,33 +2612,50 @@ function syncBulkProductRowFromInput(input) {
   updateBulkProductsSummary();
 }
 
-function bulkRowValidation(row) {
+function bulkRowAssessment(row) {
+  const barcode = normalizeBarcode(row.barcode);
   const name = String(row.name || "").trim();
   const price = Number(row.price);
   const stockNumber = Number(row.stock);
   const stock = Math.floor(stockNumber);
-  if (!name && String(row.price||"").trim()==="" && String(row.stock||"").trim()==="") {
-    return { empty:true, valid:false };
-  }
+  const allBlank = !barcode && !name && String(row.price||"").trim()==="" && String(row.stock||"").trim()==="";
+  if (allBlank) return { empty:true, valid:false };
   if (!name) return { valid:false, message:"Falta producto" };
   if (!Number.isFinite(price) || price <= 0) return { valid:false, message:"Precio inválido" };
   if (!Number.isFinite(stockNumber) || stockNumber < 0 || stockNumber !== stock) return { valid:false, message:"Cantidad inválida" };
-  return { valid:true, name, price:+price.toFixed(2), stock };
+
+  const existing = bulkExistingProduct(row);
+  if (!barcode && !existing) return { valid:false, message:"Código requerido" };
+
+  if (barcode) {
+    const conflict = findProductByBarcode(barcode, existing?.id || "");
+    if (conflict) return { valid:false, message:`Código usado por ${conflict.name}` };
+  }
+
+  return {
+    valid:true,
+    barcode:barcode || normalizeBarcode(existing?.barcode),
+    name,
+    price:+price.toFixed(2),
+    stock,
+    existing
+  };
 }
 
 function renderBulkProductRowStatus(key) {
   const row = bulkProductRows.find(r => r.key === key);
   const badge = document.querySelector(`[data-bulk-status="${key}"]`);
   if (!row || !badge) return;
-  const check = bulkRowValidation(row);
+  const check = bulkRowAssessment(row);
   badge.className = "bulk-row-status";
   if (check.empty) {
     badge.textContent = "VACÍA";
     badge.classList.add("empty");
   } else if (!check.valid) {
-    badge.textContent = "REVISAR";
+    badge.textContent = check.message?.toUpperCase().includes("CÓDIGO") ? "REVISAR CÓDIGO" : "REVISAR";
+    badge.title = check.message || "Revisar fila";
     badge.classList.add("invalid");
-  } else if (bulkExistingProduct(row)) {
+  } else if (check.existing) {
     badge.textContent = "ACTUALIZAR";
     badge.classList.add("update");
   } else {
@@ -2575,7 +2665,7 @@ function renderBulkProductRowStatus(key) {
 }
 
 function updateBulkProductsSummary() {
-  const valid = bulkProductRows.filter(row => bulkRowValidation(row).valid).length;
+  const valid = bulkProductRows.filter(row => bulkRowAssessment(row).valid).length;
   if ($("bulkProductsValidCount")) $("bulkProductsValidCount").textContent = valid;
 }
 
@@ -2586,6 +2676,7 @@ function renderBulkProductRows() {
   tbody.innerHTML = bulkProductRows.map((row,index) => `
     <tr data-bulk-row="${row.key}">
       <td class="bulk-row-number">${String(index+1).padStart(2,"0")}</td>
+      <td><input class="bulk-cell bulk-barcode-cell" data-bulk-key="${row.key}" data-bulk-field="barcode" value="${escapeHtml(row.barcode)}" placeholder="Código"></td>
       <td><input class="bulk-cell bulk-name-cell" data-bulk-key="${row.key}" data-bulk-field="name" value="${escapeHtml(row.name)}" placeholder="Producto"></td>
       <td><input class="bulk-cell" data-bulk-key="${row.key}" data-bulk-field="price" type="number" min="0.01" step="0.01" value="${escapeHtml(row.price)}" placeholder="0.00"></td>
       <td><input class="bulk-cell" data-bulk-key="${row.key}" data-bulk-field="stock" type="number" min="0" step="1" value="${escapeHtml(row.stock)}" placeholder="0"></td>
@@ -2620,23 +2711,24 @@ function parseBulkPastedProducts(text) {
     .map(line => {
       const cols = line.includes("\t") ? line.split("\t") : line.split(/[;,]/);
       return {
-        name:String(cols[0] || "").trim(),
-        price:String(cols[1] || "").trim().replace(/^\$/,""),
-        stock:String(cols[2] || "").trim(),
-        active:!String(cols[3] || "").toLowerCase().includes("inactiv")
+        barcode:String(cols[0] || "").trim(),
+        name:String(cols[1] || "").trim(),
+        price:String(cols[2] || "").trim().replace(/^\$/,""),
+        stock:String(cols[3] || "").trim(),
+        active:!String(cols[4] || "").toLowerCase().includes("inactiv")
       };
     });
 }
 
 function importBulkPasteText() {
   const pasted = parseBulkPastedProducts($("bulkPasteText")?.value || "");
-  if (!pasted.length) return toast("Pega al menos una fila con Producto, Precio y Cantidad.");
+  if (!pasted.length) return toast("Pega al menos una fila con Código, Producto, Precio y Cantidad.");
 
-  const firstLooksLikeHeader = /producto|nombre/i.test(pasted[0].name) && /precio/i.test(String(pasted[0].price));
+  const firstLooksLikeHeader = /codigo|código|barcode/i.test(pasted[0].barcode) || /producto|nombre/i.test(pasted[0].name);
   const rows = firstLooksLikeHeader ? pasted.slice(1) : pasted;
   if (!rows.length) return toast("No se encontraron productos para importar.");
 
-  const existingFilled = bulkProductRows.filter(row => !bulkRowValidation(row).empty);
+  const existingFilled = bulkProductRows.filter(row => !bulkRowAssessment(row).empty);
   bulkProductRows = [
     ...existingFilled,
     ...rows.map(row => newBulkProductRow(row))
@@ -2648,18 +2740,24 @@ function importBulkPasteText() {
 }
 
 async function saveBulkProducts() {
-  const filled = bulkProductRows.filter(row => !bulkRowValidation(row).empty);
+  const filled = bulkProductRows.filter(row => !bulkRowAssessment(row).empty);
   if (!filled.length) return toast("Agrega al menos un producto.");
 
-  const validations = filled.map(row => ({ row, check:bulkRowValidation(row) }));
-  const invalid = validations.find(item => !item.check.valid);
-  if (invalid) return toast(`Revisa la fila de ${invalid.row.name || "producto"}: ${invalid.check.message}.`);
+  const assessments = filled.map(row => ({ row, check:bulkRowAssessment(row) }));
+  const invalid = assessments.find(item => !item.check.valid);
+  if (invalid) return toast(`Revisa ${invalid.row.name || "la fila"}: ${invalid.check.message}.`);
 
   const names = new Set();
-  for (const {row} of validations) {
-    const key = normalizeProductName(row.name);
-    if (names.has(key)) return toast(`El producto “${row.name}” está repetido en la carga.`);
-    names.add(key);
+  const barcodes = new Set();
+  for (const {row,check} of assessments) {
+    const nameKey = normalizeProductName(check.name);
+    if (names.has(nameKey)) return toast(`El producto “${row.name}” está repetido en la carga.`);
+    names.add(nameKey);
+    const barcodeKey = normalizeBarcode(check.barcode);
+    if (barcodeKey) {
+      if (barcodes.has(barcodeKey)) return toast(`El código “${barcodeKey}” está repetido en la carga.`);
+      barcodes.add(barcodeKey);
+    }
   }
 
   const saveBtn = $("bulkProductsSaveBtn");
@@ -2671,9 +2769,10 @@ async function saveBulkProducts() {
   let created = 0;
   let updated = 0;
   try {
-    const operations = validations.map(({row,check}, index) => {
-      const existing = bulkExistingProduct(row);
+    const operations = assessments.map(({row,check}, index) => {
+      const existing = check.existing;
       const data = {
+        barcode:normalizeBarcode(check.barcode),
         name:check.name,
         price:check.price,
         stock:check.stock,
@@ -2714,30 +2813,47 @@ async function saveBulkProducts() {
 
 function renderProducts() {
   if (currentRole !== "admin") return;
+  const tbody = $("productCards");
+  if (!tbody) return;
 
-  $("productCards").innerHTML = state.products.length ? state.products.map(p => {
+  const allProducts = [...state.products].sort((a,b) => String(a.name||"").localeCompare(String(b.name||""), "es", {sensitivity:"base"}));
+  const queryValue = String(productSearchQuery || $("productSearchInput")?.value || "").trim();
+  const normalizedNameQuery = normalizeProductName(queryValue);
+  const normalizedBarcodeQuery = normalizeBarcode(queryValue);
+  const filtered = queryValue ? allProducts.filter(p =>
+    normalizeProductName(p.name).includes(normalizedNameQuery) ||
+    (normalizedBarcodeQuery && normalizeBarcode(p.barcode).includes(normalizedBarcodeQuery))
+  ) : allProducts;
+
+  const totalUnits = allProducts.reduce((sum,p) => sum + Math.max(0, Number(p.stock || 0)), 0);
+  const noBarcode = allProducts.filter(p => !normalizeBarcode(p.barcode)).length;
+  if ($("productListCount")) $("productListCount").textContent = allProducts.length;
+  if ($("productUnitCount")) $("productUnitCount").textContent = totalUnits;
+  if ($("productNoBarcodeCount")) $("productNoBarcodeCount").textContent = noBarcode;
+
+  tbody.innerHTML = filtered.length ? filtered.map(p => {
     const active = p.active !== false;
     const stock = Math.max(0, Number(p.stock || 0));
+    const barcode = normalizeBarcode(p.barcode);
+    return `<tr class="product-detail-row ${active ? "" : "product-disabled"}" data-product-row="${p.id}">
+      <td data-label="Código"><span class="product-barcode ${barcode ? "" : "missing"}">${escapeHtml(barcode || "SIN CÓDIGO")}</span></td>
+      <td data-label="Producto"><strong class="product-list-name">${escapeHtml(p.name)}</strong>${stock <= 2 ? `<small class="product-low-stock">Stock bajo</small>` : ""}</td>
+      <td data-label="Precio"><strong class="product-list-price">${money(p.price)}</strong></td>
+      <td data-label="Existencia"><span class="product-list-stock ${stock <= 2 ? "low" : ""}">${stock}</span></td>
+      <td data-label="Estado"><span class="product-status ${active ? "active" : "inactive"}">${active ? "ACTIVO" : "DESHABILITADO"}</span></td>
+      <td data-label="Acciones">
+        <div class="product-list-actions">
+          <button class="product-edit-btn" data-edit-product="${p.id}" type="button">Editar</button>
+          <button class="stock-adjust-btn" data-stock-product="${p.id}" type="button">Stock</button>
+          <button class="product-toggle-btn ${active ? "disable" : "enable"}" data-toggle-product="${p.id}" data-product-active="${active ? "false" : "true"}" type="button">${active ? "Deshabilitar" : "Habilitar"}</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join("") : `<tr><td colspan="6"><div class="empty">${queryValue ? "No hay productos que coincidan con la búsqueda o código." : "Todavía no has agregado productos al inventario."}</div></td></tr>`;
 
-    return `<article class="catalog-compact-card product-compact-card ${active ? "" : "product-disabled"}">
-      <div class="catalog-compact-head">
-        <span class="product-status ${active ? "active" : "inactive"}">${active ? "ACTIVO" : "DESHABILITADO"}</span>
-        <strong class="catalog-price">${money(p.price)}</strong>
-      </div>
-      <h3>${escapeHtml(p.name)}</h3>
-      <div class="product-stock-line ${stock <= 2 ? "low-stock" : ""}">
-        <span>Existencia</span><strong>${stock}</strong>
-      </div>
-      <div class="product-compact-actions">
-        <button class="stock-adjust-btn" data-stock-product="${p.id}" type="button">Ajustar cantidad</button>
-        <button class="product-toggle-btn ${active ? "disable" : "enable"}"
-          data-toggle-product="${p.id}"
-          data-product-active="${active ? "false" : "true"}"
-          type="button">${active ? "Deshabilitar" : "Habilitar"}</button>
-      </div>
-    </article>`;
-  }).join("") : `<div class="empty">Todavía no has agregado productos al catálogo.</div>`;
-
+  document.querySelectorAll("[data-edit-product]").forEach(btn =>
+    btn.addEventListener("click", () => openEditProductModal(btn.dataset.editProduct))
+  );
   document.querySelectorAll("[data-toggle-product]").forEach(btn =>
     btn.addEventListener("click", () =>
       toggleProductStatus(btn.dataset.toggleProduct, btn.dataset.productActive === "true")
@@ -2751,25 +2867,47 @@ function renderProducts() {
 async function createProduct(e) {
   e.preventDefault();
   try {
+    const editId = $("productEditId")?.value || "";
+    const barcode = normalizeBarcode($("productBarcode").value);
     const name = $("productName").value.trim();
     const price = Number($("productPrice").value);
     const stock = Math.max(0, Math.floor(Number($("productStock").value || 0)));
+
+    if (!barcode) return toast("Escanea o escribe el código de barras.");
     if (!name || !price || price <= 0) return toast("Revisa nombre y precio del producto.");
 
-    await setDoc(doc(collection(db, "products")), {
+    const barcodeConflict = findProductByBarcode(barcode, editId);
+    if (barcodeConflict) return toast(`Ese código ya pertenece a “${barcodeConflict.name}”.`);
+    const nameConflict = findProductByName(name, editId);
+    if (nameConflict) return toast(`Ya existe un producto llamado “${nameConflict.name}”.`);
+
+    const data = {
+      barcode,
       name,
       price:+price.toFixed(2),
       stock,
-      active:true,
-      order:state.products.length+1,
-      createdAt:serverTimestamp()
-    });
+      updatedAt:serverTimestamp()
+    };
+
+    if (editId) {
+      await updateDoc(doc(db, "products", editId), data);
+      toast("Producto actualizado.");
+    } else {
+      await setDoc(doc(collection(db, "products")), {
+        ...data,
+        active:true,
+        order:state.products.length+1,
+        createdAt:serverTimestamp()
+      });
+      toast("Producto agregado al inventario.");
+    }
+
     closeModal("productModal");
     e.target.reset();
-    toast("Producto agregado al catálogo.");
+    if ($("productEditId")) $("productEditId").value = "";
   } catch (err) {
     console.error(err);
-    toast(firebaseErrorMessage(err, "No se pudo crear el producto."));
+    toast(firebaseErrorMessage(err, "No se pudo guardar el producto."));
   }
 }
 
