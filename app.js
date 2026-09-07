@@ -4166,12 +4166,14 @@ async function createAppointment(e) {
     return toast("No hay barberos disponibles en ese horario.");
   }
 
-  const apptRef = doc(collection(db, "appointments"));
   let reserved = false;
 
   for (const candidate of candidates) {
     const id = slotId(candidate.id, day, time);
     const slotRef = doc(db, "bookedSlots", id);
+    // La regla de Firestore exige que la cita use el mismo ID del horario reservado.
+    // Esto también garantiza una sola cita por barbero/fecha/hora.
+    const apptRef = doc(db, "appointments", id);
 
     try {
       await runTransaction(db, async tx => {
@@ -4215,7 +4217,9 @@ async function createAppointment(e) {
       reserved = true;
       break;
     } catch (err) {
-      if (!String(err?.message).includes("SLOT_TAKEN")) throw err;
+      if (String(err?.message).includes("SLOT_TAKEN")) continue;
+      console.error("Error creando cita:", err);
+      return toast(firebaseErrorMessage(err, "No se pudo reservar la cita. Revisa la conexión e intenta nuevamente."));
     }
   }
 
