@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260907-v21-productos-barcode-lista">
+  <link rel="stylesheet" href="./styles.css?v=20260907-v22-puestos-operativos-final">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -263,8 +263,24 @@
       </section>
 
       <section class="view" id="view-chairs">
-        <div class="section-head module-intro"><div><p class="eyebrow">CAPACIDAD DEL LOCAL</p><p class="module-intro-copy">Administra los puestos disponibles y la asignación fija de cada barbero.</p></div><button class="primary-btn" id="addChairBtn" type="button">+ Agregar puesto</button></div>
-        <div id="chairCards" class="cards-grid"></div>
+        <div class="section-head module-intro chair-ops-head">
+          <div>
+            <p class="eyebrow">MAPA OPERATIVO DEL LOCAL</p>
+            <p class="module-intro-copy">Controla cada estación, su barbero asignado, producción del día, agenda y disponibilidad.</p>
+          </div>
+          <button class="primary-btn" id="addChairBtn" type="button">+ Agregar puesto</button>
+        </div>
+
+        <div id="chairOpsSummary" class="chair-ops-summary"></div>
+
+        <div class="chair-ops-legend">
+          <span><i class="available"></i>Disponible</span>
+          <span><i class="occupied"></i>Ocupado</span>
+          <span><i class="offline"></i>Fuera de servicio</span>
+          <small>El estado ocupado se detecta automáticamente por citas en curso y también puede marcarse manualmente.</small>
+        </div>
+
+        <div id="chairCards" class="chair-ops-grid"></div>
       </section>
 
       <section class="view" id="view-services">
@@ -999,7 +1015,65 @@
     </div>
   </div>
 
+
+  <div class="modal-backdrop" id="chairOperationsModal">
+    <div class="modal chair-operations-modal">
+      <button class="modal-close" data-close="chairOperationsModal" type="button">×</button>
+      <div class="chair-ops-modal-head">
+        <div>
+          <p class="eyebrow">DETALLE OPERATIVO</p>
+          <h2 id="chairOpsModalTitle">Puesto</h2>
+          <p class="modal-copy" id="chairOpsModalSubtitle">Resumen del día</p>
+        </div>
+        <span class="chair-live-status" id="chairOpsModalStatus">Disponible</span>
+      </div>
+
+      <div id="chairOpsModalSummary" class="chair-ops-modal-summary"></div>
+
+      <div class="chair-ops-modal-grid">
+        <section class="chair-ops-modal-panel">
+          <div class="chair-ops-panel-head"><div><p class="eyebrow">HOY</p><h3>Movimientos del puesto</h3></div><span id="chairOpsMovementCount">0 servicios</span></div>
+          <div class="table-wrap chair-ops-table-wrap">
+            <table class="premium-report-table chair-ops-table">
+              <thead><tr><th>Hora</th><th>Servicio</th><th>Barbero</th><th>Total</th></tr></thead>
+              <tbody id="chairOpsMovementRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside class="chair-ops-modal-side">
+          <div class="chair-ops-info-card"><span>BARBERO ASIGNADO</span><strong id="chairOpsAssignedBarber">Sin asignar</strong><small id="chairOpsAssignedBarberState"></small></div>
+          <div class="chair-ops-info-card"><span>PRÓXIMA CITA</span><strong id="chairOpsNextAppointment">Sin citas próximas</strong><small id="chairOpsNextAppointmentMeta"></small></div>
+          <div class="chair-ops-info-card"><span>ÚLTIMA ACTIVIDAD</span><strong id="chairOpsLastActivity">Sin actividad</strong><small>Último cobro registrado en este puesto</small></div>
+        </aside>
+      </div>
+
+      <div class="chair-ops-actions">
+        <button class="ghost-btn" id="chairOpsAssignBtn" type="button">Cambiar barbero</button>
+        <button class="ghost-btn" id="chairOpsBusyBtn" type="button">Marcar ocupado</button>
+        <button class="danger-btn chair-ops-offline-btn" id="chairOpsActiveBtn" type="button">Fuera de servicio</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="chairAssignModal">
+    <div class="modal small">
+      <button class="modal-close" data-close="chairAssignModal" type="button">×</button>
+      <p class="eyebrow">ASIGNACIÓN DE PUESTO</p>
+      <h2 id="chairAssignTitle">Asignar barbero</h2>
+      <p class="modal-copy" id="chairAssignCopy">Selecciona quién trabajará de forma fija en este puesto.</p>
+      <form id="chairAssignForm" class="form-stack">
+        <input id="chairAssignId" type="hidden">
+        <label>Barbero
+          <select id="chairAssignBarberSelect"></select>
+          <small class="field-help">Si eliges un barbero que ya tiene otro puesto, será movido automáticamente.</small>
+        </label>
+        <button class="primary-btn" type="submit">Guardar asignación</button>
+      </form>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260907-v21-productos-barcode-lista"></script>
+  <script type="module" src="./app.js?v=20260907-v22-puestos-operativos-final"></script>
 </body>
 </html>

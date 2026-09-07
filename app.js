@@ -61,6 +61,7 @@ let barberServiceViewMode = "cards";
 let dashboardFilterMode = "day";
 let currentChairReceiptContext = null;
 let currentPerformanceBarberId = null;
+let currentChairOpsId = null;
 let unsubscribers = [];
 
 function money(v) {
@@ -477,6 +478,10 @@ function wireStaticUI() {
   bind("productStockForm", "submit", saveProductStock);
   bind("clientBookingForm", "submit", createAppointment);
   bind("addChairBtn", "click", createChair);
+  bind("chairAssignForm", "submit", saveChairAssignment);
+  bind("chairOpsAssignBtn", "click", () => currentChairOpsId && openChairAssignmentModal(currentChairOpsId));
+  bind("chairOpsBusyBtn", "click", () => currentChairOpsId && toggleChairOccupied(currentChairOpsId));
+  bind("chairOpsActiveBtn", "click", () => currentChairOpsId && toggleChairActive(currentChairOpsId));
   bind("barberProfitFilterBtn", "click", () => {
     const period = dashboardPeriod();
     const modalMonth = $("barberProfitMonth");
@@ -2237,61 +2242,323 @@ async function toggleBarberStatus(uid, nextActive) {
   }
 }
 
+function chairAssignedBarbers(chairId, includeInactive = true) {
+  return state.barbers.filter(b => b.chairId === chairId && (includeInactive || b.active !== false));
+}
+
+function chairAppointmentDateTime(a) {
+  if (!a?.date || !a?.time) return null;
+  const rawTime = String(a.time).trim();
+  const normalizedTime = /^\d{2}:\d{2}$/.test(rawTime) ? `${rawTime}:00` : rawTime;
+  const d = new Date(`${a.date}T${normalizedTime}`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function chairAppointmentDuration(a) {
+  const service = state.services.find(s => s.id === a?.serviceId)
+    || state.services.find(s => String(s.name || "").toLowerCase() === String(a?.serviceName || "").toLowerCase());
+  return Math.max(15, Number(service?.duration || 30));
+}
+
+function chairAppointmentData(chair) {
+  const assignedIds = new Set(chairAssignedBarbers(chair.id, true).map(b => b.id));
+  if (!assignedIds.size) return { current:null, next:null };
+  const now = new Date();
+  const active = state.appointments
+    .filter(a => assignedIds.has(a.barberId) && !["completed","cancelled"].includes(a.status))
+    .map(a => ({ a, start:chairAppointmentDateTime(a) }))
+    .filter(x => x.start)
+    .sort((x,y) => x.start - y.start);
+
+  let current = null;
+  for (const x of active) {
+    const end = new Date(x.start.getTime() + chairAppointmentDuration(x.a) * 60000);
+    if (now >= x.start && now < end) {
+      current = x.a;
+      break;
+    }
+  }
+  const nextItem = active.find(x => x.start >= now);
+  return { current, next:nextItem?.a || current || null };
+}
+
+function chairOperationalStatus(chair) {
+  if (chair.active === false) return { key:"offline", label:"Fuera de servicio", source:"manual" };
+  const appointmentData = chairAppointmentData(chair);
+  if (appointmentData.current) return { key:"occupied", label:"Ocupado", source:"appointment", appointment:appointmentData.current };
+  if (chair.operationalStatus === "occupied") return { key:"occupied", label:"Ocupado", source:"manual" };
+  return { key:"available", label:"Disponible", source:"automatic" };
+}
+
+function chairTodaySales(chairId) {
+  return state.sales
+    .filter(s => s.chairId === chairId && todayIso(s.date))
+    .sort((a,b) => jsDate(b.date) - jsDate(a.date));
+}
+
+function chairLastActivity(chairId) {
+  return [...state.sales]
+    .filter(s => s.chairId === chairId)
+    .sort((a,b) => jsDate(b.date) - jsDate(a.date))[0] || null;
+}
+
+function chairTodayProductUnits(chairId) {
+  return chairTodaySales(chairId).reduce((sum,sale) => sum + (Array.isArray(sale.products)
+    ? sale.products.reduce((n,p) => n + Math.max(0, Number(p.qty || 0)), 0)
+    : 0), 0);
+}
+
+function formatChairAppointment(a) {
+  if (!a) return { main:"Sin citas próximas", meta:"Agenda libre" };
+  const barber = state.barbers.find(b => b.id === a.barberId);
+  return {
+    main:`${fmtDateOnly(a.date)} · ${a.time}`,
+    meta:`${a.serviceName || "Servicio"}${barber ? ` · ${barber.name}` : ""}`
+  };
+}
+
+function renderChairOpsSummary() {
+  const node = $("chairOpsSummary");
+  if (!node) return;
+  const statuses = state.chairs.map(c => chairOperationalStatus(c));
+  const available = statuses.filter(s => s.key === "available").length;
+  const occupied = statuses.filter(s => s.key === "occupied").length;
+  const offline = statuses.filter(s => s.key === "offline").length;
+  const todayTotal = state.sales.filter(s => todayIso(s.date)).reduce((sum,s) => sum + Number(s.total || 0), 0);
+  node.innerHTML = `
+    <article><span>Puestos</span><strong>${state.chairs.length}</strong><small>Capacidad total</small></article>
+    <article class="available"><span>Disponibles</span><strong>${available}</strong><small>Listos para atender</small></article>
+    <article class="occupied"><span>Ocupados</span><strong>${occupied}</strong><small>En atención ahora</small></article>
+    <article class="offline"><span>Fuera de servicio</span><strong>${offline}</strong><small>No disponibles</small></article>
+    <article class="gold"><span>Producción de hoy</span><strong>${money(todayTotal)}</strong><small>Total del local</small></article>`;
+}
+
 function renderChairs() {
-  $("chairCards").innerHTML = state.chairs.map((c,i) => {
-    const chairSales = state.sales.filter(s => s.chairId === c.id);
-    const chairTotal = chairSales.reduce((sum,s) => sum + Number(s.total || 0), 0);
-    const assignedBarbers = state.barbers.filter(b => b.chairId === c.id);
+  renderChairOpsSummary();
+  const node = $("chairCards");
+  if (!node) return;
+
+  node.innerHTML = state.chairs.length ? state.chairs.map((c,i) => {
+    const sales = chairTodaySales(c.id);
+    const total = sales.reduce((sum,s) => sum + Number(s.total || 0), 0);
+    const assigned = chairAssignedBarbers(c.id, true);
+    const primary = assigned[0] || null;
+    const status = chairOperationalStatus(c);
+    const appt = chairAppointmentData(c).next;
+    const next = formatChairAppointment(appt);
+    const last = chairLastActivity(c.id);
+    const lastLabel = last ? fmtDateTime(last.date) : "Sin actividad";
 
     return `
-    <article class="chair-card premium-chair-admin-card">
-      <div class="chair-card-head">
+    <article class="chair-ops-card status-${status.key}">
+      <div class="chair-ops-card-top">
         <div>
           <span class="card-kicker">PUESTO ${String(i+1).padStart(2,"0")}</span>
           <h3>${escapeHtml(c.name)}</h3>
-          <div class="card-meta">${c.active===false?"Inactivo":"Activo y disponible"}</div>
         </div>
+        <span class="chair-live-status ${status.key}"><i></i>${status.label}</span>
+      </div>
 
-        <div class="chair-total-badge">
-          <span>TOTAL GENERADO</span>
-          <strong>${money(chairTotal)}</strong>
+      <div class="chair-ops-barber ${primary ? "" : "empty"}">
+        <span class="chair-ops-avatar">${primary ? escapeHtml((primary.name || "B").charAt(0).toUpperCase()) : "—"}</span>
+        <div>
+          <small>BARBERO FIJO</small>
+          <strong>${primary ? escapeHtml(primary.name) : "Sin barbero asignado"}</strong>
+          <span>${primary ? (primary.active === false ? "Usuario deshabilitado" : "Cuenta activa") : "Asigna un barbero al puesto"}</span>
         </div>
       </div>
 
-      <div class="chair-assigned-barbers">
-        <span class="chair-assigned-label">BARBERO ASIGNADO</span>
-        ${assignedBarbers.length ? assignedBarbers.map(b => `
-          <div class="chair-barber-chip ${b.active===false ? "inactive" : ""}">
-            <span class="chair-barber-avatar">${escapeHtml((b.name || "B").charAt(0).toUpperCase())}</span>
-            <div>
-              <strong>${escapeHtml(b.name || "Barbero")}</strong>
-              <small>${b.active===false ? "Usuario deshabilitado" : `Comisión servicios ${Number(b.commission ?? 50)}%`}</small>
-            </div>
-            <span class="chair-barber-state ${b.active===false ? "inactive" : "active"}">${b.active===false ? "INACTIVO" : "ACTIVO"}</span>
-          </div>
-        `).join("") : `
-          <div class="chair-no-barber">
-            <span>⌖</span>
-            <div>
-              <strong>Sin barbero asignado</strong>
-              <small>Asigna un barbero desde Usuarios / Barberos.</small>
-            </div>
-          </div>
-        `}
+      <div class="chair-ops-kpis">
+        <div><span>Producción hoy</span><strong>${money(total)}</strong></div>
+        <div><span>Servicios hoy</span><strong>${sales.length}</strong></div>
       </div>
 
-      <div class="card-numbers chair-stats-grid">
-        <div class="mini-stat">
-          <span>Servicios</span>
-          <strong>${chairSales.length}</strong>
-        </div>
-        <div class="mini-stat">
-          <span>Estado</span>
-          <strong>${c.active===false?"Inactivo":"Activo"}</strong>
-        </div>
+      <div class="chair-ops-detail-line">
+        <div><span>PRÓXIMA CITA</span><strong>${escapeHtml(next.main)}</strong><small>${escapeHtml(next.meta)}</small></div>
+        <div><span>ÚLTIMA ACTIVIDAD</span><strong>${escapeHtml(lastLabel)}</strong><small>${last ? escapeHtml(last.serviceName || "Servicio") : "Sin cobros registrados"}</small></div>
+      </div>
+
+      <div class="chair-ops-card-actions">
+        <button class="primary-btn" type="button" data-chair-ops-detail="${c.id}">Ver puesto</button>
+        <button class="ghost-btn" type="button" data-chair-assign="${c.id}">${primary ? "Cambiar barbero" : "Asignar barbero"}</button>
+        <button class="${c.active === false ? "ghost-btn" : "danger-btn"}" type="button" data-chair-toggle-active="${c.id}">${c.active === false ? "Reactivar" : "Fuera de servicio"}</button>
       </div>
     </article>`;
-  }).join("");
+  }).join("") : `<div class="empty">Todavía no hay puestos configurados.</div>`;
+
+  document.querySelectorAll("[data-chair-ops-detail]").forEach(btn =>
+    btn.addEventListener("click", () => openChairOperations(btn.dataset.chairOpsDetail))
+  );
+  document.querySelectorAll("[data-chair-assign]").forEach(btn =>
+    btn.addEventListener("click", () => openChairAssignmentModal(btn.dataset.chairAssign))
+  );
+  document.querySelectorAll("[data-chair-toggle-active]").forEach(btn =>
+    btn.addEventListener("click", () => toggleChairActive(btn.dataset.chairToggleActive))
+  );
+
+  if (currentChairOpsId && $("chairOperationsModal")?.classList.contains("show")) {
+    populateChairOperationsModal(currentChairOpsId);
+  }
+}
+
+function openChairOperations(chairId) {
+  currentChairOpsId = chairId;
+  populateChairOperationsModal(chairId);
+  openModal("chairOperationsModal");
+}
+
+function populateChairOperationsModal(chairId) {
+  const chair = state.chairs.find(c => c.id === chairId);
+  if (!chair) return;
+  const assigned = chairAssignedBarbers(chairId, true);
+  const primary = assigned[0] || null;
+  const status = chairOperationalStatus(chair);
+  const sales = chairTodaySales(chairId);
+  const total = sales.reduce((sum,s) => sum + Number(s.total || 0), 0);
+  const barberPay = sales.reduce((sum,s) => sum + Number(s.barberAmount || 0), 0);
+  const products = chairTodayProductUnits(chairId);
+  const appointmentData = chairAppointmentData(chair);
+  const next = formatChairAppointment(appointmentData.next);
+  const last = chairLastActivity(chairId);
+
+  $("chairOpsModalTitle").textContent = chair.name;
+  $("chairOpsModalSubtitle").textContent = `${new Date().toLocaleDateString("es-PA", {weekday:"long", day:"2-digit", month:"long", year:"numeric"})} · Control operativo`;
+  const statusNode = $("chairOpsModalStatus");
+  statusNode.className = `chair-live-status ${status.key}`;
+  statusNode.innerHTML = `<i></i>${status.label}`;
+
+  $("chairOpsModalSummary").innerHTML = `
+    <div><span>Producción hoy</span><strong>${money(total)}</strong></div>
+    <div><span>Servicios</span><strong>${sales.length}</strong></div>
+    <div><span>Pago barbero</span><strong>${money(barberPay)}</strong></div>
+    <div><span>Productos vendidos</span><strong>${products}</strong></div>`;
+
+  $("chairOpsMovementCount").textContent = `${sales.length} servicio${sales.length === 1 ? "" : "s"}`;
+  $("chairOpsMovementRows").innerHTML = sales.length ? sales.map(s => `
+    <tr><td>${jsDate(s.date).toLocaleTimeString("es-PA", {hour:"2-digit",minute:"2-digit"})}</td><td>${escapeHtml(s.serviceName || "Servicio")}</td><td>${escapeHtml(s.barberName || "—")}</td><td><strong>${money(s.total)}</strong></td></tr>`).join("")
+    : `<tr><td colspan="4" class="empty">No hay movimientos registrados hoy.</td></tr>`;
+
+  $("chairOpsAssignedBarber").textContent = primary?.name || "Sin barbero asignado";
+  $("chairOpsAssignedBarberState").textContent = primary ? (primary.active === false ? "Usuario deshabilitado" : `Puesto fijo · ${primary.username || "cuenta activa"}`) : "Puedes asignarlo desde esta ventana";
+  $("chairOpsNextAppointment").textContent = next.main;
+  $("chairOpsNextAppointmentMeta").textContent = next.meta;
+  $("chairOpsLastActivity").textContent = last ? fmtDateTime(last.date) : "Sin actividad";
+
+  const assignBtn = $("chairOpsAssignBtn");
+  assignBtn.textContent = primary ? "Cambiar barbero" : "Asignar barbero";
+
+  const busyBtn = $("chairOpsBusyBtn");
+  if (status.source === "appointment") {
+    busyBtn.textContent = "Ocupado por cita";
+    busyBtn.disabled = true;
+  } else {
+    busyBtn.disabled = chair.active === false;
+    busyBtn.textContent = chair.operationalStatus === "occupied" ? "Marcar disponible" : "Marcar ocupado";
+  }
+
+  const activeBtn = $("chairOpsActiveBtn");
+  activeBtn.textContent = chair.active === false ? "Reactivar puesto" : "Fuera de servicio";
+  activeBtn.className = chair.active === false ? "ghost-btn chair-ops-offline-btn" : "danger-btn chair-ops-offline-btn";
+}
+
+function openChairAssignmentModal(chairId) {
+  const chair = state.chairs.find(c => c.id === chairId);
+  if (!chair) return;
+  const assigned = chairAssignedBarbers(chairId, true)[0] || null;
+  $("chairAssignId").value = chairId;
+  $("chairAssignTitle").textContent = `Asignar barbero · ${chair.name}`;
+  $("chairAssignCopy").textContent = assigned ? `${assigned.name} está asignado actualmente. Puedes cambiarlo o dejar el puesto sin barbero.` : "Selecciona el barbero fijo para este puesto.";
+  const options = [`<option value="">Sin barbero asignado</option>`].concat(
+    [...state.barbers].sort((a,b)=>(a.name||"").localeCompare(b.name||"")).map(b => {
+      const currentChair = b.chairName ? ` · ${b.chairName}` : "";
+      const inactive = b.active === false ? " · DESHABILITADO" : "";
+      return `<option value="${b.id}" ${assigned?.id === b.id ? "selected" : ""} ${b.active === false && assigned?.id !== b.id ? "disabled" : ""}>${escapeHtml(b.name || "Barbero")}${escapeHtml(currentChair)}${inactive}</option>`;
+    })
+  ).join("");
+  $("chairAssignBarberSelect").innerHTML = options;
+  openModal("chairAssignModal");
+}
+
+async function saveChairAssignment(e) {
+  e.preventDefault();
+  const chairId = $("chairAssignId").value;
+  const barberId = $("chairAssignBarberSelect").value;
+  const chair = state.chairs.find(c => c.id === chairId);
+  if (!chair) return toast("No se encontró el puesto.");
+  const selected = barberId ? state.barbers.find(b => b.id === barberId) : null;
+  if (barberId && (!selected || selected.active === false)) return toast("Selecciona un barbero activo.");
+
+  try {
+    const batch = writeBatch(db);
+    const currentAssigned = chairAssignedBarbers(chairId, true);
+    currentAssigned.filter(b => b.id !== barberId).forEach(b => {
+      batch.set(doc(db, "users", b.id), { chairId:"", chairName:"", updatedAt:serverTimestamp() }, { merge:true });
+      batch.set(doc(db, "publicBarbers", b.id), { chairId:"", chairName:"", active:b.active !== false, updatedAt:serverTimestamp() }, { merge:true });
+    });
+
+    if (selected) {
+      batch.set(doc(db, "users", selected.id), { chairId:chair.id, chairName:chair.name, updatedAt:serverTimestamp() }, { merge:true });
+      batch.set(doc(db, "publicBarbers", selected.id), {
+        name:selected.name || "Barbero",
+        chairId:chair.id,
+        chairName:chair.name,
+        active:selected.active !== false && chair.active !== false,
+        updatedAt:serverTimestamp()
+      }, { merge:true });
+    }
+
+    await batch.commit();
+    closeModal("chairAssignModal");
+    toast(selected ? `${selected.name} fue asignado a ${chair.name}.` : `${chair.name} quedó sin barbero asignado.`);
+  } catch (err) {
+    console.error(err);
+    toast(firebaseErrorMessage(err, "No se pudo guardar la asignación del puesto."));
+  }
+}
+
+async function toggleChairOccupied(chairId) {
+  const chair = state.chairs.find(c => c.id === chairId);
+  if (!chair || chair.active === false) return;
+  const status = chairOperationalStatus(chair);
+  if (status.source === "appointment") return toast("El puesto está ocupado automáticamente por una cita en curso.");
+  const occupied = chair.operationalStatus !== "occupied";
+  try {
+    await setDoc(doc(db, "chairs", chairId), {
+      operationalStatus:occupied ? "occupied" : "available",
+      updatedAt:serverTimestamp()
+    }, { merge:true });
+    toast(occupied ? `${chair.name} marcado como ocupado.` : `${chair.name} marcado como disponible.`);
+  } catch (err) {
+    console.error(err);
+    toast(firebaseErrorMessage(err, "No se pudo cambiar el estado del puesto."));
+  }
+}
+
+async function toggleChairActive(chairId) {
+  const chair = state.chairs.find(c => c.id === chairId);
+  if (!chair) return;
+  const nextActive = chair.active === false;
+  try {
+    const batch = writeBatch(db);
+    batch.set(doc(db, "chairs", chairId), {
+      active:nextActive,
+      operationalStatus:"available",
+      updatedAt:serverTimestamp()
+    }, { merge:true });
+
+    chairAssignedBarbers(chairId, true).forEach(b => {
+      batch.set(doc(db, "publicBarbers", b.id), {
+        active:nextActive && b.active !== false,
+        updatedAt:serverTimestamp()
+      }, { merge:true });
+    });
+
+    await batch.commit();
+    toast(nextActive ? `${chair.name} fue reactivado.` : `${chair.name} quedó fuera de servicio.`);
+  } catch (err) {
+    console.error(err);
+    toast(firebaseErrorMessage(err, "No se pudo cambiar la disponibilidad del puesto."));
+  }
 }
 
 async function createChair() {
