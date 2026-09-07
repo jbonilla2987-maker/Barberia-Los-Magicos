@@ -4401,26 +4401,27 @@ img,svg,canvas{max-width:100%;height:auto}
 .barber-availability-pill.state-changing,.barber-availability-btn.state-changing{animation:barberStatePulse .5s ease}
 .barber-availability-pill,.barber-availability-btn.premium{will-change:transform,filter}
 
-.dashboard-live-chairs-section{margin:4px auto 8px;width:100%}
-.dashboard-live-chairs-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:14px}
-.dashboard-live-chairs-head h3{margin:4px 0 0;font-size:24px}
-.dashboard-live-chairs-head>span{font-size:11px;color:var(--muted);text-align:right}
-.dashboard-live-chairs-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:stretch}
+.dashboard-live-chairs-section{margin:4px auto 12px;width:100%;max-width:1160px}
+.dashboard-live-chairs-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:10px}
+.dashboard-live-chairs-head h3{margin:4px 0 0;font-size:22px}
+.dashboard-live-chairs-head>span{font-size:10px;color:var(--muted);text-align:right}
+.dashboard-live-chairs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,260px));justify-content:center;gap:12px;align-items:stretch}
 
-.dashboard-chair-status-badge{position:relative;appearance:none;min-width:0;padding:16px 14px;border-radius:28px;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;cursor:pointer;transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, filter .18s ease;background:linear-gradient(180deg,#2b2b2f 0%,#121216 52%,#07080a 100%);border:2px solid rgba(214,170,74,.9);box-shadow:inset 0 2px 0 rgba(255,255,255,.14),inset 0 -10px 16px rgba(0,0,0,.34),0 10px 24px rgba(0,0,0,.22);color:#f7df9a;overflow:hidden}
-.dashboard-chair-status-badge::before{content:"";position:absolute;inset:4px;border-radius:22px;border:1px solid rgba(255,255,255,.10);pointer-events:none}
+.dashboard-chair-status-badge{position:relative;appearance:none;min-width:0;min-height:86px;padding:12px 12px;border-radius:22px;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;cursor:pointer;transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, filter .18s ease;background:linear-gradient(180deg,#2b2b2f 0%,#121216 52%,#07080a 100%);border:2px solid rgba(214,170,74,.9);box-shadow:inset 0 2px 0 rgba(255,255,255,.14),inset 0 -8px 14px rgba(0,0,0,.32),0 8px 18px rgba(0,0,0,.20);color:#f7df9a;overflow:hidden}
+.dashboard-chair-status-badge::before{content:"";position:absolute;inset:4px;border-radius:18px;border:1px solid rgba(255,255,255,.10);pointer-events:none}
 .dashboard-chair-status-badge:hover{transform:translateY(-2px);filter:brightness(1.03)}
-.dashboard-chair-status-badge.available{background:linear-gradient(180deg,#39b85c 0%,#15843a 55%,#0c5c28 100%);border-color:#8ff0ab;box-shadow:inset 0 2px 0 rgba(255,255,255,.18),inset 0 -12px 16px rgba(0,0,0,.28),0 12px 24px rgba(20,112,50,.28);color:#fff}
-.dashboard-chair-status-badge.occupied{background:linear-gradient(180deg,#e45151 0%,#bb1d23 56%,#830d12 100%);border-color:#ff9f9f;box-shadow:inset 0 2px 0 rgba(255,255,255,.16),inset 0 -12px 16px rgba(0,0,0,.32),0 12px 24px rgba(139,16,20,.28);color:#fff}
-.dashboard-chair-status-badge.offline{background:linear-gradient(180deg,#848892 0%,#4c515c 56%,#2f3440 100%);border-color:#cfd2d9;box-shadow:inset 0 2px 0 rgba(255,255,255,.16),inset 0 -12px 16px rgba(0,0,0,.34),0 12px 24px rgba(39,43,52,.26);color:#fff}
-.dashboard-chair-badge-name{display:block;font-size:clamp(21px,1.5vw,30px);line-height:1.05;font-weight:900;letter-spacing:.02em;text-shadow:0 2px 5px rgba(0,0,0,.22)}
-.dashboard-chair-badge-meta{display:block;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;opacity:.95}
-.dashboard-chair-status-badge small{display:block;font-size:12px;font-weight:600;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.dashboard-chair-status-empty{padding:16px;border-radius:16px;border:1px dashed rgba(255,255,255,.08);color:var(--muted);text-align:center}
+.dashboard-chair-status-badge.available{background:linear-gradient(180deg,#39b85c 0%,#15843a 55%,#0c5c28 100%);border-color:#8ff0ab;box-shadow:inset 0 2px 0 rgba(255,255,255,.18),inset 0 -10px 14px rgba(0,0,0,.26),0 10px 18px rgba(20,112,50,.24);color:#fff}
+.dashboard-chair-status-badge.occupied{background:linear-gradient(180deg,#e45151 0%,#bb1d23 56%,#830d12 100%);border-color:#ff9f9f;box-shadow:inset 0 2px 0 rgba(255,255,255,.16),inset 0 -10px 14px rgba(0,0,0,.30),0 10px 18px rgba(139,16,20,.24);color:#fff}
+.dashboard-chair-status-badge.offline{background:linear-gradient(180deg,#848892 0%,#4c515c 56%,#2f3440 100%);border-color:#cfd2d9;box-shadow:inset 0 2px 0 rgba(255,255,255,.16),inset 0 -10px 14px rgba(0,0,0,.32),0 10px 18px rgba(39,43,52,.24);color:#fff}
+.dashboard-chair-badge-name{display:block;font-size:clamp(16px,1.2vw,22px);line-height:1.05;font-weight:900;letter-spacing:.02em;text-shadow:0 2px 5px rgba(0,0,0,.22)}
+.dashboard-chair-badge-meta{display:block;font-size:10px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;opacity:.95}
+.dashboard-chair-status-badge small{display:block;font-size:11px;font-weight:600;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.dashboard-chair-status-empty{padding:14px;border-radius:16px;border:1px dashed rgba(255,255,255,.08);color:var(--muted);text-align:center}
 
-@media(max-width:1180px){.dashboard-live-chairs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:760px){.dashboard-live-chairs-head{align-items:flex-start;flex-direction:column;gap:4px}.dashboard-live-chairs-head>span{text-align:left}.dashboard-live-chairs-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.dashboard-chair-status-badge{padding:14px 12px;border-radius:24px}.dashboard-chair-badge-name{font-size:clamp(18px,5vw,24px)}.dashboard-chair-status-badge small{font-size:11px}}
-@media(max-width:520px){.dashboard-live-chairs-grid{grid-template-columns:1fr}.dashboard-chair-status-badge{padding:14px 12px}.dashboard-chair-badge-name{font-size:22px}}
+@media(max-width:1180px){.dashboard-live-chairs-grid{grid-template-columns:repeat(2,minmax(180px,240px))}}
+@media(max-width:760px){.dashboard-live-chairs-head{align-items:flex-start;flex-direction:column;gap:4px}.dashboard-live-chairs-head>span{text-align:left}.dashboard-live-chairs-grid{grid-template-columns:repeat(2,minmax(150px,1fr));gap:10px}.dashboard-chair-status-badge{min-height:78px;padding:10px 10px;border-radius:18px}.dashboard-chair-badge-name{font-size:clamp(15px,4.4vw,20px)}.dashboard-chair-status-badge small{font-size:10px}}
+@media(max-width:520px){.dashboard-live-chairs-grid{grid-template-columns:1fr 1fr;gap:8px}.dashboard-chair-status-badge{min-height:74px;padding:10px 8px;border-radius:16px}.dashboard-chair-badge-name{font-size:16px}.dashboard-chair-badge-meta{font-size:9px;letter-spacing:.6px}.dashboard-chair-status-badge small{font-size:9px}}
+@media(max-width:380px){.dashboard-live-chairs-grid{grid-template-columns:1fr}.dashboard-chair-status-badge{min-height:72px}}
 
 /* =========================================================
    V30 · RESPONSIVE GENERAL — ADMIN + BARBERO + CLIENTE
