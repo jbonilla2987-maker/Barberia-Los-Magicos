@@ -1241,7 +1241,17 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 
 
 /* AJUSTES BARBERO · UI MÁS LIMPIA */
-.barber-hero-actions{display:flex;align-items:center;justify-content:flex-end}
+
+.barber-hero-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+.barber-availability-box{display:flex;flex-direction:column;align-items:flex-end;gap:7px;padding:10px 12px;border-radius:16px;border:1px solid rgba(215,173,86,.16);background:rgba(215,173,86,.04);min-width:210px}
+.barber-availability-label{font-size:9px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:var(--muted)}
+.barber-availability-inline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.barber-availability-pill{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.6px;border:1px solid transparent;min-width:104px}
+.barber-availability-pill.available{background:rgba(114,215,167,.1);border-color:rgba(114,215,167,.22);color:#8de5b8}
+.barber-availability-pill.occupied{background:rgba(255,190,92,.1);border-color:rgba(255,190,92,.24);color:#ffcf72}
+.barber-availability-pill.offline{background:rgba(255,124,124,.09);border-color:rgba(255,124,124,.2);color:#ff9e9e}
+.barber-availability-btn{min-width:150px}
+
 .barber-today-btn{min-width:190px}
 .premium-flow-spacer{width:1px;height:1px;opacity:0;pointer-events:none}
 .barber-money-grid{grid-template-columns:repeat(3,1fr);gap:12px}
@@ -1257,7 +1267,9 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 }
 @media(max-width:600px){
   .barber-hero-actions{width:100%;justify-content:flex-start}
-  .barber-today-btn{width:100%}
+  .barber-availability-box{width:100%;align-items:flex-start}
+  .barber-availability-inline{width:100%;justify-content:flex-start}
+  .barber-availability-btn,.barber-today-btn{width:100%}
   .barber-money-grid{grid-template-columns:1fr}
   .barber-today-card .today-appt-main{grid-template-columns:1fr}
 }

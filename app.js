@@ -395,6 +395,7 @@ function wireStaticUI() {
     if (e.key === "Enter" || e.key === " ") openDashboardAppointmentsModal();
   });
   bind("openBarberTodayAppointmentsBtn", "click", openBarberTodayAppointmentsModal);
+  bind("toggleBarberAvailabilityBtn", "click", toggleCurrentBarberChairOccupied);
 
   document.querySelectorAll("[data-dashboard-filter-mode]").forEach(btn =>
     btn.addEventListener("click", () => setDashboardFilterMode(btn.dataset.dashboardFilterMode))
@@ -3779,6 +3780,45 @@ function renderBarberRecentServices(recent) {
   }).join("");
 }
 
+function renderBarberAvailabilityState() {
+  const badge = $("barberAvailabilityBadge");
+  const btn = $("toggleBarberAvailabilityBtn");
+  if (!badge || !btn) return;
+
+  const chair = state.chairs.find(c => c.id === currentBarber?.chairId);
+  if (!chair) {
+    badge.className = "barber-availability-pill offline";
+    badge.textContent = "Sin puesto";
+    btn.textContent = "Sin puesto asignado";
+    btn.disabled = true;
+    return;
+  }
+
+  const status = chairOperationalStatus(chair);
+  badge.className = `barber-availability-pill ${status.key}`;
+  badge.textContent = status.label;
+
+  if (status.source === "appointment") {
+    btn.textContent = "Ocupado por cita";
+    btn.disabled = true;
+    return;
+  }
+
+  if (chair.active === false || status.key === "offline") {
+    btn.textContent = "Puesto fuera de servicio";
+    btn.disabled = true;
+    return;
+  }
+
+  btn.disabled = false;
+  btn.textContent = chair.operationalStatus === "occupied" ? "Marcar disponible" : "Marcar ocupado";
+}
+
+async function toggleCurrentBarberChairOccupied() {
+  if (currentRole !== "barber" || !currentBarber?.chairId) return toast("No tienes un puesto asignado.");
+  await toggleChairOccupied(currentBarber.chairId);
+}
+
 function renderBarberPortal() {
   if (currentRole !== "barber" || !currentBarber) return;
 
@@ -3787,6 +3827,7 @@ function renderBarberPortal() {
 
   $("barberWelcomeName").textContent = (currentBarber.name || "Barbero").split(" ")[0];
   $("barberWelcomeChair").textContent = currentBarber.chairName || "Puesto sin asignar";
+  renderBarberAvailabilityState();
 
   const mine = state.sales.filter(s => s.barberId === currentBarber.id);
   const today = mine.filter(s => todayIso(s.date));

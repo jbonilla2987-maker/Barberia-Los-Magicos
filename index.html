@@ -422,6 +422,13 @@
       <section class="barber-welcome">
         <div><p class="eyebrow">MI PANEL</p><h1>Hola, <span id="barberWelcomeName">Barbero</span></h1><p>Aquí puedes ver tu producción y tus próximas citas.</p><div class="barber-welcome-chair"><span>⌖</span><b id="barberWelcomeChair">Puesto sin asignar</b></div></div>
         <div class="barber-hero-actions">
+          <div class="barber-availability-box">
+            <span class="barber-availability-label">Estado actual</span>
+            <div class="barber-availability-inline">
+              <span class="barber-availability-pill available" id="barberAvailabilityBadge">Disponible</span>
+              <button class="ghost-btn barber-availability-btn" id="toggleBarberAvailabilityBtn" type="button">Marcar ocupado</button>
+            </div>
+          </div>
           <button class="primary-btn barber-today-btn" id="openBarberTodayAppointmentsBtn" type="button">Ver mis citas de hoy</button>
         </div>
       </section>
@@ -1074,6 +1081,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script type="module" src="./app.js?v=20260907-v24-controls-centered"></script>
+  <script type="module" src="./app.js?v=20260907-v25-availability-toggle"></script>
 </body>
 </html>
