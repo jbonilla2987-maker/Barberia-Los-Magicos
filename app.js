@@ -60,59 +60,15 @@ let productSearchQuery = "";
 let productCurrentPage = 1;
 const PRODUCTS_PER_PAGE = 10;
 let barberServiceViewMode = "cards";
-let barberChargeForceReset = true;
-let dashboardFilterMode = "day";
 let currentChairReceiptContext = null;
 let currentPerformanceBarberId = null;
 let currentChairOpsId = null;
 let unsubscribers = [];
-let adminRenderFrame = 0;
-let barberRenderFrame = 0;
-let excelJsLoadPromise = null;
 
-function scheduleAdminRender() {
-  if (adminRenderFrame) return;
-  adminRenderFrame = requestAnimationFrame(() => {
-    adminRenderFrame = 0;
-    renderAdminAll();
-  });
-}
-
-function scheduleBarberRender() {
-  if (barberRenderFrame) return;
-  barberRenderFrame = requestAnimationFrame(() => {
-    barberRenderFrame = 0;
-    renderBarberPortal();
-  });
-}
-
-function ensureExcelJS() {
-  if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
-  if (excelJsLoadPromise) return excelJsLoadPromise;
-
-  excelJsLoadPromise = new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js";
-    script.async = true;
-    script.onload = () => window.ExcelJS ? resolve(window.ExcelJS) : reject(new Error("ExcelJS no disponible"));
-    script.onerror = () => reject(new Error("No se pudo cargar ExcelJS"));
-    document.head.appendChild(script);
-  }).catch(error => {
-    excelJsLoadPromise = null;
-    throw error;
-  });
-
-  return excelJsLoadPromise;
-}
-
-const moneyFormatter = new Intl.NumberFormat("es-PA", { style:"currency", currency:"USD" });
-const dateTimeFormatter = new Intl.DateTimeFormat("es-PA", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" });
-const dateOnlyFormatter = new Intl.DateTimeFormat("es-PA", { weekday:"short", day:"2-digit", month:"short" });
-const monthLabelFormatter = new Intl.DateTimeFormat("es-PA", { month:"long", year:"numeric" });
-const shortDayFormatter = new Intl.DateTimeFormat("es-PA", { day:"2-digit", month:"short", year:"numeric" });
+const usdFormatter = new Intl.NumberFormat("es-PA", { style:"currency", currency:"USD" });
 
 function money(v) {
-  return moneyFormatter.format(Number(v || 0));
+  return usdFormatter.format(Number(v || 0));
 }
 
 function isoDay(d = new Date()) {
@@ -126,16 +82,16 @@ function jsDate(v) {
 }
 
 function todayIso(v) {
-  return dayKey(v) === isoDay();
+  return jsDate(v).toISOString().slice(0,10) === isoDay();
 }
 
 function fmtDateTime(v) {
-  return dateTimeFormatter.format(jsDate(v));
+  return jsDate(v).toLocaleString("es-PA", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" });
 }
 
 function fmtDateOnly(day) {
   const [y,m,d] = String(day).split("-").map(Number);
-  return dateOnlyFormatter.format(new Date(y,m-1,d));
+  return new Date(y,m-1,d).toLocaleDateString("es-PA", { weekday:"short", day:"2-digit", month:"short" });
 }
 
 function escapeHtml(v) {
@@ -164,70 +120,28 @@ function dayKey(value) {
 function monthLabel(key) {
   if (!key) return "";
   const [year, month] = key.split("-").map(Number);
-  return monthLabelFormatter.format(new Date(year, month-1, 1));
+  return new Date(year, month-1, 1).toLocaleDateString("es-PA", { month:"long", year:"numeric" });
 }
 
 function shortDayLabel(key) {
   const [year, month, day] = key.split("-").map(Number);
-  return shortDayFormatter.format(new Date(year, month-1, day));
+  return new Date(year, month-1, day).toLocaleDateString("es-PA", { day:"2-digit", month:"short", year:"numeric" });
 }
 
 
-
-function isoWeekValue(date = new Date()) {
-  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const day = d.getDay() || 7;
-  d.setDate(d.getDate() + 4 - day);
-  const yearStart = new Date(d.getFullYear(), 0, 1);
-  const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-  return `${d.getFullYear()}-W${String(week).padStart(2,"0")}`;
+function parseIsoDayLocal(key) {
+  const [y,m,d] = String(key || "").split("-").map(Number);
+  return new Date(y || 1970, (m || 1)-1, d || 1);
 }
 
-function isoWeekBounds(value) {
-  const match = String(value || "").match(/^(\d{4})-W(\d{2})$/);
-  if (!match) {
-    const today = isoDay();
-    return { start:today, end:today };
-  }
-  const year = Number(match[1]);
-  const week = Number(match[2]);
-  const jan4 = new Date(year, 0, 4);
-  const jan4Day = jan4.getDay() || 7;
-  const monday = new Date(year, 0, 4 - jan4Day + 1 + (week - 1) * 7);
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  return { start:isoDay(monday), end:isoDay(sunday) };
-}
 
 function dashboardPeriod() {
   const today = isoDay();
-  const mode = dashboardFilterMode || "day";
-  let start = today;
-  let end = today;
-  let label = "Hoy";
-
-  if (mode === "day") {
-    start = end = $("dashboardFilterDay")?.value || today;
-    label = shortDayLabel(start);
-  } else if (mode === "week") {
-    const bounds = isoWeekBounds($("dashboardFilterWeek")?.value || isoWeekValue(new Date()));
-    start = bounds.start;
-    end = bounds.end;
-    label = `${shortDayLabel(start)} – ${shortDayLabel(end)}`;
-  } else if (mode === "range") {
-    start = $("dashboardFilterStart")?.value || today;
-    end = $("dashboardFilterEnd")?.value || start;
-    if (start > end) [start, end] = [end, start];
-    label = start === end ? shortDayLabel(start) : `${shortDayLabel(start)} – ${shortDayLabel(end)}`;
-  } else if (mode === "month") {
-    const key = $("dashboardFilterMonth")?.value || monthKey(new Date());
-    const [year, month] = key.split("-").map(Number);
-    start = `${year}-${String(month).padStart(2,"0")}-01`;
-    end = isoDay(new Date(year, month, 0));
-    label = monthLabel(key);
-  }
-
-  return { mode, start, end, label };
+  let start = $("dashboardFilterStart")?.value || today;
+  let end = $("dashboardFilterEnd")?.value || today;
+  if (start > end) [start, end] = [end, start];
+  const label = start === end ? shortDayLabel(start) : `${shortDayLabel(start)} – ${shortDayLabel(end)}`;
+  return { mode:"range", start, end, label };
 }
 
 function dateKeyInPeriod(key, period = dashboardPeriod()) {
@@ -252,40 +166,17 @@ function openNativeDatePicker(input) {
   }
 }
 
-function setDashboardFilterMode(mode, render = true) {
-  dashboardFilterMode = ["day","week","range","month"].includes(mode) ? mode : "day";
-  document.querySelectorAll("[data-dashboard-filter-mode]").forEach(btn =>
-    btn.classList.toggle("active", btn.dataset.dashboardFilterMode === dashboardFilterMode)
-  );
-  document.querySelectorAll("[data-dashboard-filter-control]").forEach(node =>
-    node.classList.toggle("active", node.dataset.dashboardFilterControl === dashboardFilterMode)
-  );
-
-  // Al seleccionar Rango, abrir inmediatamente el calendario "Desde".
-  // Si el navegador no soporta showPicker(), el campo queda enfocado y usa el selector nativo.
-  if (dashboardFilterMode === "range") openNativeDatePicker($("dashboardFilterStart"));
-
-  if (render && currentRole === "admin") renderDashboard();
-}
-
 function resetDashboardFilterToToday() {
   const today = isoDay();
-  if ($("dashboardFilterDay")) $("dashboardFilterDay").value = today;
-  if ($("dashboardFilterWeek")) $("dashboardFilterWeek").value = isoWeekValue(new Date());
   if ($("dashboardFilterStart")) $("dashboardFilterStart").value = today;
   if ($("dashboardFilterEnd")) $("dashboardFilterEnd").value = today;
-  if ($("dashboardFilterMonth")) $("dashboardFilterMonth").value = monthKey(new Date());
-  setDashboardFilterMode("day");
+  if (currentRole === "admin") renderDashboard();
 }
 
 function initializeDashboardFilter() {
   const today = isoDay();
-  if ($("dashboardFilterDay")) $("dashboardFilterDay").value = today;
-  if ($("dashboardFilterWeek")) $("dashboardFilterWeek").value = isoWeekValue(new Date());
   if ($("dashboardFilterStart")) $("dashboardFilterStart").value = today;
   if ($("dashboardFilterEnd")) $("dashboardFilterEnd").value = today;
-  if ($("dashboardFilterMonth")) $("dashboardFilterMonth").value = monthKey(new Date());
-  setDashboardFilterMode("day", false);
 }
 
 function toast(message) {
@@ -315,10 +206,6 @@ function cleanupListeners() {
     try { unsub(); } catch {}
   }
   unsubscribers = [];
-  if (adminRenderFrame) cancelAnimationFrame(adminRenderFrame);
-  if (barberRenderFrame) cancelAnimationFrame(barberRenderFrame);
-  adminRenderFrame = 0;
-  barberRenderFrame = 0;
 }
 
 function usernameToEmail(username) {
@@ -435,6 +322,7 @@ function wireStaticUI() {
     btn.addEventListener("click", () => setBarberServiceView(btn.dataset.serviceView))
   );
 
+  bind("openTodayAppointmentsBtn", "click", openDashboardAppointmentsModal);
   bind("appointmentsTodayBtn", "click", openTodayAppointmentsModal);
   bind("todayAppointmentsCard", "click", openDashboardAppointmentsModal);
   bind("todayAppointmentsCard", "keydown", e => {
@@ -443,10 +331,7 @@ function wireStaticUI() {
   bind("openBarberTodayAppointmentsBtn", "click", openBarberTodayAppointmentsModal);
   bind("toggleBarberAvailabilityBtn", "click", toggleCurrentBarberChairOccupied);
 
-  document.querySelectorAll("[data-dashboard-filter-mode]").forEach(btn =>
-    btn.addEventListener("click", () => setDashboardFilterMode(btn.dataset.dashboardFilterMode))
-  );
-  ["dashboardFilterDay","dashboardFilterWeek","dashboardFilterStart","dashboardFilterEnd","dashboardFilterMonth"].forEach(id => {
+  ["dashboardFilterStart","dashboardFilterEnd"].forEach(id => {
     bind(id, "change", () => currentRole === "admin" && renderDashboard());
     bind(id, "click", e => {
       const input = e.currentTarget;
@@ -531,14 +416,6 @@ function wireStaticUI() {
   bind("chairOpsAssignBtn", "click", () => currentChairOpsId && openChairAssignmentModal(currentChairOpsId));
   bind("chairOpsBusyBtn", "click", () => currentChairOpsId && toggleChairOccupied(currentChairOpsId));
   bind("chairOpsActiveBtn", "click", () => currentChairOpsId && toggleChairActive(currentChairOpsId));
-  bind("barberProfitFilterBtn", "click", () => {
-    const period = dashboardPeriod();
-    const modalMonth = $("barberProfitMonth");
-    if (modalMonth) modalMonth.value = period.start.slice(0,7);
-    if ($("reportMonth")) $("reportMonth").value = period.start.slice(0,7);
-    renderBarberProfitFilter();
-    openModal("barberProfitModal");
-  });
   bind("barberProfitSelect", "change", renderBarberProfitFilter);
   bind("barberProfitMonth", "change", renderBarberProfitFilter);
   bind("exportExcelBtn", "click", () => {
@@ -605,7 +482,6 @@ async function barberLogin(e) {
 
     currentRole = "barber";
     currentBarber = profile;
-    resetBarberChargeForm();
     closeModal("barberLoginModal");
     hide("accessScreen");
     show("barberApp");
@@ -673,37 +549,37 @@ function subscribeAdmin() {
 
   unsubscribers.push(onSnapshot(collection(db, "chairs"), snap => {
     state.chairs = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>(a.order||999)-(b.order||999));
-    scheduleAdminRender();
+    renderAdminAll();
   }));
 
   unsubscribers.push(onSnapshot(query(collection(db, "users"), where("role","==","barber")), snap => {
     state.barbers = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>(a.name||"").localeCompare(b.name||""));
-    scheduleAdminRender();
+    renderAdminAll();
   }));
 
   unsubscribers.push(onSnapshot(collection(db, "services"), snap => {
     state.services = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>(a.order||999)-(b.order||999));
-    scheduleAdminRender();
+    renderAdminAll();
   }));
 
   unsubscribers.push(onSnapshot(collection(db, "products"), snap => {
     state.products = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>(a.order||999)-(b.order||999));
-    scheduleAdminRender();
+    renderAdminAll();
   }));
 
   unsubscribers.push(onSnapshot(collection(db, "sales"), snap => {
     state.sales = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    scheduleAdminRender();
+    renderAdminAll();
   }));
 
   unsubscribers.push(onSnapshot(collection(db, "chargeRequests"), snap => {
     state.chargeRequests = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    scheduleAdminRender();
+    renderAdminAll();
   }));
 
   unsubscribers.push(onSnapshot(collection(db, "appointments"), snap => {
     state.appointments = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    scheduleAdminRender();
+    renderAdminAll();
   }));
 }
 
@@ -712,39 +588,39 @@ function subscribeBarber(uid) {
 
   unsubscribers.push(onSnapshot(collection(db, "chairs"), snap => {
     state.chairs = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => x.active !== false).sort((a,b)=>(a.order||999)-(b.order||999));
-    scheduleBarberRender();
+    renderBarberPortal();
   }));
 
   unsubscribers.push(onSnapshot(collection(db, "services"), snap => {
     state.services = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => x.active !== false).sort((a,b)=>(a.order||999)-(b.order||999));
-    scheduleBarberRender();
+    renderBarberPortal();
   }));
 
   unsubscribers.push(onSnapshot(collection(db, "products"), snap => {
     state.products = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => x.active !== false).sort((a,b)=>(a.order||999)-(b.order||999));
-    scheduleBarberRender();
+    renderBarberPortal();
   }));
 
   unsubscribers.push(onSnapshot(query(collection(db, "chargeRequests"), where("barberId","==",uid)), snap => {
     state.chargeRequests = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    scheduleBarberRender();
+    renderBarberPortal();
   }));
 
   unsubscribers.push(onSnapshot(doc(db, "users", uid), snap => {
     if (!snap.exists()) return;
     currentBarber = { id:snap.id, ...snap.data() };
     if (currentBarber.active === false) return logout();
-    scheduleBarberRender();
+    renderBarberPortal();
   }));
 
   unsubscribers.push(onSnapshot(query(collection(db, "sales"), where("barberId","==",uid)), snap => {
     state.sales = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    scheduleBarberRender();
+    renderBarberPortal();
   }));
 
   unsubscribers.push(onSnapshot(query(collection(db, "appointments"), where("barberId","==",uid)), snap => {
     state.appointments = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    scheduleBarberRender();
+    renderBarberPortal();
   }));
 }
 
@@ -867,6 +743,7 @@ function renderDashboard() {
 
   const singleToday = period.start === isoDay() && period.end === isoDay();
   const periodWord = singleToday ? "hoy" : "período";
+  const periodTitle = singleToday ? "HOY" : period.label.toUpperCase();
 
   if ($("dashboardPeriodLabel")) $("dashboardPeriodLabel").textContent = period.label;
   if ($("statSalesLabel")) $("statSalesLabel").textContent = singleToday ? "Ventas de hoy" : "Ventas del período";
@@ -885,6 +762,47 @@ function renderDashboard() {
 
   renderDashboardChairStatus();
 
+  if ($("dashboardChairKicker")) $("dashboardChairKicker").textContent = `PUESTOS · ${periodTitle}`;
+  if ($("dashboardChairHeading")) $("dashboardChairHeading").textContent = singleToday ? "Producción diaria por puesto" : "Producción por puesto";
+  if ($("dashboardChairCaption")) $("dashboardChairCaption").textContent = `Barbero asignado, total generado y distribución · ${period.label}.`;
+  if ($("dashboardAgendaKicker")) $("dashboardAgendaKicker").textContent = singleToday ? "AGENDA DE HOY" : "AGENDA DEL PERÍODO";
+  if ($("dashboardAgendaHeading")) $("dashboardAgendaHeading").textContent = singleToday ? "Citas del día" : "Citas del período";
+  if ($("openTodayAppointmentsBtn")) $("openTodayAppointmentsBtn").textContent = singleToday ? "Ver citas de hoy" : "Ver citas del período";
+
+  const recent = [...ds]
+    .sort((a,b)=>jsDate(b.date)-jsDate(a.date))
+    .slice(0,5);
+
+  const recentSalesNode = $("recentSales");
+  if (recentSalesNode) recentSalesNode.innerHTML = recent.length ? recent.map(s =>     `
+    <div class="list-row">
+      <div>
+        <div class="item-title">${escapeHtml(s.serviceName)}</div>
+        <div class="item-meta">${escapeHtml(s.barberName)} · ${fmtDateTime(s.date)}</div>
+      </div>
+      <div class="amount">${money(s.total)}</div>
+    </div>
+  `).join("") : `<div class="empty">No hay cobros en ${escapeHtml(period.label)}.</div>`;
+
+  const periodRows = [...da]
+    .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time))
+    .slice(0,4);
+
+  const upcomingAppointmentsNode = $("upcomingAppointments");
+  if (upcomingAppointmentsNode) upcomingAppointmentsNode.innerHTML = periodRows.length ? periodRows.map(a =>     `
+    <button class="list-row dashboard-appt-row" type="button" data-open-dashboard-appts>
+      <div>
+        <div class="item-title">${fmtDateOnly(a.date)} · ${a.time} · ${escapeHtml(a.clientName)}</div>
+        <div class="item-meta">${escapeHtml(a.serviceName)} · ${escapeHtml(a.barberName || "Por asignar")}</div>
+      </div>
+      <span class="status ${a.status}">${statusLabel(a.status)}</span>
+    </button>
+  `).join("") : `<div class="empty">No hay citas en ${escapeHtml(period.label)}.</div>`;
+
+  document.querySelectorAll("[data-open-dashboard-appts]").forEach(btn =>
+    btn.addEventListener("click", openDashboardAppointmentsModal)
+  );
+
   renderBarberPerformanceChart(ds, period);
 }
 
@@ -899,14 +817,12 @@ function renderDashboardChairStatus() {
 
   node.innerHTML = state.chairs.map((chair,index) => {
     const status = chairOperationalStatus(chair);
-    const assigned = chairAssignedBarbers(chair.id, true)[0] || null;
     const statusLabelText = status.key === "occupied" ? "Ocupado" : status.key === "available" ? "Disponible" : "Fuera de servicio";
     const chairIndex = String(index + 1).padStart(2, "0");
     return `
       <button class="dashboard-chair-status-badge ${status.key}" type="button" data-dashboard-chair-open="${chair.id}" title="Abrir ${escapeHtml(chair.name)}">
         <span class="dashboard-chair-badge-name">${escapeHtml((chair.name || `Puesto ${index+1}`).toUpperCase())}</span>
         <span class="dashboard-chair-badge-meta">${chairIndex} · ${statusLabelText}</span>
-        <small>${assigned ? escapeHtml(assigned.name) : "Sin barbero asignado"}</small>
       </button>`;
   }).join("");
 
@@ -944,14 +860,15 @@ function renderBarberPerformanceChart(periodSales = [], period = dashboardPeriod
     return;
   }
 
-  const maxGross = Math.max(...rows.map(r => r.gross), 1);
-  const maxPay = Math.max(...rows.map(r => r.pay), 1);
+  // Producción y ganancia comparten exactamente la misma escala.
+  // Ejemplo: producción 66 y ganancia 33 => barras 100% y 50% respectivamente.
+  const chartMax = Math.max(...rows.flatMap(r => [r.gross, r.pay]), 1);
 
   node.innerHTML = `
     <div class="performance-premium-grid">
       ${rows.map((r, index) => {
-        const grossPct = Math.min(100, Math.max(r.gross > 0 ? 5 : 0, (r.gross / maxGross) * 100));
-        const payPct = Math.min(100, Math.max(r.pay > 0 ? 5 : 0, (r.pay / maxPay) * 100));
+        const grossPct = Math.min(100, Math.max(r.gross > 0 ? 3 : 0, (r.gross / chartMax) * 100));
+        const payPct = Math.min(100, Math.max(r.pay > 0 ? 3 : 0, (r.pay / chartMax) * 100));
         const initials = (r.barber.name || "B")
           .split(/\s+/)
           .slice(0, 2)
@@ -1015,14 +932,14 @@ function openBarberPerformanceDetail(barberId) {
 
   const gross = rows.reduce((sum,s)=>sum+Number(s.total||0),0);
   const pay = rows.reduce((sum,s)=>sum+Number(s.barberAmount||0),0);
-  const average = rows.length ? gross / rows.length : 0;
+  const serviceCommission = Number(barber.commission ?? 50);
 
   $("performanceDetailName").textContent = barber.name || "Barbero";
   $("performanceDetailPeriod").textContent = period.label;
   $("performanceDetailGross").textContent = money(gross);
   $("performanceDetailPay").textContent = money(pay);
   $("performanceDetailServices").textContent = rows.length;
-  $("performanceDetailAverage").textContent = money(average);
+  $("performanceDetailCommission").textContent = `${serviceCommission}%`;
   $("performanceDetailCount").textContent = `${rows.length} movimiento${rows.length===1?"":"s"}`;
 
   $("performanceDetailRows").innerHTML = rows.length ? rows.map(s => `
@@ -1038,34 +955,135 @@ function openBarberPerformanceDetail(barberId) {
   openModal("barberPerformanceDetailModal");
 }
 
-function printBarberPerformanceReport() {
+async function ensurePerformanceSignatureData(barber) {
+  let adminCedula = String(currentAdmin?.cedula || "").trim();
+  let barberCedula = String(barber?.cedula || "").trim();
+
+  if (!adminCedula) {
+    const entered = window.prompt("Ingresa la cédula del administrador para incluirla en el reporte:", "");
+    if (entered === null || !String(entered).trim()) {
+      toast("La cédula del administrador es necesaria para imprimir el reporte.");
+      return null;
+    }
+    adminCedula = String(entered).trim();
+    currentAdmin = { ...(currentAdmin || {}), cedula:adminCedula };
+    try {
+      if (auth.currentUser?.uid) {
+        await updateDoc(doc(db, "users", auth.currentUser.uid), {
+          cedula:adminCedula,
+          updatedAt:serverTimestamp()
+        });
+      }
+    } catch (err) {
+      console.warn("No se pudo guardar la cédula del administrador; se usará solo en este reporte.", err);
+    }
+  }
+
+  if (!barberCedula) {
+    const entered = window.prompt(`Ingresa la cédula de ${barber.name || "el barbero"}:`, "");
+    if (entered === null || !String(entered).trim()) {
+      toast("La cédula del barbero es necesaria para imprimir el reporte.");
+      return null;
+    }
+    barberCedula = String(entered).trim();
+    barber.cedula = barberCedula;
+    try {
+      await updateDoc(doc(db, "users", barber.id), {
+        cedula:barberCedula,
+        updatedAt:serverTimestamp()
+      });
+    } catch (err) {
+      console.warn("No se pudo guardar la cédula del barbero; se usará solo en este reporte.", err);
+    }
+  }
+
+  return { adminCedula, barberCedula };
+}
+
+async function printBarberPerformanceReport() {
   if (!currentPerformanceBarberId) return toast("Selecciona un barbero primero.");
   const barber = state.barbers.find(b => b.id === currentPerformanceBarberId);
   if (!barber) return toast("No se encontró el barbero.");
+
+  const printWindow = window.open("", "_blank", "width=1100,height=850");
+  if (!printWindow) return toast("Tu navegador bloqueó la ventana de impresión.");
+
+  const signatureData = await ensurePerformanceSignatureData(barber);
+  if (!signatureData) {
+    printWindow.close();
+    return;
+  }
+
   const period = dashboardPeriod();
   const rows = state.sales
     .filter(s => s.barberId === barber.id && saleInDashboardPeriod(s, period))
     .sort((a,b)=>jsDate(a.date)-jsDate(b.date));
-  const gross = rows.reduce((sum,s)=>sum+Number(s.total||0),0);
   const pay = rows.reduce((sum,s)=>sum+Number(s.barberAmount||0),0);
-  const average = rows.length ? gross / rows.length : 0;
+  const serviceCommission = Number(barber.commission ?? 50);
+  const adminName = currentAdmin?.name || "Administrador";
   const generatedAt = new Date().toLocaleString("es-PA", {dateStyle:"long",timeStyle:"short"});
   const details = rows.map((s,index)=>`
     <tr><td>${index+1}</td><td>${receiptSafeText(fmtDateTime(s.date))}</td><td>${receiptSafeText(s.serviceName||"Servicio")}</td><td>${receiptSafeText(s.payment||"—")}</td><td class="num">${receiptSafeText(money(s.total))}</td><td class="num pay">${receiptSafeText(money(s.barberAmount))}</td></tr>`).join("");
 
-  const printWindow = window.open("", "_blank", "width=1100,height=850");
-  if (!printWindow) return toast("Tu navegador bloqueó la ventana de impresión.");
   printWindow.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Rendimiento - ${receiptSafeText(barber.name)}</title><style>
-  *{box-sizing:border-box}body{margin:0;background:#fff;color:#222;font-family:Arial,Helvetica,sans-serif}.page{max-width:1000px;margin:0 auto;padding:24px}.head{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:14px;border-bottom:2px solid #c9a04d}.brand{display:flex;gap:13px;align-items:center}.logo{width:50px;height:50px;border-radius:12px;background:#e8d39f;display:grid;place-items:center;font-weight:900;font-size:20px;color:#51380b}.head h1{margin:0;font-size:25px}.sub{margin:4px 0 0;color:#75581f;text-transform:uppercase;font-size:10px;letter-spacing:.9px}.doc{text-align:right}.doc h2{margin:0;font-size:19px}.doc p{margin:5px 0 0;color:#666;font-size:10px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin:18px 0;border:1px solid #e3ded3;border-radius:10px;padding:13px}.meta div{display:flex;justify-content:space-between;gap:12px}.meta span{color:#777}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}.kpi{border:1px solid #ddd8ce;border-radius:10px;padding:12px}.kpi.gold{background:#f4e5bf;border-color:#d3ad60}.kpi span{display:block;color:#76674d;font-size:9px;text-transform:uppercase;letter-spacing:.6px}.kpi strong{display:block;margin-top:5px;font-size:19px}.section-title{margin:20px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:#755512}table{width:100%;border-collapse:collapse;font-size:10px}th{background:#232323;color:#fff;text-align:left;padding:8px;font-size:9px;text-transform:uppercase}td{padding:8px;border-bottom:1px solid #e6e1d8}.num{text-align:right;white-space:nowrap}.pay{font-weight:700;color:#7a5814}.footer{margin-top:28px;padding-top:10px;border-top:1px solid #ddd;color:#777;text-align:center;font-size:9px}.print-note{text-align:center;color:#666;font-size:10px;margin-bottom:10px}@media print{.print-note{display:none}.page{padding:0}@page{size:A4;margin:10mm}}
+  @page{size:A4;margin:12mm}*{box-sizing:border-box}body{margin:0;background:#fff;color:#222;font-family:Arial,Helvetica,sans-serif}.page{max-width:1000px;margin:0 auto;padding:24px}.head{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:14px;border-bottom:2px solid #c9a04d}.brand{display:flex;gap:13px;align-items:center}.logo{width:50px;height:50px;border-radius:12px;background:#e8d39f;display:grid;place-items:center;font-weight:900;font-size:20px;color:#51380b}.head h1{margin:0;font-size:25px}.sub{margin:4px 0 0;color:#75581f;text-transform:uppercase;font-size:10px;letter-spacing:.9px}.doc{text-align:right}.doc h2{margin:0;font-size:19px}.doc p{margin:5px 0 0;color:#666;font-size:10px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin:18px 0;border:1px solid #e3ded3;border-radius:10px;padding:13px}.meta div{display:flex;justify-content:space-between;gap:12px}.meta span{color:#777}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}.kpi{border:1px solid #ddd8ce;border-radius:10px;padding:12px}.kpi.gold{background:#f4e5bf;border-color:#d3ad60}.kpi span{display:block;color:#76674d;font-size:9px;text-transform:uppercase;letter-spacing:.6px}.kpi strong{display:block;margin-top:5px;font-size:19px}.section-title{margin:20px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:#755512}table{width:100%;border-collapse:collapse;font-size:10px}th{background:#232323;color:#fff;text-align:left;padding:8px;font-size:9px;text-transform:uppercase}td{padding:8px;border-bottom:1px solid #e6e1d8}.num{text-align:right;white-space:nowrap}.pay{font-weight:700;color:#7a5814}.ack{margin:18px 0 24px;padding:11px 13px;border-left:4px solid #c9a04d;background:#faf8f3;color:#444;font-size:10px;line-height:1.5}.signatures{display:grid;grid-template-columns:1fr 1fr;gap:56px;margin-top:52px;break-inside:avoid}.sig{text-align:center}.sig-line{border-top:1px solid #222;padding-top:7px;font-weight:700}.sig-name{margin-top:5px;font-size:10px}.sig-id{margin-top:3px;color:#666;font-size:9px}.sig-date{margin-top:8px;color:#777;font-size:9px}.footer{margin-top:28px;padding-top:10px;border-top:1px solid #ddd;color:#777;text-align:center;font-size:9px}.print-note{text-align:center;color:#666;font-size:10px;margin-bottom:10px}@media print{.print-note{display:none}.page{padding:0}}
   </style></head><body><div class="print-note">En la ventana de impresión selecciona <b>Guardar como PDF</b>.</div><main class="page">
   <header class="head"><div class="brand"><div class="logo">LM</div><div><h1>Barbería Los Mágicos</h1><p class="sub">Reporte individual de rendimiento</p></div></div><div class="doc"><h2>${receiptSafeText(barber.name)}</h2><p>${receiptSafeText(period.label)}</p><p>Generado: ${receiptSafeText(generatedAt)}</p></div></header>
-  <section class="meta"><div><span>Barbero</span><strong>${receiptSafeText(barber.name)}</strong></div><div><span>Puesto</span><strong>${receiptSafeText(barber.chairName||"Sin puesto")}</strong></div><div><span>Período</span><strong>${receiptSafeText(period.label)}</strong></div><div><span>Estado</span><strong>${barber.active===false?"Inactivo":"Activo"}</strong></div></section>
-  <section class="kpis"><div class="kpi"><span>Producción total</span><strong>${receiptSafeText(money(gross))}</strong></div><div class="kpi gold"><span>Ganancia barbero</span><strong>${receiptSafeText(money(pay))}</strong></div><div class="kpi"><span>Servicios</span><strong>${rows.length}</strong></div><div class="kpi"><span>Promedio</span><strong>${receiptSafeText(money(average))}</strong></div></section>
-  <h3 class="section-title">Detalle de movimientos</h3><table><thead><tr><th>#</th><th>Fecha / hora</th><th>Servicio</th><th>Método</th><th class="num">Total</th><th class="num">Pago barbero</th></tr></thead><tbody>${details || `<tr><td colspan="6">Sin movimientos en el período seleccionado.</td></tr>`}</tbody></table>
+  <section class="meta"><div><span>Barbero</span><strong>${receiptSafeText(barber.name)}</strong></div><div><span>Cédula</span><strong>${receiptSafeText(signatureData.barberCedula)}</strong></div><div><span>Puesto</span><strong>${receiptSafeText(barber.chairName||"Sin puesto")}</strong></div><div><span>Período</span><strong>${receiptSafeText(period.label)}</strong></div></section>
+  <section class="kpis"><div class="kpi gold"><span>Ganancia barbero</span><strong>${receiptSafeText(money(pay))}</strong></div><div class="kpi"><span>Servicios</span><strong>${rows.length}</strong></div><div class="kpi"><span>Porcentaje del barbero</span><strong>${receiptSafeText(serviceCommission)}%</strong></div></section>
+  <h3 class="section-title">Detalle de movimientos</h3><table><thead><tr><th>#</th><th>Fecha / hora</th><th>Servicio</th><th>Método</th><th class="num">Total cobrado</th><th class="num">Pago barbero</th></tr></thead><tbody>${details || `<tr><td colspan="6">Sin movimientos en el período seleccionado.</td></tr>`}</tbody></table>
+  <div class="ack">Este reporte corresponde al período <b>${receiptSafeText(period.label)}</b> y refleja el pago del barbero según el porcentaje configurado en el sistema.</div>
+  <section class="signatures"><div class="sig"><div class="sig-line">Firma del Administrador</div><div class="sig-name">${receiptSafeText(adminName)}</div><div class="sig-id">Cédula: ${receiptSafeText(signatureData.adminCedula)}</div><div class="sig-date">Fecha: __________________</div></div><div class="sig"><div class="sig-line">Firma del Barbero</div><div class="sig-name">${receiptSafeText(barber.name)}</div><div class="sig-id">Cédula: ${receiptSafeText(signatureData.barberCedula)}</div><div class="sig-date">Fecha: __________________</div></div></section>
   <footer class="footer">Barbería Los Mágicos · Reporte generado por el sistema de gestión</footer></main><script>window.addEventListener('load',()=>setTimeout(()=>window.print(),250));</script></body></html>`);
   printWindow.document.close();
 }
 
+function renderDashboardChairCards(periodSales = [], period = dashboardPeriod()) {
+  const node = $("dashboardChairCards");
+  if (!node) return;
+  const singleToday = period.start === isoDay() && period.end === isoDay();
+
+  node.innerHTML = state.chairs.map((chair,index) => {
+    const sales = periodSales.filter(s => s.chairId === chair.id);
+    const total = sales.reduce((a,s)=>a+Number(s.total||0),0);
+    const barberPay = sales.reduce((a,s)=>a+Number(s.barberAmount||0),0);
+    const shopPay = sales.reduce((a,s)=>a+Number(s.shopAmount||0),0);
+    const assigned = state.barbers.filter(b => b.chairId === chair.id && b.active !== false);
+
+    return `
+      <article class="dashboard-chair-card">
+        <div class="dashboard-chair-top">
+          <div>
+            <span class="card-kicker">PUESTO ${String(index+1).padStart(2,"0")}</span>
+            <h4>${escapeHtml(chair.name)}</h4>
+          </div>
+          <div class="dashboard-chair-total"><span>${singleToday ? "GENERADO HOY" : "GENERADO PERÍODO"}</span><strong>${money(total)}</strong></div>
+        </div>
+
+        <div class="dashboard-chair-barber ${assigned.length ? "" : "empty-barber"}">
+          <span class="dashboard-chair-avatar">${assigned.length ? escapeHtml((assigned[0].name||"B").charAt(0).toUpperCase()) : "—"}</span>
+          <div>
+            <small>BARBERO ASIGNADO</small>
+            <strong>${assigned.length ? assigned.map(b=>escapeHtml(b.name)).join(", ") : "Sin barbero asignado"}</strong>
+          </div>
+        </div>
+
+        <div class="dashboard-chair-money">
+          <div><span>Barbero</span><strong>${money(barberPay)}</strong></div>
+          <div><span>Barbería</span><strong>${money(shopPay)}</strong></div>
+          <div><span>Servicios</span><strong>${sales.length}</strong></div>
+        </div>
+
+        <button class="chair-detail-btn" type="button" data-chair-day-detail="${chair.id}">
+          Ver detalle ${singleToday ? "del día" : "del período"} →
+        </button>
+      </article>`;
+  }).join("");
+
+  document.querySelectorAll("[data-chair-day-detail]").forEach(btn =>
+    btn.addEventListener("click", () => openChairDayDetail(btn.dataset.chairDayDetail))
+  );
+}
 
 function openChairDayDetail(chairId) {
   const chair = state.chairs.find(c => c.id === chairId);
@@ -1260,11 +1278,11 @@ function renderSales() {
 async function exportApprovedSalesExcel() {
   if (currentRole !== "admin") return toast("Solo el administrador puede exportar este historial.");
   if (!state.sales.length) return toast("No hay cobros aprobados para exportar.");
+  if (!window.ExcelJS) return toast("No se pudo cargar el generador de Excel. Revisa tu conexión a Internet.");
 
   try {
-    toast("Preparando Excel...");
-    const ExcelJS = await ensureExcelJS();
     const rows = [...state.sales].sort((a,b)=>jsDate(b.date)-jsDate(a.date));
+    const ExcelJS = window.ExcelJS;
     const wb = new ExcelJS.Workbook();
     wb.creator = "Barbería Los Mágicos";
     wb.title = "Cobros aprobados";
@@ -1695,6 +1713,63 @@ function openTodayAppointmentsModal() {
   openModal("todayAppointmentsModal");
 }
 
+function renderTodayAppointmentsModal() {
+  const node = $("todayAppointmentsModalList");
+  if (!node || currentRole !== "admin") return;
+
+  const today = state.appointments
+    .filter(a => a.date === isoDay() && !["completed","cancelled"].includes(a.status))
+    .sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+
+  $("todayAppointmentsModalCount").textContent = today.length;
+  $("todayAppointmentsDateLabel").textContent = new Date().toLocaleDateString("es-PA", {
+    weekday:"long", day:"2-digit", month:"long", year:"numeric"
+  });
+
+  node.innerHTML = today.length ? today.map(a => `
+    <article class="today-appt-card ${appointmentNeedsBarber(a) ? "needs-barber" : ""}">
+      <div class="today-appt-time">
+        <span>HORA</span><strong>${escapeHtml(a.time || "")}</strong>
+      </div>
+      <div class="today-appt-main">
+        <div class="today-appt-client">
+          <span class="status ${a.status}">${statusLabel(a.status)}</span>
+          <h4>${escapeHtml(a.clientName || "Cliente")}</h4>
+          <small>${escapeHtml(a.clientPhone || "")} · ${escapeHtml(a.serviceName || "")}</small>
+        </div>
+
+        ${appointmentNeedsBarber(a) ? `
+          <div class="today-assign-box">
+            <div><span>BARBERO</span><strong>Por asignar</strong></div>
+            <select data-assign-select="${a.id}">${assignmentOptionsForAppointment(a)}</select>
+            <button class="primary-btn tiny-assignment-btn" type="button" data-assign-appt="${a.id}">Asignar</button>
+          </div>
+        ` : `
+          <div class="today-assigned-barber">
+            <span>BARBERO</span>
+            <strong>${escapeHtml(a.barberName || "Barbero")}</strong>
+          </div>
+        `}
+      </div>
+      <div class="today-appt-actions">
+        ${a.status==="pending" ? `<button class="tiny-btn" data-today-appt="${a.id}" data-status="confirmed" type="button">Confirmar</button>` : ""}
+        ${a.status==="confirmed" ? `<button class="tiny-btn" data-today-appt="${a.id}" data-status="completed" type="button">Completar</button>` : ""}
+        ${!["completed","cancelled"].includes(a.status) ? `<button class="tiny-btn danger" data-today-appt="${a.id}" data-status="cancelled" type="button">Cancelar</button>` : ""}
+      </div>
+    </article>
+  `).join("") : `<div class="cash-empty"><span>◷</span><strong>Agenda libre</strong><p>No hay citas registradas para hoy.</p></div>`;
+
+  document.querySelectorAll("[data-assign-appt]").forEach(btn =>
+    btn.addEventListener("click", () => {
+      const select = document.querySelector(`[data-assign-select="${btn.dataset.assignAppt}"]`);
+      assignBarberToAppointment(btn.dataset.assignAppt, select?.value || "");
+    })
+  );
+
+  document.querySelectorAll("[data-today-appt]").forEach(btn =>
+    btn.addEventListener("click", () => changeAppointment(btn.dataset.todayAppt, btn.dataset.status))
+  );
+}
 
 async function assignBarberToAppointment(appointmentId, barberId) {
   if (!barberId) return toast("Selecciona un barbero.");
@@ -2045,6 +2120,7 @@ function openCommissionEditor(barberId) {
 
   $("commissionBarberId").value = barber.id;
   $("commissionBarberName").textContent = barber.name || "Barbero";
+  $("editBarberCedula").value = barber.cedula || "";
   $("editServiceCommission").value = Number(barber.commission ?? 50);
   $("editProductCommission").value = Number(barber.productCommission ?? 0);
   openModal("commissionModal");
@@ -2054,6 +2130,7 @@ async function saveBarberCommissions(e) {
   e.preventDefault();
 
   const barberId = $("commissionBarberId").value;
+  const cedula = String($("editBarberCedula")?.value || "").trim();
   const serviceCommission = Number($("editServiceCommission").value);
   const productCommission = Number($("editProductCommission").value);
 
@@ -2067,6 +2144,7 @@ async function saveBarberCommissions(e) {
 
   try {
     await updateDoc(doc(db, "users", barberId), {
+      cedula,
       commission:serviceCommission,
       productCommission,
       updatedAt:serverTimestamp()
@@ -2083,6 +2161,7 @@ async function createBarber(e) {
   e.preventDefault();
 
   const name = $("barberName").value.trim();
+  const cedula = String($("barberCedula")?.value || "").trim();
   const username = $("barberUsername").value.trim().toLowerCase();
   const password = $("barberPassword").value;
   const password2 = $("barberPassword2").value;
@@ -2091,6 +2170,7 @@ async function createBarber(e) {
   const chairId = $("barberFixedChair").value;
   const fixedChair = state.chairs.find(c => c.id === chairId && c.active !== false);
 
+  if (!cedula) return toast("Ingresa la cédula del barbero.");
   if (!/^[a-z0-9._-]{3,30}$/.test(username)) return toast("El usuario debe tener mínimo 3 caracteres, sin espacios.");
   if (password.length < 6) return toast("La contraseña debe tener mínimo 6 caracteres.");
   if (password !== password2) return toast("Las contraseñas no coinciden.");
@@ -2114,6 +2194,7 @@ async function createBarber(e) {
     await setDoc(doc(db, "users", uid), {
       role:"barber",
       name,
+      cedula,
       username,
       emailAlias:usernameToEmail(username),
       commission,
@@ -3405,49 +3486,20 @@ function renderBarberProfitFilter() {
 }
 
 
-function resetBarberChargeForm() {
-  barberChargeForceReset = true;
-
-  const form = $("barberChargeForm");
-  if (form) form.reset();
-
-  const serviceSelect = $("barberChargeService");
-  const productSelect = $("barberChargeProduct");
-  const priceInput = $("barberChargePrice");
-  const quantityInput = $("barberChargeProductQty");
-  const paymentSelect = $("barberChargePayment");
-  const noteInput = $("barberChargeNote");
-
-  if (serviceSelect) {
-    serviceSelect.value = "";
-    if (serviceSelect.options.length) serviceSelect.selectedIndex = 0;
-  }
-  if (productSelect) {
-    productSelect.value = "";
-    if (productSelect.options.length) productSelect.selectedIndex = 0;
-  }
-  if (priceInput) priceInput.value = "";
-  if (quantityInput) quantityInput.value = "1";
-  if (paymentSelect) paymentSelect.value = "Efectivo";
-  if (noteInput) noteInput.value = "";
-
-  barberProductCart = [];
-}
-
 function renderBarberChargeOptions() {
   if (currentRole !== "barber") return;
 
   const serviceSelect = $("barberChargeService");
   const chairInput = $("barberChargeChair");
   const productSelect = $("barberChargeProduct");
-  const selectedService = barberChargeForceReset ? "" : serviceSelect.value;
-  const selectedProduct = barberChargeForceReset ? "" : (productSelect?.value || "");
+  const selectedService = serviceSelect.value;
+  const selectedProduct = productSelect?.value || "";
 
   serviceSelect.innerHTML = state.services.length
-    ? `<option value="" selected>Seleccionar servicio</option>` + state.services.map(s =>
+    ? `<option value="">Selecciona un servicio...</option>` + state.services.map(s =>
         `<option value="${s.id}">${escapeHtml(s.name)} · ${money(s.price)}</option>`
       ).join("")
-    : `<option value="" selected>No hay servicios activos</option>`;
+    : `<option value="">No hay servicios activos</option>`;
 
   if (productSelect) {
     const availableProducts = state.products.filter(p => Number(p.stock || 0) > 0);
@@ -3460,21 +3512,10 @@ function renderBarberChargeOptions() {
 
   if (selectedService && state.services.some(s => s.id === selectedService)) {
     serviceSelect.value = selectedService;
-  } else {
-    serviceSelect.value = "";
-    serviceSelect.selectedIndex = 0;
   }
-  if (productSelect) {
-    if (selectedProduct && state.products.some(p => p.id === selectedProduct)) {
-      productSelect.value = selectedProduct;
-    } else {
-      productSelect.value = "";
-      if (productSelect.options.length) productSelect.selectedIndex = 0;
-    }
+  if (selectedProduct && state.products.some(p => p.id === selectedProduct)) {
+    productSelect.value = selectedProduct;
   }
-
-  // Mantén el reinicio pendiente hasta que el catálogo de servicios haya cargado.
-  if (barberChargeForceReset && state.services.length) barberChargeForceReset = false;
 
   const fixedChair = state.chairs.find(c =>
     c.id === currentBarber?.chairId && c.active !== false
@@ -3500,12 +3541,15 @@ function renderBarberChargeOptions() {
     chairDisplay?.classList.add("chair-missing");
   }
 
+  // Si no hay servicio seleccionado, usar automáticamente el primero del catálogo
+  if (!serviceSelect.value && state.services.length) {
+    serviceSelect.value = state.services[0].id;
+  }
+
   const chosenService = state.services.find(s => s.id === serviceSelect.value);
   const priceInput = $("barberChargePrice");
   if (priceInput) {
-    if (!chosenService) {
-      priceInput.value = "";
-    } else if (!priceInput.value || Number(priceInput.value) <= 0 || !selectedService) {
+    if (chosenService && (!priceInput.value || Number(priceInput.value) <= 0 || !selectedService)) {
       priceInput.value = Number(chosenService.price || 0).toFixed(2);
     }
   }
@@ -3693,7 +3737,8 @@ async function submitBarberChargeRequest(e) {
       createdBy:auth.currentUser.uid
     });
 
-    resetBarberChargeForm();
+    e.target.reset();
+    barberProductCart = [];
     renderBarberChargeOptions();
     renderBarberProductCart();
     renderBarberChargePreview();
@@ -4204,14 +4249,12 @@ async function createAppointment(e) {
     return toast("No hay barberos disponibles en ese horario.");
   }
 
+  const apptRef = doc(collection(db, "appointments"));
   let reserved = false;
 
   for (const candidate of candidates) {
     const id = slotId(candidate.id, day, time);
     const slotRef = doc(db, "bookedSlots", id);
-    // La regla de Firestore exige que la cita use el mismo ID del horario reservado.
-    // Esto también garantiza una sola cita por barbero/fecha/hora.
-    const apptRef = doc(db, "appointments", id);
 
     try {
       await runTransaction(db, async tx => {
@@ -4255,9 +4298,7 @@ async function createAppointment(e) {
       reserved = true;
       break;
     } catch (err) {
-      if (String(err?.message).includes("SLOT_TAKEN")) continue;
-      console.error("Error creando cita:", err);
-      return toast(firebaseErrorMessage(err, "No se pudo reservar la cita. Revisa la conexión e intenta nuevamente."));
+      if (!String(err?.message).includes("SLOT_TAKEN")) throw err;
     }
   }
 
@@ -4285,9 +4326,44 @@ function renderClientAppointments() {
   `).join("") : `<div class="empty">Aún no has creado citas desde este dispositivo.</div>`;
 }
 
+function exportCsv() {
+  const selectedMonth = $("reportMonth")?.value || monthKey(new Date());
+  const rows = state.sales
+    .filter(s => monthKey(s.date) === selectedMonth)
+    .sort((a,b)=>jsDate(a.date)-jsDate(b.date));
+
+  const header = ["Fecha","Barbero","Puesto","Servicio","Metodo","Total cobrado","Comision %","Saldo barbero","Ingreso barberia"];
+  const data = rows.map(s => [
+    jsDate(s.date).toLocaleString("es-PA"),
+    s.barberName,
+    s.chairName,
+    s.serviceName,
+    s.payment,
+    Number(s.total || 0).toFixed(2),
+    Number(s.commission || 0).toFixed(2),
+    Number(s.barberAmount || 0).toFixed(2),
+    Number(s.shopAmount || 0).toFixed(2)
+  ]);
+
+  const csv = [header,...data]
+    .map(r => r.map(v => `"${String(v ?? "").replaceAll('"','""')}"`).join(","))
+    .join("\\n");
+
+  const blob = new Blob(["\\ufeff"+csv], { type:"text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `Los_Magicos_Reporte_${selectedMonth}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 
 async function exportExcelReport() {
+  if (!window.ExcelJS) {
+    return toast("No se pudo cargar el generador de Excel. Revisa tu conexión a Internet.");
+  }
+
   const period = dashboardPeriod();
   const selectedMonth = period.start.slice(0,7);
   const periodLabel = period.label;
@@ -4302,7 +4378,7 @@ async function exportExcelReport() {
   toast("Generando Excel premium...");
 
   try {
-    const ExcelJS = await ensureExcelJS();
+    const ExcelJS = window.ExcelJS;
     const wb = new ExcelJS.Workbook();
     wb.creator = "Barbería Los Mágicos";
     wb.lastModifiedBy = "Barbería Los Mágicos";
@@ -4700,7 +4776,6 @@ async function restoreSession(user) {
     } else if (profile.role === "barber" && profile.active !== false) {
       currentRole = "barber";
       currentBarber = profile;
-      resetBarberChargeForm();
       hide("accessScreen");
       show("barberApp");
       subscribeBarber(profile.id);

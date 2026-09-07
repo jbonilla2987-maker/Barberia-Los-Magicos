@@ -7,9 +7,8 @@
   <meta name="theme-color" content="#09090b">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260907-v44-servicio-reset-puestos-grandes">
+  <link rel="stylesheet" href="./styles.css?v=20260907-v41-final-publicacion">
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -142,23 +141,7 @@
                 <button class="dashboard-filter-today" id="dashboardFilterTodayBtn" type="button">Hoy</button>
               </div>
 
-              <div class="dashboard-filter-modes" role="group" aria-label="Tipo de período">
-                <button class="active" data-dashboard-filter-mode="day" type="button">Día</button>
-                <button data-dashboard-filter-mode="week" type="button">Semana</button>
-                <button data-dashboard-filter-mode="month" type="button">Mes</button>
-                <button data-dashboard-filter-mode="range" type="button">Rango</button>
-              </div>
-
-              <div class="dashboard-filter-control active" data-dashboard-filter-control="day">
-                <label>Fecha<input id="dashboardFilterDay" type="date"></label>
-              </div>
-              <div class="dashboard-filter-control" data-dashboard-filter-control="week">
-                <label>Semana<input id="dashboardFilterWeek" type="week"></label>
-              </div>
-              <div class="dashboard-filter-control" data-dashboard-filter-control="month">
-                <label>Mes<input id="dashboardFilterMonth" type="month"></label>
-              </div>
-              <div class="dashboard-filter-control dashboard-range-control" data-dashboard-filter-control="range">
+              <div class="dashboard-filter-control dashboard-range-control dashboard-range-only active">
                 <label class="dashboard-date-label">Desde<input id="dashboardFilterStart" type="date" aria-label="Fecha desde"></label>
                 <label class="dashboard-date-label">Hasta<input id="dashboardFilterEnd" type="date" aria-label="Fecha hasta"></label>
               </div>
@@ -168,7 +151,6 @@
               <span class="dashboard-report-kicker">REPORTES DEL PERÍODO</span>
               <div class="dashboard-report-buttons">
                 <button class="ghost-btn dashboard-report-btn" id="printReportBtn" type="button">Imprimir / PDF</button>
-                <button class="primary-btn dashboard-profit-btn" id="barberProfitFilterBtn" type="button"><span>★</span> Ganancias por barbero</button>
                 <button class="primary-btn dashboard-excel-btn" id="exportExcelBtn" type="button">Exportar Excel</button>
               </div>
             </div>
@@ -453,7 +435,7 @@
         </div>
 
         <div class="barber-charge-layout">
-          <form id="barberChargeForm" class="barber-charge-form premium-charge-form" autocomplete="off">
+          <form id="barberChargeForm" class="barber-charge-form premium-charge-form">
             <div class="charge-form-section-title">
               <span>01</span>
               <div><strong>Trabajo realizado</strong><small>Servicio del catálogo + puesto fijo asignado</small></div>
@@ -461,7 +443,7 @@
 
             <label class="charge-field charge-field-wide">
               <span class="charge-label">Servicio</span>
-              <select id="barberChargeService" required autocomplete="off"><option value="" selected>Seleccionar servicio</option></select>
+              <select id="barberChargeService" required></select>
               <small>Servicios creados y activos por el administrador.</small>
             </label>
 
@@ -733,7 +715,7 @@
         <article><span>Producción total</span><strong id="performanceDetailGross">USD 0.00</strong><small>Total generado</small></article>
         <article class="gold-kpi"><span>Ganancia barbero</span><strong id="performanceDetailPay">USD 0.00</strong><small>Pago correspondiente</small></article>
         <article><span>Servicios</span><strong id="performanceDetailServices">0</strong><small>Movimientos del período</small></article>
-        <article><span>Promedio por servicio</span><strong id="performanceDetailAverage">USD 0.00</strong><small>Producción promedio</small></article>
+        <article><span>Porcentaje del barbero</span><strong id="performanceDetailCommission">50%</strong><small>Comisión de servicios</small></article>
       </div>
 
       <div class="barber-detail-table-head">
@@ -808,6 +790,7 @@
       <p class="eyebrow">NUEVO USUARIO</p><h2>Crear barbero</h2><p class="modal-copy">El usuario tendrá su propia contraseña para entrar a su panel.</p>
       <form id="barberForm" class="form-grid">
         <label>Nombre<input id="barberName" required placeholder="Nombre completo"></label>
+        <label>Cédula<input id="barberCedula" required placeholder="Ej. 8-123-4567" autocomplete="off"></label>
         <label>Usuario<input id="barberUsername" required minlength="3" placeholder="Ej. carlos"></label>
         <label>Contraseña
           <div class="password-input-wrap">
@@ -868,6 +851,9 @@
         <input id="commissionBarberId" type="hidden">
         <label>Comisión por servicios (%)
           <input id="editServiceCommission" type="number" min="0" max="100" step="0.01" required>
+        </label>
+        <label>Cédula del barbero
+          <input id="editBarberCedula" placeholder="Ej. 8-123-4567" autocomplete="off">
         </label>
         <label>Comisión por productos (%)
           <input id="editProductCommission" type="number" min="0" max="100" step="0.01" required>
@@ -1090,6 +1076,7 @@
     </div>
   </div>
 
-  <script type="module" src="./app.js?v=20260907-v44-servicio-reset-puestos-grandes"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script type="module" src="./app.js?v=20260907-v41-final-publicacion"></script>
 </body>
 </html>

@@ -26,6 +26,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 .firebase-alert{margin:0 0 20px;padding:13px 15px;border:1px solid rgba(255,124,124,.35);border-radius:14px;background:rgba(255,124,124,.08);color:#ffc0c0;font-size:13px;line-height:1.5}
 .barber-appt-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 
+/* REPORTES PREMIUM */
 .report-page-head{align-items:flex-end}
 .report-actions{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
 .month-filter{min-width:165px}
@@ -115,6 +116,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   @page{size:A4;margin:12mm}
 }
 
+
+/* =========================================================
+   AJUSTE RESPONSIVE DE CIFRAS / TARJETAS DE REPORTES
+   ========================================================= */
 .report-chair-card,
 .report-barber-card{
   container-type:inline-size;
@@ -174,6 +179,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   line-height:1.35;
 }
 
+/* Cuando una tarjeta individual queda estrecha, los indicadores
+   se acomodan sin esperar a que cambie todo el layout de la página. */
 @container (max-width:235px){
   .report-split-3{
     grid-template-columns:repeat(2,minmax(0,1fr));
@@ -196,6 +203,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   }
 }
 
+/* Fallback y afinado por tamaño de pantalla */
 @media(max-width:1250px){
   .report-split>div,
   .report-barber-main>div{
@@ -257,6 +265,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   }
 }
 
+
+/* =========================================================
+   FLUJO BARBERO -> CAJA -> COMISIÓN
+   ========================================================= */
 .cash-queue-panel{margin-bottom:22px;border-color:rgba(215,173,86,.18);background:linear-gradient(180deg,#161619,#101012)}
 .cash-queue-head{align-items:center}
 .cash-help{max-width:650px;color:var(--muted);font-size:11px;line-height:1.55;margin:6px 0 0}
@@ -289,6 +301,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 @media(max-width:1050px){.cash-request-grid{grid-template-columns:1fr}.barber-charge-form{grid-template-columns:1fr 1fr}.barber-send-cash{grid-column:1/-1}.cash-flow-badge{display:none}}
 @media(max-width:650px){.cash-queue-head,.barber-cash-intro{align-items:flex-start;flex-direction:column}.cash-count{width:100%}.cash-approval-row{grid-template-columns:1fr}.cash-actions{justify-content:stretch}.cash-reject-btn,.cash-approve-btn{flex:1;max-width:none}.barber-charge-form{grid-template-columns:1fr}.barber-send-cash{grid-column:auto}.barber-charge-row{grid-template-columns:auto 1fr}.barber-charge-credit{grid-column:2;text-align:left}.cash-request-top{grid-template-columns:auto 1fr}.cash-request-top .request-status{grid-column:2;justify-self:start}}
 
+
+/* Flujo Barbero prepara / Administrador confirma */
 .cash-confirm-summary{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -349,6 +363,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .cash-actions-full{grid-template-columns:1fr}
 }
 
+
+/* =========================================================
+   PORTAL BARBERO — COBRO PREMIUM RESPONSIVE
+   ========================================================= */
 .barber-cash-premium{padding:26px;border-radius:28px;background:
   radial-gradient(circle at 92% 4%,rgba(215,173,86,.12),transparent 28%),
   linear-gradient(145deg,#17171a,#101012);border-color:rgba(215,173,86,.24)}
@@ -362,11 +380,16 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 .charge-submit-area{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:2px;padding-top:15px;border-top:1px solid rgba(255,255,255,.055)}.charge-submit-note{display:flex;align-items:flex-start;gap:9px;max-width:430px}.charge-submit-note>span{width:25px;height:25px;min-width:25px;border-radius:8px;display:grid;place-items:center;background:rgba(114,215,167,.09);color:var(--success);font-size:11px;font-weight:900}.charge-submit-note p{margin:2px 0 0;color:var(--muted);font-size:10px;line-height:1.5}.barber-send-cash{height:auto;min-height:44px;padding:12px 17px;display:flex;align-items:center;gap:14px;white-space:nowrap}.barber-send-cash b{font-size:18px}
 .barber-charge-preview{position:sticky;top:20px;border:1px solid rgba(215,173,86,.2);border-radius:22px;padding:20px;background:linear-gradient(160deg,#1a1814,#121214 60%);box-shadow:0 18px 45px rgba(0,0,0,.22);overflow:hidden}.barber-charge-preview:before{content:"";position:absolute;width:170px;height:170px;border-radius:50%;right:-75px;top:-90px;background:radial-gradient(circle,rgba(215,173,86,.16),transparent 70%);pointer-events:none}.preview-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;position:relative}.preview-top h3{margin:5px 0 0;font-size:19px}.preview-status{padding:6px 9px;border-radius:999px;background:rgba(215,173,86,.08);border:1px solid rgba(215,173,86,.2);color:var(--gold2);font-size:9px;font-weight:900;letter-spacing:.8px;text-transform:uppercase}.preview-service-block{margin-top:18px;padding:14px;border-radius:15px;background:#19191d;border:1px solid #29292f}.preview-service-block span,.preview-total-block span,.preview-money-grid span{display:block;color:var(--muted);font-size:9px;letter-spacing:.8px;text-transform:uppercase}.preview-service-block strong{display:block;margin:5px 0;font-size:14px}.preview-service-block small{font-size:10px;color:#8b8b93}.preview-total-block{margin-top:11px;padding:17px;border-radius:17px;background:linear-gradient(135deg,rgba(215,173,86,.16),rgba(215,173,86,.045));border:1px solid rgba(215,173,86,.18)}.preview-total-block strong{display:block;font-size:32px;line-height:1;margin:8px 0 6px;color:#f4efe5;letter-spacing:-1.2px}.preview-total-block small{color:var(--gold2);font-size:10px}.preview-money-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:11px}.preview-money-grid>div{min-width:0;padding:11px 9px;border:1px solid #29292f;border-radius:13px;background:#18181c}.preview-money-grid strong{display:block;font-size:clamp(10px,1vw,13px);line-height:1.2;margin-top:5px;overflow-wrap:anywhere}.preview-money-grid .preview-gold{border-color:rgba(215,173,86,.2);background:rgba(215,173,86,.07)}.preview-money-grid .preview-gold strong{color:var(--gold2)}.preview-foot{display:flex;gap:9px;align-items:flex-start;margin-top:14px;padding-top:13px;border-top:1px solid rgba(255,255,255,.055)}.preview-foot>span{color:var(--gold);font-size:11px}.preview-foot p{margin:0;color:#777780;font-size:9px;line-height:1.5}
 
+/* ADMIN — ACTIVAR / DESACTIVAR BARBEROS */
 .barber-admin-card{transition:.2s;border-color:rgba(255,255,255,.07)}.barber-admin-card:hover{transform:translateY(-2px);border-color:rgba(215,173,86,.2)}.barber-admin-card.is-disabled{opacity:.72;background:linear-gradient(180deg,#141416,#101012)}.barber-admin-card.is-disabled:after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,124,124,.025),transparent);pointer-events:none}.barber-admin-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:13px}.barber-admin-avatar{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:rgba(215,173,86,.1);border:1px solid rgba(215,173,86,.15);color:var(--gold2);font-weight:900}.barber-state{position:relative;z-index:1;padding:6px 9px;border-radius:999px;font-size:9px;font-weight:900;letter-spacing:.8px}.barber-state.active{color:#8ce7b9;background:rgba(114,215,167,.08);border:1px solid rgba(114,215,167,.18)}.barber-state.inactive{color:#ff9f9f;background:rgba(255,124,124,.07);border:1px solid rgba(255,124,124,.17)}.barber-admin-card .credential{display:grid;gap:3px}.barber-admin-card .credential>span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}.barber-admin-card .credential>b{font-size:13px;color:#eee}.barber-admin-card .credential>small{font-size:9px;color:#696970}.barber-admin-numbers{margin-bottom:13px}.barber-toggle-btn{position:relative;z-index:2;width:100%;border-radius:12px;padding:10px 12px;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px}.barber-toggle-btn.disable{background:transparent;color:#ff9c9c;border:1px solid rgba(255,124,124,.22)}.barber-toggle-btn.enable{background:rgba(114,215,167,.08);color:#8ce7b9;border:1px solid rgba(114,215,167,.19)}.barber-toggle-help{font-size:9px;color:#67676e;line-height:1.45;text-align:center;margin-top:8px}
 
 @media(max-width:1100px){.barber-charge-layout{grid-template-columns:1fr}.barber-charge-preview{position:relative;top:auto}.premium-flow{display:none!important}}
 @media(max-width:700px){.barber-cash-premium{padding:17px}.premium-charge-form{grid-template-columns:1fr;padding:14px}.charge-field-wide,.charge-form-section-title,.charge-submit-area{grid-column:auto}.charge-submit-area{align-items:stretch;flex-direction:column}.barber-send-cash{justify-content:center;width:100%}.preview-money-grid{grid-template-columns:1fr}.premium-cash-head{align-items:flex-start;flex-direction:column}}
 
+
+/* =========================================================
+   ADMIN - HABILITAR / DESHABILITAR BARBEROS
+   ========================================================= */
 .barber-admin-card.is-disabled{
   opacity:1!important;
   border-color:rgba(255,124,124,.16)!important;
@@ -435,6 +458,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   background:rgba(255,124,124,.06);
 }
 
+
+/* =========================================================
+   CITAS - SELECTOR DE FECHA PREMIUM
+   ========================================================= */
 .booking-date-section{
   margin:2px 0 18px;
   padding:15px;
@@ -514,6 +541,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .quick-date-row button{flex:1;min-width:70px}
 }
 
+
+/* =========================================================
+   PRODUCTOS EN COBRO DEL BARBERO
+   ========================================================= */
 .charge-products-title{margin-top:8px!important}
 .barber-product-picker{
   grid-column:1/-1;
@@ -625,6 +656,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 .cash-product-subtotal span{color:var(--gold)}
 .cash-request-price small{display:block;color:var(--muted);font-size:10px;margin-top:5px}
 
+/* Admin products */
 .product-admin-card{position:relative}
 .product-admin-card.product-disabled{opacity:.72}
 .product-admin-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
@@ -655,6 +687,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .product-remove-btn{grid-column:2;grid-row:2;justify-self:end}
 }
 
+
+/* =========================================================
+   COMISIONES SEPARADAS: SERVICIOS / PRODUCTOS
+   ========================================================= */
 .barber-commission-pills{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -766,6 +802,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   }
 }
 
+
+/* =========================================================
+   PUESTO FIJO POR BARBERO
+   ========================================================= */
 .field-help{
   display:block;
   color:var(--muted);
@@ -913,6 +953,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   font-size:13px;
 }
 
+
+/* =========================================================
+   PUESTOS - BARBERO ASIGNADO + TOTAL GENERADO
+   ========================================================= */
 .premium-chair-admin-card{
   position:relative;
   overflow:hidden;
@@ -1082,6 +1126,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   }
 }
 
+
+/* =========================================================
+   DASHBOARD DIARIO + CITAS + PASSWORD
+   ========================================================= */
 .password-input-wrap{position:relative}
 .password-input-wrap input{padding-right:44px!important;width:100%}
 .password-eye{
@@ -1191,6 +1239,9 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .submodal-count,.chair-detail-total{width:100%;text-align:left}
 }
 
+
+/* AJUSTES BARBERO · UI MÁS LIMPIA */
+
 .barber-hero-actions{display:flex;align-items:center;justify-content:flex-end;gap:14px;flex-wrap:wrap}
 .barber-availability-box{display:flex;flex-direction:column;align-items:flex-end;gap:12px;padding:18px 20px;border-radius:24px;min-width:360px;max-width:100%}
 .barber-availability-box.premium{border:1px solid rgba(215,173,86,.22);background:linear-gradient(135deg, rgba(215,173,86,.10), rgba(16,18,30,.94));box-shadow:0 16px 34px rgba(0,0,0,.24)}
@@ -1218,6 +1269,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .barber-today-card .today-appt-main{grid-template-columns:1fr}
 }
 
+
+/* AJUSTE 02-09-2026 · ADMIN/BARBERO */
 .barber-bottom-grid{grid-template-columns:1fr;}
 .barber-agenda-panel{display:none;}
 .barber-sales-panel{grid-column:1/-1;}
@@ -1235,6 +1288,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .barber-charge-preview{max-width:none;width:100%;}
 }
 
+
+/* =========================================================
+   BARBERO · ÚLTIMOS SERVICIOS PREMIUM + CITAS DEL DÍA
+   ========================================================= */
 .panel-subcopy{
   margin:5px 0 0;
   color:var(--muted);
@@ -1626,6 +1683,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   }
 }
 
+
+/* =========================================================
+   ÚLTIMOS SERVICIOS · TARJETAS + TABLA COMPACTA
+   ========================================================= */
 .premium-my-sales-head{
   align-items:flex-start;
   gap:16px;
@@ -1825,6 +1886,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   }
 }
 
+
+/* REPORTES · FILTRO DE GANANCIAS POR BARBERO */
 .report-stats{grid-template-columns:repeat(3,minmax(0,1fr));}
 .barber-profit-modal{width:min(980px,95vw)!important;max-width:980px!important;}
 .barber-profit-filter-row{display:grid;grid-template-columns:minmax(220px,360px);gap:12px;margin:4px 0 16px;}
@@ -1850,6 +1913,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .barber-profit-filter-row{grid-template-columns:1fr;}
 }
 
+
+/* =========================================================
+   PRODUCCIÓN: CITAS / CATÁLOGO / INVENTARIO / GANANCIAS
+   ========================================================= */
 .completed-appts-title{margin-top:28px}
 .completed-appts-panel{padding:0!important;overflow:hidden}
 .completed-appts-table{min-width:720px}
@@ -1909,6 +1976,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 }
 .barber-profit-filter-row input[type="month"]{margin-top:7px;}
 
+/* =========================================================
+   PRODUCCIÓN FINAL 02-09-2026 · MODAL CITAS BARBERO
+   Evita que TOTAL se superponga con el botón cerrar.
+   ========================================================= */
 .barber-appts-modal{
   padding-top:30px!important;
 }
@@ -1967,6 +2038,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   }
 }
 
+
+/* =========================================================
+   PRODUCTOS VENDIDOS HOY
+   ========================================================= */
 .product-page-actions{
   display:flex;
   align-items:center;
@@ -2122,6 +2197,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .product-sales-day-summary{grid-template-columns:1fr}
 }
 
+
+/* =========================================================
+   DASHBOARD · FILTRO DE PERÍODO v4
+   ========================================================= */
 .dashboard-period-filter{
   position:relative;
   z-index:3;
@@ -2218,6 +2297,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   gap:7px;
 }
 
+/* Evita que el total se monte sobre el botón X. */
 .chair-detail-modal .submodal-heading{
   padding-right:62px;
   min-height:58px;
@@ -2248,6 +2328,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .chair-detail-modal .submodal-heading{padding-right:48px;padding-top:8px}
 }
 
+
+/* =========================================================
+   COMPROBANTE DE PAGO DESDE DETALLE DE PUESTO
+   ========================================================= */
 .chair-detail-header-actions{
   display:flex;
   flex-direction:column;
@@ -2285,6 +2369,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .chair-receipt-btn{min-height:40px}
 }
 
+
+/* =========================================================
+   V6 · FILTRO MÁS LEGIBLE + CALENDARIO DE RANGO
+   ========================================================= */
 .dashboard-period-filter{
   width:min(500px,100%);
   flex-basis:min(500px,46%);
@@ -2371,6 +2459,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .dashboard-date-label::after{display:none}
 }
 
+
+/* REPORTES INTEGRADOS AL DASHBOARD */
 .report-support-view{display:none!important;}
 .report-actions-support{display:none!important;}
 .dashboard-report-actions{
@@ -2394,6 +2484,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 @media(max-width:900px){.dashboard-report-actions{width:100%}.dashboard-report-buttons{grid-template-columns:1fr}.dashboard-profit-btn{grid-column:auto}}
 @media print{.report-support-view{display:block!important;}}
 
+
+/* =========================================================
+   V8 · ENCABEZADOS DE MÓDULO MÁS LIMPIOS
+   ========================================================= */
 .module-intro{
   margin:0 0 22px;
   padding:0 0 15px;
@@ -2442,6 +2536,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   }
 }
 
+
+/* =========================================================
+   COBROS APROBADOS · HISTORIAL CONTROLADO
+   ========================================================= */
 .sales-history-title{
   align-items:flex-end;
   gap:18px;
@@ -2523,6 +2621,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .sales-history-scroll{max-height:62vh}
 }
 
+
+/* =========================================================
+   CARGA MASIVA DE PRODUCTOS · TIPO HOJA DE CÁLCULO
+   ========================================================= */
 .bulk-products-btn{
   border:1px solid rgba(215,173,86,.24);
   background:rgba(215,173,86,.075);
@@ -2681,6 +2783,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .bulk-products-toolbar>*{flex:1 1 150px}
 }
 
+
+/* =========================================================
+   REPORTE V12 · DETALLE POR PUESTO EN TABLA COMPACTA
+   ========================================================= */
 .report-chair-table-wrap{
   margin-top:10px;
   border:1px solid var(--line);
@@ -2752,11 +2858,14 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .report-chair-table th:nth-child(6),.report-chair-table td:nth-child(6){width:15%}
   .report-chair-table th:nth-child(7),.report-chair-table td:nth-child(7){width:15%}
 
+  /* Las tarjetas antiguas ya no forman parte del detalle por puesto. */
   .report-section-title{margin-top:6mm!important;margin-bottom:2mm!important}
   .report-section-title h3{font-size:13pt!important;margin:0!important}
   .report-section-title>p{font-size:7.5pt!important;margin:2px 0 0!important}
 }
 
+
+/* V13 · Limpieza de reporte + modales + PDF inventario */
 .report-barber-summary,#reportBarberMonthly{display:none!important;}
 .product-inventory-pdf-btn{min-height:40px;padding:0 15px;border-radius:12px;border:1px solid rgba(215,173,86,.22);background:rgba(255,255,255,.03);color:#fff;font-weight:800;font-size:11px;cursor:pointer;}
 .product-inventory-pdf-btn:hover{border-color:rgba(215,173,86,.35);background:rgba(255,255,255,.06);}
@@ -2765,6 +2874,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 #todayAppointmentsModal .modal-close,#barberTodayAppointmentsModal .modal-close{z-index:30;}
 @media(max-width:780px){#todayAppointmentsModal .submodal-count,#barberTodayAppointmentsModal .submodal-count{margin-right:0;}#todayAppointmentsModal .submodal-heading,#barberTodayAppointmentsModal .submodal-heading{padding-right:42px;}}
 
+
+/* =========================================================
+   V14 · DASHBOARD · RENDIMIENTO DE BARBEROS + KPIs CENTRADOS
+   ========================================================= */
 #view-dashboard>.stats-grid .stat-card{
   text-align:center;
   display:flex;
@@ -2887,6 +3000,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .barber-performance-value{text-align:left;}
 }
 
+
+/* =========================================================
+   V15 · RENDIMIENTO VERTICAL + DETALLE INTERACTIVO
+   ========================================================= */
 .barber-performance-v15{margin:28px 0 24px}
 .barber-vertical-panel{padding:18px 20px 20px!important;overflow:hidden}
 .barber-chart-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px}
@@ -2918,6 +3035,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 .performance-barber-button small{font-size:8px;color:var(--muted);white-space:nowrap}
 .top-performer .performance-name-avatar{background:rgba(215,173,86,.16);box-shadow:0 0 0 1px rgba(215,173,86,.10) inset}
 
+/* ocultar producción por puesto del dashboard (se mantiene el módulo Puestos) */
 .dashboard-chair-section{display:none!important}
 
 .barber-performance-detail-modal{width:min(1040px,94vw)!important;max-width:1040px!important;padding:24px!important}
@@ -2960,10 +3078,15 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
   .barber-detail-kpis{grid-template-columns:1fr}
 }
 
+
+/* =========================================================
+   V16 · RESPONSIVE TOTAL + GRÁFICA HORIZONTAL
+   ========================================================= */
 html,body{max-width:100%;overflow-x:hidden}
 .app-shell,.main,.view,.hero,.stats-grid,.dashboard-grid,.panel,.barber-performance-section,.barber-performance-panel{min-width:0}
 img,svg,canvas{max-width:100%;height:auto}
 
+/* Dashboard hero: evita desbordes en laptops y pantallas intermedias */
 #view-dashboard .hero{
   display:grid;
   grid-template-columns:minmax(300px,1.25fr) minmax(250px,.72fr) minmax(330px,.9fr);
@@ -2979,12 +3102,14 @@ img,svg,canvas{max-width:100%;height:auto}
 #view-dashboard .dashboard-report-buttons button{min-width:0;max-width:100%;width:100%;white-space:normal;text-align:center;justify-self:stretch}
 #view-dashboard .dashboard-period-filter{width:100%!important;min-width:0!important}
 
+/* Cifras siempre dentro de sus tarjetas */
 .stat-card{min-width:0;text-align:center}
 .stat-card .stat-top{justify-content:center;position:relative;padding:0 34px;min-height:30px}
 .stat-card .stat-top i{position:absolute;right:0;top:0}
 .stat-card strong{font-size:clamp(22px,2.25vw,30px);overflow-wrap:anywhere;word-break:normal}
 .stat-card small{display:block;text-align:center}
 
+/* Nueva gráfica horizontal */
 .barber-performance-v15{margin:26px 0 22px;min-width:0}
 .barber-horizontal-panel{padding:16px 18px 18px!important;overflow:hidden;min-width:0}
 .barber-performance-horizontal-chart{display:block;width:100%;min-width:0;overflow:hidden}
@@ -3036,9 +3161,11 @@ img,svg,canvas{max-width:100%;height:auto}
 .production-fill{background:linear-gradient(90deg,#ad7b2d,#efd083)}
 .gain-fill{background:linear-gradient(90deg,#343741,#6c707b)}
 
+/* Detalle del barbero: siempre dentro del viewport */
 .barber-performance-detail-modal{width:min(1040px,calc(100vw - 24px))!important;max-height:calc(100vh - 24px);overflow:auto!important}
 .barber-detail-table-wrap{max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch}
 
+/* Pantalla intermedia: hero en dos niveles */
 @media(max-width:1450px){
   #view-dashboard .hero{grid-template-columns:minmax(0,1fr) minmax(290px,.85fr)}
   #view-dashboard .hero-content{grid-column:1/-1}
@@ -3110,6 +3237,10 @@ img,svg,canvas{max-width:100%;height:auto}
   .modal-backdrop{padding:8px}
 }
 
+
+/* =========================================================
+   V17 · DASHBOARD MÁS LIMPIO Y BOTÓN NUEVO COBRO EN SIDEBAR
+   ========================================================= */
 .sidebar-quick-sale-btn{width:100%;justify-content:center;padding:12px 14px;border-radius:14px;font-size:17px;font-weight:800;box-shadow:0 10px 26px rgba(201,151,63,.18)}
 .top-actions{justify-content:flex-end;width:100%}
 .hero-side-stack{display:flex;flex-direction:column;gap:16px;min-width:0;align-self:stretch}
@@ -3124,6 +3255,9 @@ img,svg,canvas{max-width:100%;height:auto}
 @media(max-width:820px){.hero-side-stack{width:100%}#view-dashboard .hero{grid-template-columns:1fr!important}.sidebar-quick-sale-btn{font-size:15px}}
 @media(max-width:600px){.topbar{margin-bottom:14px}.top-actions{width:auto}#view-dashboard .dashboard-report-buttons{grid-template-columns:1fr!important}.sidebar-quick-sale-btn{padding:11px 12px}}
 
+/* =========================================================
+   V18 · DASHBOARD PREMIUM / ESPACIADO / ARMONÍA VISUAL
+   ========================================================= */
 :root{
   --dashboard-card-bg:linear-gradient(180deg,#15161a 0%,#121317 100%);
   --dashboard-card-border:rgba(255,255,255,.075);
@@ -3407,6 +3541,9 @@ img,svg,canvas{max-width:100%;height:auto}
   }
 }
 
+/* =========================================================
+   V20 · ENCABEZADO COMPACTO + CONTROLES EN PARALELO
+   ========================================================= */
 .dashboard-topbar{
   display:grid;
   grid-template-columns:minmax(220px,auto) minmax(0,1fr) auto;
@@ -3456,6 +3593,7 @@ img,svg,canvas{max-width:100%;height:auto}
   line-height:1.35;
 }
 
+/* El antiguo hero grande ya no se usa en V20. */
 #view-dashboard .hero{display:none!important}
 
 .dashboard-control-grid{
@@ -3502,6 +3640,7 @@ img,svg,canvas{max-width:100%;height:auto}
   grid-template-columns:repeat(4,minmax(0,1fr))!important;
 }
 
+/* Mantener el dashboard compacto y sin huecos grandes. */
 #view-dashboard.active{gap:18px}
 #view-dashboard .stats-grid{margin:0}
 
@@ -3622,6 +3761,9 @@ img,svg,canvas{max-width:100%;height:auto}
   .dashboard-control-grid .dashboard-report-actions{padding:12px!important}
 }
 
+/* =========================================================
+   V21 · INVENTARIO EN LISTA + CÓDIGO DE BARRAS ÚNICO
+   ========================================================= */
 #view-products .module-intro{margin-bottom:16px}
 .product-inventory-toolbar{
   display:grid;
@@ -3747,6 +3889,7 @@ img,svg,canvas{max-width:100%;height:auto}
 .product-list-actions .product-toggle-btn{margin:0!important}
 .field-help{display:block;color:#777b85;font-size:9px;margin-top:5px;font-weight:500}
 
+/* Carga masiva con columna de código */
 .bulk-products-grid{min-width:1030px}
 .bulk-barcode-cell{min-width:170px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace!important;letter-spacing:.2px}
 .bulk-name-cell{min-width:210px}
@@ -3791,6 +3934,9 @@ img,svg,canvas{max-width:100%;height:auto}
   .product-list-actions{grid-template-columns:1fr}
 }
 
+/* =========================================================
+   V22 · PUESTOS COMO MAPA OPERATIVO
+   ========================================================= */
 .chair-ops-head{align-items:center}
 .chair-ops-summary{
   display:grid;
@@ -3892,6 +4038,7 @@ img,svg,canvas{max-width:100%;height:auto}
 .chair-ops-card-actions{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:8px;margin-top:12px}
 .chair-ops-card-actions button{min-width:0;margin:0!important;min-height:38px;padding:8px 10px!important;border-radius:11px;font-size:10px!important;white-space:normal}
 
+/* Detalle operativo */
 .chair-operations-modal{width:min(1050px,calc(100vw - 28px))!important;max-height:calc(100vh - 28px);overflow:auto!important;padding:22px!important}
 .chair-ops-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding-right:46px;padding-bottom:14px;border-bottom:1px solid #2a2b31}
 .chair-ops-modal-head h2{margin:4px 0 0;font-size:30px}
@@ -3954,6 +4101,10 @@ img,svg,canvas{max-width:100%;height:auto}
   .chair-ops-modal-head{padding-right:38px;flex-direction:column}
 }
 
+
+/* =========================================================
+   V23 · PUESTOS COMPACTOS, CENTRADOS + NUEVO COBRO ARRIBA
+   ========================================================= */
 .sidebar-footer{
   display:grid;
   gap:10px;
@@ -3967,6 +4118,7 @@ img,svg,canvas{max-width:100%;height:auto}
 .sidebar-footer .admin-card{order:1}
 .sidebar-footer .logout-btn{order:2}
 
+/* Contenedor de puestos: nunca estira las tarjetas demasiado */
 .chair-ops-grid{
   display:grid!important;
   grid-template-columns:repeat(auto-fit,minmax(270px,330px))!important;
@@ -4051,6 +4203,7 @@ img,svg,canvas{max-width:100%;height:auto}
   font-size:9px!important;
 }
 
+/* Resumen superior más compacto y centrado */
 .chair-ops-summary{
   max-width:1180px;
   margin-left:auto;
@@ -4119,6 +4272,9 @@ img,svg,canvas{max-width:100%;height:auto}
   }
 }
 
+/* =========================================================
+   V24 · CONTROLES DEL DASHBOARD COMPACTOS Y CENTRADOS
+   ========================================================= */
 #view-dashboard .dashboard-control-grid{
   width:min(1180px,100%);
   margin-left:auto!important;
@@ -4240,6 +4396,10 @@ img,svg,canvas{max-width:100%;height:auto}
   }
 }
 
+
+/* =========================================================
+   V29/V31 · ESTADO DE PUESTOS EN DASHBOARD + ANIMACIÓN SWITCH
+   ========================================================= */
 @keyframes barberStatePulse{0%{transform:scale(1)}35%{transform:scale(.96)}70%{transform:scale(1.035)}100%{transform:scale(1)}}
 .barber-availability-pill.state-changing,.barber-availability-btn.state-changing{animation:barberStatePulse .5s ease}
 .barber-availability-pill,.barber-availability-btn.premium{will-change:transform,filter}
@@ -4266,6 +4426,10 @@ img,svg,canvas{max-width:100%;height:auto}
 @media(max-width:520px){.dashboard-live-chairs-grid{grid-template-columns:1fr 1fr;gap:8px}.dashboard-chair-status-badge{min-height:74px;padding:10px 8px;border-radius:16px}.dashboard-chair-badge-name{font-size:18px}.dashboard-chair-badge-meta{font-size:10px;letter-spacing:.6px}.dashboard-chair-status-badge small{font-size:10px}}
 @media(max-width:380px){.dashboard-live-chairs-grid{grid-template-columns:1fr}.dashboard-chair-status-badge{min-height:72px}}
 
+/* =========================================================
+   V30 · RESPONSIVE GENERAL — ADMIN + BARBERO + CLIENTE
+   Corrige desbordes en móvil/tablet sin cambiar la lógica.
+   ========================================================= */
 html,body{width:100%;max-width:100%;overflow-x:hidden}
 body{min-width:0}
 .app-shell,.main,.view,.panel,.section-head,.module-intro,.cards-grid,.appointment-grid,
@@ -4276,6 +4440,7 @@ body{min-width:0}
 .barber-charge-layout,.premium-charge-form,.barber-charge-preview,.booking-main,.booking-layout,
 .booking-card,.lookup-card,.luxury-card,.modal,.modal-backdrop{min-width:0;max-width:100%}
 
+/* Controles nativos de fecha pueden imponer ancho mínimo en Chrome móvil. */
 input,select,textarea,button{max-width:100%}
 input[type="date"],input[type="week"],input[type="month"],input[type="time"]{
   width:100%!important;
@@ -4290,12 +4455,16 @@ input[type="date"],input[type="week"],input[type="month"],input[type="time"]{
 .dashboard-filter-control label{display:block;width:100%}
 .dashboard-filter-control input{display:block;width:100%!important;max-width:100%!important;min-width:0!important}
 
+/* Tablas: nunca ensanchan el body; el scroll queda dentro de su panel. */
 .table-wrap,.product-inventory-table-shell,.barber-service-table-wrap,.barber-profit-table-wrap,
 .completed-appts-table-wrap,.chair-ops-table-wrap,.bulk-grid-shell,.barber-detail-table-wrap,
 .product-sales-day-list-wrap,.report-chair-table-wrap{
   width:100%;max-width:100%;overflow-x:auto!important;-webkit-overflow-scrolling:touch;
 }
 
+/* =========================================================
+   MÓVIL / TABLET
+   ========================================================= */
 @media(max-width:820px){
   .main{margin-left:0!important;width:100%!important;max-width:100%!important;padding:16px!important}
   .sidebar{width:min(286px,88vw)!important;max-width:88vw;overflow-y:auto}
@@ -4305,6 +4474,7 @@ input[type="date"],input[type="week"],input[type="month"],input[type="time"]{
   .topbar-left>div{min-width:0}
   .topbar h1{overflow-wrap:anywhere}
 
+  /* Dashboard */
   #view-dashboard.active{width:100%;max-width:100%;overflow:visible}
   .dashboard-topbar{width:100%;max-width:100%;grid-template-columns:1fr!important}
   .dashboard-top-message{width:100%;max-width:100%;min-width:0}
@@ -4324,6 +4494,7 @@ input[type="date"],input[type="week"],input[type="month"],input[type="time"]{
   .dashboard-report-buttons button{width:100%;min-width:0!important}
   .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;width:100%}
 
+  /* Módulos admin */
   .section-head,.module-intro{flex-direction:column!important;align-items:stretch!important;gap:12px}
   .section-head>button,.module-intro>button,.module-intro .primary-btn{width:100%;min-width:0}
   .filter-row{justify-content:stretch}
@@ -4333,6 +4504,7 @@ input[type="date"],input[type="week"],input[type="month"],input[type="time"]{
   .appointment-top{min-width:0}
   .appt-actions{width:100%}
 
+  /* Productos */
   #view-products .module-intro{align-items:stretch!important}
   .product-page-actions,.product-inventory-toolbar{width:100%;max-width:100%;flex-wrap:wrap!important}
   .product-page-actions>*{flex:1 1 150px;min-width:0}
@@ -4341,10 +4513,12 @@ input[type="date"],input[type="week"],input[type="month"],input[type="time"]{
   .product-search-shell input{min-width:0!important}
   .product-list-actions{min-width:0!important}
 
+  /* Puestos */
   .chair-ops-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .chair-ops-grid{grid-template-columns:repeat(2,minmax(0,360px))!important;justify-content:center}
   .chair-ops-card{width:100%;max-width:360px;margin-inline:auto}
 
+  /* Portal barbero */
   .barber-header{flex-wrap:wrap;gap:10px}
   .barber-main,.booking-main{width:calc(100% - 24px)!important;max-width:100%;padding-top:20px}
   .barber-welcome{width:100%;max-width:100%;padding:20px;align-items:flex-start;flex-direction:column}
@@ -4358,9 +4532,11 @@ input[type="date"],input[type="week"],input[type="month"],input[type="time"]{
   .barber-charge-preview{min-width:0!important;max-width:100%!important;width:100%!important}
   .premium-charge-form{min-width:0!important;width:100%}
 
+  /* Cliente */
   .booking-layout{grid-template-columns:1fr!important;width:100%}
   .booking-card,.lookup-card,.luxury-card{width:100%;max-width:100%}
 
+  /* Modales */
   .modal-backdrop{padding:10px!important;align-items:flex-start!important;overflow-y:auto}
   .modal,.modal.small,.dashboard-submodal,.barber-profit-modal,.product-sales-day-modal,
   .bulk-products-modal,.chair-operations-modal,.barber-performance-detail-modal{
@@ -4375,6 +4551,7 @@ input[type="date"],input[type="week"],input[type="month"],input[type="time"]{
   .menu-btn{flex:0 0 auto}
   .eyebrow{font-size:9px;letter-spacing:1.4px}
 
+  /* Dashboard: arreglo específico del campo que se salía en la captura. */
   .dashboard-control-grid{gap:10px!important}
   #view-dashboard .dashboard-control-grid .dashboard-period-filter,
   #view-dashboard .dashboard-control-grid .dashboard-report-actions{padding:12px!important;border-radius:16px!important;overflow:hidden}
@@ -4391,27 +4568,32 @@ input[type="date"],input[type="week"],input[type="month"],input[type="time"]{
   .performance-horizontal-metrics{grid-template-columns:1fr!important}
   .dashboard-live-chairs-grid{grid-template-columns:1fr!important}
 
+  /* Todas las pestañas admin */
   .cards-grid{grid-template-columns:1fr!important}
   .person-card,.chair-card,.service-card,.appointment-card{width:100%;max-width:100%}
   .section-head h2{font-size:26px}
   .card-numbers{grid-template-columns:1fr 1fr}
   .appt-actions .tiny-btn{flex:1 1 120px;min-width:0}
 
+  /* Usuarios / Barberos */
   .barber-admin-card{width:100%;max-width:100%}
   .barber-admin-numbers{grid-template-columns:1fr 1fr!important}
 
+  /* Puestos */
   .chair-ops-summary{grid-template-columns:1fr 1fr!important}
   .chair-ops-grid{grid-template-columns:1fr!important}
   .chair-ops-card{max-width:380px!important}
   .chair-ops-card-actions{grid-template-columns:1fr!important}
   .chair-ops-card-actions button{width:100%}
 
+  /* Productos */
   .product-page-actions{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
   .product-page-actions .primary-btn{grid-column:1/-1}
   .product-inventory-summary{grid-template-columns:1fr!important}
   .product-list-actions{display:grid!important;grid-template-columns:1fr!important;width:100%!important}
   .product-list-actions button{width:100%;min-width:0}
 
+  /* Barbero */
   .barber-main,.booking-main{width:calc(100% - 20px)!important}
   .barber-welcome{padding:16px;border-radius:20px}
   .barber-availability-box{padding:12px!important;border-radius:18px!important}
@@ -4423,12 +4605,14 @@ input[type="date"],input[type="week"],input[type="month"],input[type="time"]{
   .preview-money-grid{grid-template-columns:1fr!important}
   .barber-money-grid{grid-template-columns:1fr!important}
 
+  /* Cliente */
   .client-header{gap:10px;flex-wrap:wrap}
   .client-header .brand{min-width:0}
   .booking-intro{margin-top:10px}
   .booking-intro h1{font-size:clamp(34px,11vw,48px)}
   .choice-grid{grid-template-columns:1fr!important}
 
+  /* Modales compactos */
   .modal{padding:18px 14px!important;border-radius:20px!important}
   .modal h2{font-size:26px}
   .modal-close{right:10px;top:10px}
@@ -4451,9 +4635,11 @@ input[type="date"],input[type="week"],input[type="month"],input[type="time"]{
   .barber-main,.booking-main{width:calc(100% - 14px)!important}
 }
 
+/* V34 · Texto de botones de reporte ligeramente mayor */
 #view-dashboard .dashboard-report-buttons button{font-size:13px!important;line-height:1.2;}
 @media(max-width:600px){#view-dashboard .dashboard-report-buttons button{font-size:11.5px!important;}}
 
+/* V35: tipografía renovada y ligeramente más grande en todo el proyecto */
 body{
   letter-spacing:0.01em;
 }
@@ -4494,6 +4680,10 @@ label,
   font-family:"Cormorant Garamond",serif;
 }
 
+
+/* =========================================================
+   V36 · TIPOGRAFÍA PREMIUM — CORMORANT GARAMOND + OUTFIT
+   ========================================================= */
 :root{
   --font-ui:"Outfit",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   --font-display:"Cormorant Garamond",Georgia,serif;
@@ -4503,6 +4693,7 @@ html,body{font-family:var(--font-ui)}
 body{font-weight:400;letter-spacing:.005em}
 button,input,select,textarea,table,th,td,label{font-family:var(--font-ui)}
 
+/* Títulos premium */
 .access-brand h1,
 .role-card strong,
 .topbar h1,
@@ -4520,6 +4711,7 @@ button,input,select,textarea,table,th,td,label{font-family:var(--font-ui)}
   letter-spacing:-.025em;
 }
 
+/* Navegación y acciones */
 .nav-item,
 .primary-btn,
 .ghost-btn,
@@ -4532,6 +4724,7 @@ button,input,select,textarea,table,th,td,label{font-family:var(--font-ui)}
   letter-spacing:.005em;
 }
 
+/* Títulos de módulos y tarjetas */
 .topbar h1{font-size:34px;line-height:1.05}
 .section-head h2{font-size:32px;line-height:1.05}
 .panel-head h3,
@@ -4539,6 +4732,7 @@ button,input,select,textarea,table,th,td,label{font-family:var(--font-ui)}
 .chair-ops-panel-head h3,
 .barber-performance-title h3{font-weight:700;letter-spacing:-.018em}
 
+/* Texto general: moderno y más legible */
 .nav-item{font-size:14px}
 .brand strong{font-size:15px}
 .brand span{font-size:10px;letter-spacing:2.2px}
@@ -4551,6 +4745,7 @@ input,select,textarea{font-size:14px;font-weight:500}
 th{font-size:10px;font-weight:700;letter-spacing:1px}
 td{font-size:12.5px}
 
+/* Cifras y métricas */
 .stat-card strong,
 .report-card-total,
 .mini-stat strong,
@@ -4562,6 +4757,7 @@ td{font-size:12.5px}
 }
 .stat-card strong{font-weight:700}
 
+/* Jerarquía premium del Dashboard */
 .dashboard-filter-kicker,
 .dashboard-report-kicker,
 .barber-performance-title .eyebrow,
@@ -4569,15 +4765,18 @@ td{font-size:12.5px}
 .dashboard-report-buttons button{font-weight:700!important}
 .dashboard-chair-badge-name{font-family:var(--font-ui);font-weight:800;letter-spacing:.015em}
 
+/* Portal del barbero */
 .barber-welcome h1{font-size:clamp(42px,5vw,56px)}
 .barber-welcome p{font-size:14px;line-height:1.55}
 .barber-availability-label{font-family:var(--font-ui);font-weight:700}
 .barber-availability-pill,.barber-availability-btn.premium{font-family:var(--font-ui);font-weight:800}
 
+/* Cliente / reservas */
 .booking-intro h1{font-size:clamp(44px,7vw,76px)}
 .choice strong{font-size:14px;font-weight:700}
 .choice small{font-size:11px}
 
+/* Ajuste móvil: conserva elegancia sin desbordes */
 @media(max-width:700px){
   .topbar h1{font-size:30px}
   .section-head h2{font-size:28px}
@@ -4594,6 +4793,9 @@ td{font-size:12.5px}
   td{font-size:12px}
 }
 
+/* =========================================================
+   V37 · RENDIMIENTO COMPACTO PREMIUM
+   ========================================================= */
 .barber-performance-v15{
   margin:6px 0 0;
 }
@@ -4871,6 +5073,9 @@ td{font-size:12.5px}
   .performance-compact-head strong{font-size:14px}
 }
 
+/* =========================================================
+   V38 · RENDIMIENTO EN TARJETAS PREMIUM
+   ========================================================= */
 .performance-premium-grid{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
@@ -4984,6 +5189,9 @@ td{font-size:12.5px}
   .performance-premium-avatar{width:38px;height:38px}
 }
 
+/* =========================================================
+   V39 · PRODUCTOS PAGINADOS · 10 POR PÁGINA
+   ========================================================= */
 .product-pagination{
   margin-top:14px;
   padding:14px 16px;
@@ -5105,6 +5313,9 @@ td{font-size:12.5px}
   }
 }
 
+/* =========================================================
+   V40 · PRODUCTOS MÁS COMPACTOS EN TABLA
+   ========================================================= */
 .product-detail-list-shell{
   max-height:calc(100vh - 255px);
 }
@@ -5199,57 +5410,92 @@ td{font-size:12.5px}
 }
 
 /* =========================================================
-   V44 · PUESTOS UN POCO MÁS GRANDES + MEJOR LEGIBILIDAD
+   V41 · AJUSTES FINALES PARA PUBLICACIÓN
    ========================================================= */
-@media (min-width:1101px){
-  .chair-ops-grid{
-    grid-template-columns:repeat(auto-fit,minmax(300px,365px))!important;
-    max-width:1540px!important;
-    gap:18px!important;
+
+/* Dashboard: filtro único Desde / Hasta */
+#view-dashboard .dashboard-range-only{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px!important;
+  margin-top:10px!important;
+}
+#view-dashboard .dashboard-range-only .dashboard-date-label::after{
+  content:none!important;
+  display:none!important;
+}
+#view-dashboard .dashboard-report-buttons{
+  grid-template-columns:1fr!important;
+}
+
+/* Estado de puestos: más pequeño y sin nombre del barbero */
+.dashboard-live-chairs-section{
+  max-width:920px!important;
+  margin-top:2px!important;
+}
+.dashboard-live-chairs-grid{
+  grid-template-columns:repeat(auto-fit,minmax(135px,175px))!important;
+  gap:8px!important;
+}
+.dashboard-chair-status-badge{
+  min-height:58px!important;
+  padding:8px 10px!important;
+  border-radius:15px!important;
+  gap:2px!important;
+  border-width:1px!important;
+}
+.dashboard-chair-status-badge::before{
+  inset:3px!important;
+  border-radius:12px!important;
+}
+.dashboard-chair-badge-name{
+  font-size:16px!important;
+  line-height:1!important;
+}
+.dashboard-chair-badge-meta{
+  font-size:9px!important;
+  line-height:1.15!important;
+  letter-spacing:.45px!important;
+}
+.dashboard-chair-status-badge small{
+  display:none!important;
+}
+
+/* Rendimiento: producción y ganancia comparten escala; ganancia en verde */
+.gain-fill{
+  background:linear-gradient(90deg,#1f8f57,#79e2a7)!important;
+}
+.performance-premium-track{
+  height:10px!important;
+}
+
+/* Detalle del barbero */
+#performanceDetailCommission{
+  color:var(--gold2);
+}
+
+@media(max-width:760px){
+  #view-dashboard .dashboard-range-only{
+    grid-template-columns:1fr 1fr!important;
   }
-  .chair-ops-card{
-    max-width:365px!important;
-    padding:17px!important;
-    border-radius:20px!important;
+  .dashboard-live-chairs-section{
+    max-width:100%!important;
   }
-  .chair-ops-card-top h3{
-    font-size:23px!important;
+  .dashboard-live-chairs-grid{
+    grid-template-columns:repeat(2,minmax(120px,1fr))!important;
   }
-  .chair-ops-barber{
-    padding:12px!important;
-    margin-top:12px!important;
-  }
-  .chair-ops-avatar{
-    width:38px!important;
-    height:38px!important;
-    flex-basis:38px!important;
-    font-size:13px!important;
-  }
-  .chair-ops-barber strong{
-    font-size:12px!important;
-  }
-  .chair-ops-kpis>div,
-  .chair-ops-detail-line>div{
-    padding:11px 12px!important;
-  }
-  .chair-ops-kpis strong{
-    font-size:17px!important;
-  }
-  .chair-ops-card-actions button{
-    min-height:37px!important;
-    padding:8px 9px!important;
-    font-size:9.5px!important;
+  .dashboard-chair-status-badge{
+    min-height:54px!important;
   }
 }
 
-@media (min-width:761px) and (max-width:1100px){
-  .chair-ops-grid{
-    grid-template-columns:repeat(2,minmax(0,340px))!important;
-    gap:16px!important;
-    justify-content:center!important;
+@media(max-width:430px){
+  #view-dashboard .dashboard-range-only{
+    grid-template-columns:1fr!important;
   }
-  .chair-ops-card{
-    max-width:340px!important;
-    padding:16px!important;
+  .dashboard-live-chairs-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
   }
+  .dashboard-chair-badge-name{font-size:14px!important}
+  .dashboard-chair-badge-meta{font-size:8px!important}
 }
