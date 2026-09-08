@@ -272,12 +272,6 @@ function wireStaticUI() {
     btn.addEventListener("click", () => closeModal(btn.dataset.close))
   );
 
-  document.querySelectorAll(".modal-backdrop").forEach(modal =>
-    modal.addEventListener("click", e => {
-      if (e.target === modal) closeModal(modal.id);
-    })
-  );
-
   document.querySelectorAll("[data-logout]").forEach(btn =>
     btn.addEventListener("click", logout)
   );
